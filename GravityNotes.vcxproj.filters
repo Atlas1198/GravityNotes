@@ -115,6 +115,10 @@
     <ClCompile Include="debugscene\debugscene.cpp">
       <Filter>デバッグ</Filter>
     </ClCompile>
+    <ClCompile Include="komachi\debug_ui.cpp" />
+    <ClCompile Include="gamecamera.cpp">
+      <Filter>SCENE_GAME\cpp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework\camera.h">
@@ -260,6 +264,11 @@
     </ClInclude>
     <ClInclude Include="debugscene\debugscene.h">
       <Filter>デバッグ</Filter>
+    </ClInclude>
+    <ClInclude Include="komachi\debug_params.h" />
+    <ClInclude Include="komachi\debug_ui.h" />
+    <ClInclude Include="gamecamera.h">
+      <Filter>SCENE_GAME\h</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

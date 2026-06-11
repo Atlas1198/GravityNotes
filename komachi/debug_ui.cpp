@@ -4,13 +4,15 @@
 #include "../framework/imgui/imgui_impl_dx11.h"
 #include "../framework/imgui/imgui_impl_win32.h"
 #include "../framework/keyboard.h"
+#include "../framework/camera.h"
+#include "field.h"
 
 static bool s_IsOpen = false;
 
 void DebugUI_Draw()
 {
 #ifdef _DEBUG
-    if (Keyboard_IsKeyDownTrigger(KK_F1))
+    if (Keyboard_IsKeyDownTrigger(KK_D1))
         s_IsOpen = !s_IsOpen;
 
     ImGui_ImplDX11_NewFrame();
@@ -19,7 +21,23 @@ void DebugUI_Draw()
 
     if (s_IsOpen)
     {
-        ImGui::Begin("LD Parameters", &s_IsOpen);
+		ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
+		ImGui::Begin("Camera");
+		{
+			ImGui::Text("Position:%.1f,%.1f,%.1f", GetCamera()->GetPos().x, GetCamera()->GetPos().y, GetCamera()->GetPos().z);
+			
+			
+		}
+		ImGui::End();
+
+		/*ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
+		ImGui::Begin("Field");
+		{
+			ImGui::SliderFloat3("Position", (float)Field::GetPos);
+		}
+		ImGui::End();*/
+
+       /* ImGui::Begin("LD Parameters", &s_IsOpen);
 
         auto& p = D_PARAMS;
 
@@ -31,7 +49,7 @@ void DebugUI_Draw()
         ImGui::SliderFloat("Lane Width",   &p.laneWidth,        0.5f,  5.0f,  "%.2f u");
         ImGui::SliderFloat("Gravity Time", &p.gravityTransTime, 0.05f, 1.0f,  "%.2f s");
 
-        ImGui::End();
+        ImGui::End();*/
     }
 
     ImGui::Render();

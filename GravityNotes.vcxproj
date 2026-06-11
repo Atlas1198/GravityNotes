@@ -194,6 +194,7 @@
     <ClCompile Include="framework\sound.cpp" />
     <ClCompile Include="framework\sprite2d.cpp" />
     <ClCompile Include="framework\texture.cpp" />
+    <ClCompile Include="gamecamera.cpp" />
     <ClCompile Include="komachi\debug_ui.cpp" />
     <ClCompile Include="mouse.cpp" />
     <ClCompile Include="game.cpp" />
@@ -254,6 +255,7 @@
     <ClInclude Include="framework\sprite3d.h" />
     <ClInclude Include="framework\stb_truetype.h" />
     <ClInclude Include="framework\texture.h" />
+    <ClInclude Include="gamecamera.h" />
     <ClInclude Include="komachi\debug_params.h" />
     <ClInclude Include="komachi\debug_ui.h" />
     <ClInclude Include="mouse.h" />

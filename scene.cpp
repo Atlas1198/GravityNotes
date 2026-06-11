@@ -10,7 +10,7 @@
 #include "define.h"
 using namespace DirectX;
 
-static SCENE scene = SCENE_TITLE;
+static SCENE scene = SCENE_GAME;
 
 void Init( void )
 {
