@@ -71,7 +71,7 @@ struct LIGHT
 struct SHADOW_CONSTANT
 {
 	XMFLOAT4X4 LightViewProjection;
-	XMFLOAT4 Param;	// x:深度のずれ防止 y:影部分の明るさ
+	XMFLOAT4 Param;	// x:深度のずれ防止 y:影部分の明るさ z,w:ShadowMapの1テクセル分のUVサイズ
 };
 
 enum	BLENDSTATE

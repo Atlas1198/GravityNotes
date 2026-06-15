@@ -3,6 +3,7 @@
 #include "debug_lighting_scene.h"
 #include "debugscore.h"
 #include "keyboard.h"
+#include "mouse.h"
 
 using namespace DirectX;
 
@@ -36,6 +37,12 @@ void DebugScene_Initialize(void)
 
 void DebugScene_Update(void)
 {
+	// Tab キーでデバッグシーン切り替え
+	if (Keyboard_IsKeyDownTrigger(KK_ESCAPE))
+	{
+		UnLockMouse();
+	}
+
 	// Tab キーでデバッグシーン切り替え
 	if (Keyboard_IsKeyDownTrigger(KK_TAB))
 	{

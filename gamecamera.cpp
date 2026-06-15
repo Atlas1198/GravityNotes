@@ -23,6 +23,7 @@ void GameCamera::Init() {
 
 void GameCamera::Update(Player* player) {
 	if (Keyboard_IsKeyDownTrigger(KK_D4))cameraIndex= !cameraIndex;
+
 	if (!cameraIndex)
 	{
 		const float SPEED = 0.1f;
@@ -80,7 +81,8 @@ void GameCamera::Update(Player* player) {
 		}
 	}
 	else {
-		s_Instance->m_Pos = player->GetPos();
+		//s_Instance->m_Pos = player->GetPos();
+		s_Instance->m_Pos = { 0.0f,0.0f,0.0f };
 		s_Instance->m_AtPos = { 0.0f,0.0f,10.0f };
 	}
 

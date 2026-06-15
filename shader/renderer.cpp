@@ -324,6 +324,8 @@ void SetShadowMatrix(XMMATRIX LightViewProjection, XMFLOAT4 Param)
 	XMMATRIX lightViewProjection = XMMatrixTranspose(LightViewProjection);
 	XMStoreFloat4x4(&shadow.LightViewProjection, lightViewProjection);
 	shadow.Param = Param;
+	shadow.Param.z = 1.0f / static_cast<float>(SHADOW_MAP_SIZE);
+	shadow.Param.w = 1.0f / static_cast<float>(SHADOW_MAP_SIZE);
 
 	g_ImmediateContext->UpdateSubresource(g_ShadowBuffer, 0, NULL, &shadow, 0, 0);
 }
