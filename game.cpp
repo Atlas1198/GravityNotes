@@ -64,7 +64,7 @@ void Game_Initialize(void)
 		"Selected JSON: " + (selectedJson.empty() ? std::string("(none)") : selectedJson)
 	);*/
 
-	int pad = Gamepad_FindConnectedPlayer();
+	//int pad = Gamepad_FindConnectedPlayer();
 	//if (pad < 0)return;//デバック時必要なし
 
   //各種初期化

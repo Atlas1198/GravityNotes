@@ -35,18 +35,19 @@ void Player::Init(NoteManager* nm)
 void Player::Update()
 {
 	//lane移動入力
+	Gamepad_ThumbStick ls = Gamepad_GetRightStick(pad);
 	if (m_GravityFace == FACE::FACE_FLOOR || m_GravityFace == FACE::FACE_CEILING)
 	{
-		if (Gamepad_GetLeftStick(pad).x < 0 || Keyboard_IsKeyDownTrigger(KK_A))//左移動
+		if (ls.x <-0.5f || Keyboard_IsKeyDownTrigger(KK_A))//左移動
 			MoveLeft();
-		else if (Gamepad_GetLeftStick(pad).x > 0 || Keyboard_IsKeyDownTrigger(KK_D))//右移動
+		else if (ls.x > 0.5f || Keyboard_IsKeyDownTrigger(KK_D))//右移動
 			MoveRight();
 	}
 	else
 	{
-		if (Gamepad_GetLeftStick(pad).y > 0 || Keyboard_IsKeyDownTrigger(KK_W))//上移動
+		if (ls.y > 0.5f || Keyboard_IsKeyDownTrigger(KK_W))//上移動
 			MoveRight();
-		else if (Gamepad_GetLeftStick(pad).y < 0 || Keyboard_IsKeyDownTrigger(KK_S))//下移動
+		else if (ls.y < -0.5f || Keyboard_IsKeyDownTrigger(KK_S))//下移動
 			MoveLeft();
 	}
 
@@ -98,7 +99,8 @@ void Player::Update()
 	}
 
 	//ノーツヒット入力
-	if (Keyboard_IsKeyDownTrigger(KK_SPACE))
+	if (Keyboard_IsKeyDownTrigger(KK_SPACE)||
+		GamePad_Get)
 	{
 		JUDGE result = m_pNoteManager->Judge(m_LaneIndex, m_GravityFace);
 		// TODO: result に基づいてスコア・コンボ処理
