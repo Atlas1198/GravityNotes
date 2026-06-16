@@ -2,6 +2,7 @@
 #include "debug_model_scene.h"
 #include "debug_lighting_scene.h"
 #include "debugscore.h"
+#include "debugrigplayer.h"
 #include "keyboard.h"
 #include "mouse.h"
 
@@ -12,6 +13,7 @@ enum DEBUG_TYPE {
 	DEBUG_MODEL = 0,
 	DEBUG_LIGHTING,
 	DEBUG_SCORE,
+	DEBUG_RIG,
 	DEBUG_MAX
 };
 
@@ -29,6 +31,9 @@ void DebugScene_Initialize(void)
 		break;
 	case DEBUG_SCORE:
 		Debugscore_Initialize();
+		break;
+	case DEBUG_RIG:
+		DebugRigPlayer_Initialize();
 		break;
 	default:
 		break;
@@ -58,6 +63,9 @@ void DebugScene_Update(void)
 		case DEBUG_SCORE:
 			Debugscore_Finalize();
 			break;
+		case DEBUG_RIG:
+			DebugRigPlayer_Finalize();
+			break;
 		default:
 			break;
 		}
@@ -77,6 +85,9 @@ void DebugScene_Update(void)
 		case DEBUG_SCORE:
 			Debugscore_Initialize();
 			break;
+		case DEBUG_RIG:
+			DebugRigPlayer_Initialize();
+			break;
 		default:
 			break;
 		}
@@ -93,6 +104,9 @@ void DebugScene_Update(void)
 		break;
 	case DEBUG_SCORE:
 		Debugscore_Update();
+		break;
+	case DEBUG_RIG:
+		DebugRigPlayer_Update();
 		break;
 	default:
 		break;
@@ -112,6 +126,9 @@ void DebugScene_Draw(void)
 	case DEBUG_SCORE:
 		Debugscore_Draw();
 		break;
+	case DEBUG_RIG:
+		DebugRigPlayer_Draw();
+		break;
 	default:
 		break;
 	}
@@ -129,6 +146,9 @@ void DebugScene_Finalize(void)
 		break;
 	case DEBUG_SCORE:
 		Debugscore_Finalize();
+		break;
+	case DEBUG_RIG:
+		DebugRigPlayer_Finalize();
 		break;
 	default:
 		break;

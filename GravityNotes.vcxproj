@@ -165,6 +165,7 @@
     <ClCompile Include="debugscene\debug_model_scene.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="debugscene\debugrigplayer.cpp" />
     <ClCompile Include="debug_ui.cpp" />
     <ClCompile Include="enemy_note.cpp" />
     <ClCompile Include="field.cpp" />
@@ -225,6 +226,7 @@
     <ClInclude Include="debugscene\debug_model_scene.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="debugscene\debugrigplayer.h" />
     <ClInclude Include="debug_params.h" />
     <ClInclude Include="debug_ui.h" />
     <ClInclude Include="define.h" />
@@ -287,6 +289,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="framework\DirectXTex.inl" />
+    <None Include="markdown\anim_sprite3d_usage.md" />
     <None Include="markdown\direct3d_viewport_resize_spec.md" />
     <None Include="markdown\nonexistent_apis.md" />
     <None Include="markdown\shader_vertex_skinning_spec.md" />
