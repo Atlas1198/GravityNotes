@@ -33,6 +33,8 @@ static Field* g_pField=nullptr;
 static Player* g_pPlayer = nullptr;
 static NoteManager* g_pNoteManager = nullptr;
 
+//RESULT g_result;
+
 void Game_Initialize(void)
 {
 	// ②各種初期化

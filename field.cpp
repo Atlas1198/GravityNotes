@@ -9,7 +9,6 @@ using namespace DirectX;
 
 void Field::Init() {
 	m_Position = { 0.0f,0.0f,10.0f };
-	m_Color = { 1.0f,1.0f,1.0f,1.0f };
 }
 
 void Field::Update(){

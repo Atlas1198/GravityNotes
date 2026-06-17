@@ -5,6 +5,7 @@
 #include "../framework/imgui/imgui_impl_win32.h"
 #include "../framework/keyboard.h"
 #include "../framework/camera.h"
+#include "gamepad.h"
 
 static bool s_IsOpen = false;
 
@@ -18,12 +19,13 @@ void DebugUI_Draw()
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
-	/*ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
-	ImGui::Begin("Camera",&s_IsOpen);
+	ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
+	ImGui::Begin("Trigger",&s_IsOpen);
 	{
-		ImGui::Text("Position:%.1f,%.1f,%.1f", GetCamera()->GetPos().x, GetCamera()->GetPos().y, GetCamera()->GetPos().z);
+		ImGui::Text("Left  : %.1f",Gamepad_GetLeftTrigger(0));
+		ImGui::Text("Right: %.1f", Gamepad_GetRightTrigger(0));
 	}
-	ImGui::End();*/
+	ImGui::End();
 
     /*ImGui::Begin("LD Parameters", &s_IsOpen);
 

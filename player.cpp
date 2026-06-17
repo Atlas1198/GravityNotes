@@ -1,4 +1,5 @@
-﻿#include "keyboard.h"
+﻿#include "main.h"
+#include "keyboard.h"
 #include "mouse.h"
 #include "gamepad.h"
 #include "mathhelper.h"
@@ -7,12 +8,9 @@
 #include "note_manager.h"
 #include "player.h"
 
-int pad;
-
 void Player::Init(NoteManager* nm)
 {
 	m_pNoteManager = nm;
-	pad = Gamepad_FindConnectedPlayer();//現在仮置き、多分フレームワークに置いた方が各シーンで使いやすい
 	m_GravityFace = FACE::FACE_FLOOR;
 	m_LaneIndex = LANE_CENTER;
 	m_TargetLaneIndex = LANE_CENTER;
@@ -34,8 +32,13 @@ void Player::Init(NoteManager* nm)
 
 void Player::Update()
 {
+	int pad = GetGamePad();
+	bool connected = Gamepad_IsConnected(pad);
+	if (connected < 0) {
+		return;
+	}
 	//lane移動入力
-	Gamepad_ThumbStick ls = Gamepad_GetRightStick(pad);
+	Gamepad_ThumbStick ls = Gamepad_GetLeftStick(pad);
 	if (m_GravityFace == FACE::FACE_FLOOR || m_GravityFace == FACE::FACE_CEILING)
 	{
 		if (ls.x <-0.5f || Keyboard_IsKeyDownTrigger(KK_A))//左移動
@@ -99,8 +102,9 @@ void Player::Update()
 	}
 
 	//ノーツヒット入力
-	if (Keyboard_IsKeyDownTrigger(KK_SPACE)||
-		GamePad_Get)
+	if (Keyboard_IsKeyDownTrigger(KK_SPACE) ||
+		Gamepad_GetLeftTrigger(pad) > 0.5f ||
+		Gamepad_GetRightTrigger(pad) > 0.5f)
 	{
 		JUDGE result = m_pNoteManager->Judge(m_LaneIndex, m_GravityFace);
 		// TODO: result に基づいてスコア・コンボ処理
