@@ -242,7 +242,7 @@ void StageSelect_Initialize(void)
 		<< " Count=" << g_ScoreSummaries.size()
 		<< std::endl;
 
-
+	
 
 	// Tải toàn bộ danh sách các file JSON lên hệ thống
 	g_ScoreSummaries = LoadScoreSummaries();
@@ -436,8 +436,8 @@ void StageSelect_Draw(void)
 		g_pStageButtons[i]->Draw();
 	}
 
-
-
+	
+	
 
 	g_pScoreInfoText->Draw(); // 5. Vẽ bảng thông tin bài hát & điểm số JSON lên trên cùng góc phải
 }
@@ -455,7 +455,7 @@ void StageSelect_Finalize(void)
 	}
 	g_LoadedBgmPath = "";
 
-	SAFE_DELETE(g_pBackground);
+	SAFE_DELETE(g_pBackground); 
 	SAFE_DELETE(g_pMainVinyl);
 	SAFE_DELETE(g_pToneArm);
 	SAFE_DELETE(g_pScoreInfoText);
