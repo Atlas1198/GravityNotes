@@ -76,7 +76,7 @@ void Title_Draw(void)
 	//④描画
 	g_pTitleMovie->Draw();
 
-	g_pTitleSprite->Draw();
+	//g_pTitleSprite->Draw();
 	g_pChangeSceneText->Draw();
 
 }

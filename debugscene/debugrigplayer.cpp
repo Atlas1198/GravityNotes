@@ -59,7 +59,7 @@ void DebugRigPlayer_Initialize(void)
 		{ 0.0f, -6.0f, 5.0f },
 		{ 0.1f, 0.1f, 0.1f },
 		{ 0.0f, 0.0f, 0.0f },
-		"asset\\model\\rigtest.fbx",
+		"asset\\model\\knight_run.fbx",
 		S_PHONG
 	);
 
