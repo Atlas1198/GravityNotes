@@ -11,6 +11,7 @@
 #include "ClickFont.h"
 #include "scoresummaryloader.h"
 #include "scene.h"
+#include "MultiLineFontRenderer.h"
 
 using namespace DirectX;
 
@@ -19,6 +20,9 @@ static Sprite2D* g_pResultSprite = nullptr;
 static ClickFont* g_pChangeSceneText = nullptr;
 static ScoreSummary g_ResultScoreSummary;
 static RESULT g_Result;
+static MultiLineFontRenderer* g_pDetailText = nullptr;
+static MultiLineFontRenderer* g_pScoreText = nullptr;
+
 
 void Result_Initialize(void)
 {
@@ -33,14 +37,14 @@ void Result_Initialize(void)
 	hal::dout << "[result.cpp]" << g_ResultScoreSummary.musicname << std::endl;
 	hal::dout << "[result.cpp]" << g_Result.maxCombo << std::endl;
 
-	g_pResultSprite = new Sprite2D(
-		{ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 3 },					//位置
-		{ 300.0f, 300.0f },											//サイズ
-		0.0f,														//回転（度）
-		{ 1.0f, 1.0f, 1.0f, 1.0f },									//RGBA
-		BLENDSTATE_NONE,											//BlendState
-		L"asset\\texture\\tex.png"									//テクスチャパス
-	);
+	//g_pResultSprite = new Sprite2D(
+	//	{ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 3 },					//位置
+	//	{ 300.0f, 300.0f },											//サイズ
+	//	0.0f,														//回転（度）
+	//	{ 1.0f, 1.0f, 1.0f, 1.0f },									//RGBA
+	//	BLENDSTATE_NONE,											//BlendState
+	//	L"asset\\texture\\tex.png"									//テクスチャパス
+	//);
 
 	g_pChangeSceneText = new ClickFont(
 		{ SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 4.0f * 3 },			//位置
@@ -48,7 +52,27 @@ void Result_Initialize(void)
 		0.0f,														//回転（度）
 		{ 1.0f, 1.0f, 1.0f, 1.0f },									//通常色
 		{ 1.0f, 0.8f, 0.2f, 1.0f },									//ホバー色
-		"[result.cpp] タイトルへ"									//テキスト
+		"[result.cpp] タイトルへ"										//テキスト
+	);
+
+	g_pDetailText = new MultiLineFontRenderer(
+		{ SCREEN_WIDTH / 5, SCREEN_HEIGHT / 6 },											 // 表示基準位置
+		30.0f,																				 // フォントサイズ
+		0.0f,																				 // 回転角（度）
+		{ 1.0f, 1.0f, 0.0f, 1.0f },															 // 文字色 RGBA
+		"SCORE ：\nHIT数 ：\nCOMBO ：\nMAXCOMBO ：\nSUCCESS ：\nMISS ：",						 // 初期テキスト（\nで改行）
+		1.4f,																				 // 行間倍率
+		TA_START
+	);
+
+	g_pScoreText = new MultiLineFontRenderer(
+		{ SCREEN_WIDTH / 3, SCREEN_HEIGHT / 6  },            
+		30.0f,												
+		0.0f,												
+		{ 1.0f, 1.0f, 0.0f, 1.0f },							
+		"102\n130\n95\n80\n85\n102",						 
+		1.4f,												
+		TA_MIDDLE
 	);
 
 
@@ -71,13 +95,17 @@ void Result_Update(void)
 void Result_Draw(void)
 {
 	//④描画
-	g_pResultSprite->Draw();
+	//g_pResultSprite->Draw();
 	g_pChangeSceneText->Draw();
+	g_pDetailText->Draw();
+	g_pScoreText->Draw();
 }
 
 void Result_Finalize(void)
 {
 	//⑤解放
-	SAFE_DELETE(g_pResultSprite);
+	//SAFE_DELETE(g_pResultSprite);
 	SAFE_DELETE(g_pChangeSceneText);
+	SAFE_DELETE(g_pDetailText);
+	SAFE_DELETE(g_pScoreText);
 }

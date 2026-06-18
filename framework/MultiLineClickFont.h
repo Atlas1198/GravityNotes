@@ -13,7 +13,7 @@ class MultiLineClickFont : public ClickFont
 public:
 MultiLineClickFont(XMFLOAT2 pos, float fontSize, float rotation,
 XMFLOAT4 normalColor, XMFLOAT4 hoverColor, const std::string& text,
-float lineSpacing = 1.5f);
+float lineSpacing = 1.5f, TextAlignment align = TA_MIDDLE);
 ~MultiLineClickFont() = default;
 
 void Draw() override;
