@@ -52,6 +52,8 @@ public:
 
 	int GetLaneIndex()   const { return m_LaneIndex; }
 	int GetGravityFace() const { return m_GravityFace; }
+	int GetTargetFace() const { return m_TargetFace; }
+	bool IsGravityMoving() const { return m_IsGravityMoving; }
 
 	void MoveLeft();
 	void MoveRight();
