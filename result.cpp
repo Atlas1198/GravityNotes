@@ -33,7 +33,6 @@ void Result_Initialize(void)
 	hal::dout << "[result.cpp]" << g_ResultScoreSummary.musicname << std::endl;
 	hal::dout << "[result.cpp]" << g_Result.maxCombo << std::endl;
 
-
 	g_pResultSprite = new Sprite2D(
 		{ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 3 },					//位置
 		{ 300.0f, 300.0f },											//サイズ
