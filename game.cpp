@@ -33,8 +33,6 @@ static Field* g_pField=nullptr;
 static Player* g_pPlayer = nullptr;
 static NoteManager* g_pNoteManager = nullptr;
 
-//RESULT g_result;
-
 void Game_Initialize(void)
 {
 	// ②各種初期化
@@ -111,6 +109,18 @@ void Game_Update(void)
 
 	if (Keyboard_IsKeyDownTrigger(KK_D2))Mouse_SetVisible(true);
 	if (Keyboard_IsKeyDownTrigger(KK_D3))Mouse_SetVisible(false);
+
+	if (Keyboard_IsKeyDownTrigger(KK_ENTER)) {
+		RESULT r;
+		r.score = 13232;
+		r.rank = "A";
+		r.accurary = 87.45;
+		r.maxCombo = 175;
+		r.success = 312;
+		r.miss = 26;
+
+		SetResult(r);
+	}
 }
 
 void Game_Draw(void)
