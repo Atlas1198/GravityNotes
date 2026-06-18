@@ -416,6 +416,7 @@ void StageSelect_Update(void)
 			}
 			g_LoadedBgmPath = "";
 
+			SetPlayJson(GetSelectedJsonName());
 			SetSceneFade(SCENE_GAME);
 		}
 	}

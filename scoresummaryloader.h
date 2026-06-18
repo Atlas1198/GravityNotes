@@ -20,7 +20,7 @@ struct ScoreSummary
 	std::string music;
 };
 
-inline ScoreSummary LoadSingleScoreSummary(const std::string& jsonName, const std::string& directoryPath = "asset\score")
+inline ScoreSummary LoadSingleScoreSummary(const std::string& jsonName, const std::string& directoryPath = "asset\\score")
 {
 	ScoreSummary summary;
 

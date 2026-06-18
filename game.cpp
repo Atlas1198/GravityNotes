@@ -74,7 +74,8 @@ void Game_Initialize(void)
 	g_pField->Init();
 
 	g_pNoteManager = new NoteManager();
-	g_pNoteManager->Init("asset/score/score.json");
+
+	g_pNoteManager->Init("asset/score/" + GetPlayJson());
 
 	g_pPlayer = new Player();
 	g_pPlayer->Init(g_pNoteManager);
@@ -120,6 +121,7 @@ void Game_Update(void)
 		r.miss = 26;
 
 		SetResult(r);
+		SetSceneFade(SCENE_RESULT);
 	}
 }
 

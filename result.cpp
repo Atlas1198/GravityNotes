@@ -26,7 +26,7 @@ void Result_Initialize(void)
 	g_ResultScoreSummary = LoadSingleScoreSummary(GetPlayJson());
 
 	//曲名デバッグ出力
-	hal::dout << g_ResultScoreSummary.musicname <<std::endl;
+	hal::dout << "[result.cpp]" << g_ResultScoreSummary.musicname << std::endl;
 
 	g_pResultSprite = new Sprite2D(
 		{ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 3 },					//位置
