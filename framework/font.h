@@ -19,6 +19,13 @@
 #include "component.h"
 using namespace DirectX;
 
+// テキストアライメント
+enum TextAlignment {
+	TA_START,
+    TA_MIDDLE,
+    TA_END
+};
+
 // フォント設定定数
 #define FONT_MARGIN_RATIO (0)          // グリフ幅に対するマージン比率（5%）
 #define FONT_ATLAS_WIDTH (2048)            // アトラステクスチャの幅
@@ -42,16 +49,19 @@ void Font_FinalizeGlobalData();
 class FontRenderer : public Transform2D
 {
 public:
-	// pos: 中心位置, fontSize: フォントサイズ(px), rotation: 角度(度)
-	// color: 色(R,G,B,A), text: 表示テキスト
+	// pos: 基準位置, fontSize: フォントサイズ(px), rotation: 角度(度)
+	// color: 色(R,G,B,A), text: 表示テキスト, align: アライメント
 	FontRenderer(XMFLOAT2 pos, float fontSize, float rotation,
-				 XMFLOAT4 color, const std::string& text);
+				 XMFLOAT4 color, const std::string& text, TextAlignment align = TA_MIDDLE);
 	~FontRenderer();
 
 	virtual void Draw();
 	void SetColor(XMFLOAT4 color) { m_Color = color; UpdateAtlasTexture(); }
 	virtual void SetText(const std::string& text);
 	XMFLOAT4 GetColor() const { return m_Color; }
+
+	void SetAlignment(TextAlignment align) { m_Alignment = align; }
+	TextAlignment GetAlignment() const { return m_Alignment; }
 
 	// テキスト中のグリフを事前にアトラスへ登録（描画時のスタッター防止）
 	void PreCacheGlyphs();
@@ -64,6 +74,7 @@ private:
 	XMFLOAT4 m_Color;
 	std::string m_Text;
 	float m_FontSize;                         // フォントサイズ（ピクセル）
+	TextAlignment m_Alignment;                // アライメント
 	
 	UINT m_VertexCount;
 	std::map<int, CharInfo> m_CharCache;      // グリフIDからCharInfo への マッピング

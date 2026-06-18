@@ -70,9 +70,9 @@ void Font_FinalizeGlobalData()
 // ==========================================
 
 FontRenderer::FontRenderer(XMFLOAT2 pos, float fontSize, float rotation,
-	XMFLOAT4 color, const std::string& text)
+	XMFLOAT4 color, const std::string& text, TextAlignment align)
 	: Transform2D(pos, rotation, { 1.0f, 1.0f }), m_Color(color), m_Text(text),
-	m_FontSize(fontSize),
+	m_FontSize(fontSize), m_Alignment(align),
 	m_pTexture(nullptr), m_pSRV(nullptr),
 	m_pVertexBuffer(nullptr),
 	m_VertexCount(0), m_AtlasWidth(0), m_AtlasHeight(0),
@@ -547,7 +547,12 @@ void FontRenderer::Draw() {
 	}
 
 	// HD論理座標→描画解像度へスケーリング（幅はすでに4K単位なので中心オフセットのみ調整）
-	float draw_start_x = m_Position.x * DRAW_SCALE_X - text_width / 2.0f;
+	float draw_start_x = m_Position.x * DRAW_SCALE_X;
+	if (m_Alignment == TA_MIDDLE) {
+		draw_start_x -= text_width / 2.0f;
+	} else if (m_Alignment == TA_END) {
+		draw_start_x -= text_width;
+	}
 	float draw_current_x = draw_start_x;
 	float draw_current_y = m_Position.y * DRAW_SCALE_Y;
 
