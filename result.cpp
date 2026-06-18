@@ -9,6 +9,7 @@
 #include "mouse.h"
 #include "sound.h"
 #include "ClickFont.h"
+#include "scoresummaryloader.h"
 #include "scene.h"
 
 using namespace DirectX;
@@ -16,10 +17,17 @@ using namespace DirectX;
 // ①インスタンス、ポインタ用意
 static Sprite2D* g_pResultSprite = nullptr;
 static ClickFont* g_pChangeSceneText = nullptr;
+static ScoreSummary g_ResultScoreSummary;
 
 void Result_Initialize(void)
 {
 	// ②各種初期化
+	//プレイした楽曲の概要を取得
+	g_ResultScoreSummary = LoadSingleScoreSummary(GetPlayJson());
+
+	//曲名デバッグ出力
+	hal::dout << g_ResultScoreSummary.musicname <<std::endl;
+
 	g_pResultSprite = new Sprite2D(
 		{ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 3 },					//位置
 		{ 300.0f, 300.0f },											//サイズ
@@ -38,6 +46,7 @@ void Result_Initialize(void)
 		"[result.cpp] タイトルへ"									//テキスト
 	);
 
+
 	UnLockMouse();//マウスアンロック
 }
 
@@ -49,7 +58,7 @@ void Result_Update(void)
 	//ClickFontがクリックされた
 	if (g_pChangeSceneText->IsClick())
 	{
-		SetPlayJson("");
+		SetPlayJson("");//resultを抜けるときに初期化
 		SetSceneFade(SCENE_TITLE);
 	}
 }
