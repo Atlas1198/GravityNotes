@@ -24,6 +24,7 @@
 #include "sound.h"
 #include "input_manager.h"
 #include "input_monitor_console.h"
+#include "gamepad.h"
 #include "shadermanager.h"
 #include "../framework/imgui/imgui.h"
 #include "../framework/imgui/imgui_impl_win32.h"
@@ -56,6 +57,7 @@ long long g_UpdateTime = 0;
 long long g_DrawTime = 0;
 wchar_t g_DebugStr[2048];
 static int g_TargetFPS = FPS;  // 目標FPS（デフォルトは FPS マクロの値）
+int pad;//未接続:-1、接続中:0
 
 #pragma comment(lib, "winmm.lib")
 
@@ -68,6 +70,10 @@ void SetFPS(int fps)
 	{
 		g_TargetFPS = fps;
 	}
+}
+
+int GetGamePad() {
+	return pad;
 }
 
 //==================================
@@ -180,6 +186,8 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	Sprite_Initialize();
 	Fade_Initialize();
 	InitSound();
+	Gamepad_Initialize();
+
 	Init();
 
 	//メッセージループ
@@ -225,6 +233,9 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 			{
 				Input_Update();
 				InputMonitorConsole_Update();
+				Gamepad_Update();
+
+				if(pad<0) pad = Gamepad_FindConnectedPlayer();
 
 				// ウィンドウ操作（論理ステップ内で判定：keycopy後に正しいトリガーを参照できる）
 				// Alt+Enterで全画面切り替え
@@ -332,6 +343,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	ImGui::DestroyContext();
 
 	Finalize();
+	Gamepad_Finalize();
 	Input_Finalize();
 	InputMonitorConsole_Finalize();
 	UninitSound();
