@@ -18,15 +18,21 @@ using namespace DirectX;
 static Sprite2D* g_pResultSprite = nullptr;
 static ClickFont* g_pChangeSceneText = nullptr;
 static ScoreSummary g_ResultScoreSummary;
+static RESULT g_Result;
 
 void Result_Initialize(void)
 {
 	// ②各種初期化
+	
 	//プレイした楽曲の概要を取得
 	g_ResultScoreSummary = LoadSingleScoreSummary(GetPlayJson());
+	//リザルトデータを実体化させてコピー
+	g_Result = *GetResult();
 
-	//曲名デバッグ出力
+	//デバッグ出力（構造体の中身をいい感じに表示すればOK）
 	hal::dout << "[result.cpp]" << g_ResultScoreSummary.musicname << std::endl;
+	hal::dout << "[result.cpp]" << g_Result.maxCombo << std::endl;
+
 
 	g_pResultSprite = new Sprite2D(
 		{ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 3 },					//位置
