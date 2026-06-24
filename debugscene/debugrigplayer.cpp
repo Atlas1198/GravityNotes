@@ -1,4 +1,4 @@
-﻿#include "debugrigplayer.h"
+#include "debugrigplayer.h"
 #include "light.h"
 #include "sprite2d.h"
 #include "texture.h"
@@ -22,8 +22,10 @@
 using namespace DirectX;
 
 static AnimSprite3D* g_pRigPlayer = nullptr;
+static Sprite3D* g_pFieldNormal = nullptr;
+static Sprite3D* g_pBox1x1x1 = nullptr;
 static PointLight* g_pMainLight = nullptr;
-static AmbientLight g_AmbientLight(XMFLOAT4(0.15f, 0.15f, 0.15f, 1.0f));
+static AmbientLight g_AmbientLight(XMFLOAT4(0.4f, 0.4f, 0.4f, 1.0f));
 static FontRenderer* g_pGuideFont = nullptr;
 static FontRenderer* g_pAnimInfoFont = nullptr;
 
@@ -63,6 +65,22 @@ void DebugRigPlayer_Initialize(void)
 		S_PHONG
 	);
 
+	g_pFieldNormal = new Sprite3D(
+		{ 0.0f, 0.0f, 0.0f },
+		{ 1.0f, 1.0f, 1.0f },
+		{ 0.0f, 0.0f, 0.0f },
+		"asset\\model\\field_normal.fbx",
+		S_LAMBERT
+	);
+
+	g_pBox1x1x1 = new Sprite3D(
+		{ 1.0f, 0.0f, 0.0f },
+		{ 1.0f, 1.0f, 1.0f },
+		{ 0.0f, 0.0f, 0.0f },
+		"asset\\model\\cube.fbx",
+		S_PHONG
+	);
+
 	if (g_pRigPlayer)
 	{
 		g_pRigPlayer->SetAnimationBlendDuration(0.2);
@@ -76,10 +94,10 @@ void DebugRigPlayer_Initialize(void)
 
 	g_pMainLight = new PointLight(
 		TRUE,
-		{ 0.0f, 5.0f, -5.0f, 1.0f },
+		{ 0.0f, 5.0f, 0.0f, 1.0f },
 		{ 1.0f, 1.0f, 1.0f, 1.0f },
-		20.0f,
-		1.0f
+		100.0f,
+		2.0f
 	);
 	g_pMainLight->Apply(g_AmbientLight);
 
@@ -159,6 +177,15 @@ void DebugRigPlayer_Draw(void)
 	{
 		g_pRigPlayer->Draw();
 	}
+	if (g_pFieldNormal)
+	{
+		g_pFieldNormal->Draw();
+	}
+
+	if (g_pBox1x1x1)
+	{
+		g_pBox1x1x1->Draw();
+	}
 
 	SetDepthEnable(false);
 	Sprite_BeginDraw2D();
@@ -177,8 +204,10 @@ void DebugRigPlayer_Draw(void)
 void DebugRigPlayer_Finalize(void)
 {
 	SAFE_DELETE(g_pRigPlayer);
+	SAFE_DELETE(g_pFieldNormal);
 	SAFE_DELETE(g_pMainLight);
 	SAFE_DELETE(g_pGuideFont);
 	SAFE_DELETE(g_pAnimInfoFont);
+	SAFE_DELETE(g_pBox1x1x1);
 	DebugCamera_Finalize();
 }
