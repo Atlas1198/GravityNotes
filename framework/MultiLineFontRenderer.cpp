@@ -1,4 +1,4 @@
-﻿#include "MultiLineFontRenderer.h"
+#include "MultiLineFontRenderer.h"
 
 #include <algorithm>
 
@@ -37,7 +37,7 @@ if (line.empty())
 continue;
 }
 
-SetPos({ originalPos.x, originalPos.y + static_cast<float>(i) * m_FontSize * m_LineSpacing });
+SetPos({ originalPos.x, originalPos.y + static_cast<float>(i) * m_FontSize * m_LineSpacing * GetScaleY() });
 FontRenderer::SetText(line);
 FontRenderer::Draw();
 }

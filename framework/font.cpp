@@ -1,4 +1,4 @@
-﻿/*==============================================================================
+/*==============================================================================
 
    日本語フォont描画システム実装 [font.cpp]
 										  Author : Copilot
@@ -546,12 +546,15 @@ void FontRenderer::Draw() {
 		prev_glyph = glyph_index;
 	}
 
+	float scX = GetScaleX();
+	float scY = GetScaleY();
+
 	// HD論理座標→描画解像度へスケーリング（幅はすでに4K単位なので中心オフセットのみ調整）
 	float draw_start_x = m_Position.x * DRAW_SCALE_X;
 	if (m_Alignment == TA_MIDDLE) {
-		draw_start_x -= text_width / 2.0f;
+		draw_start_x -= (text_width * scX) / 2.0f;
 	} else if (m_Alignment == TA_END) {
-		draw_start_x -= text_width;
+		draw_start_x -= (text_width * scX);
 	}
 	float draw_current_x = draw_start_x;
 	float draw_current_y = m_Position.y * DRAW_SCALE_Y;
@@ -605,11 +608,11 @@ void FontRenderer::Draw() {
 		float v1 = info.y1 / (float)m_AtlasHeight;
 
 		// y0はすでに4Kスケール（scaleがDRAW_SCALE_X倍済み）
-		float y_offset = draw_current_y + (float)y0 + m_FontSize * FONT_OFFSET_Y * DRAW_SCALE_Y;
+		float y_offset = draw_current_y + ((float)y0 + m_FontSize * FONT_OFFSET_Y * DRAW_SCALE_Y) * scY;
 
 		// グリフサイズはすでに4Kピクセルなのでそのまま使う
-		float char_pixel_width  = actual_glyph_width;
-		float char_pixel_height = actual_glyph_height;
+		float char_pixel_width  = actual_glyph_width * scX;
+		float char_pixel_height = actual_glyph_height * scY;
 
 		D3D11_MAPPED_SUBRESOURCE msr;
 		pContext->Map(m_pVertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &msr);
@@ -651,7 +654,7 @@ void FontRenderer::Draw() {
 		pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 		pContext->Draw(m_VertexCount, 0);
 
-		draw_current_x += ((float)advance_width * scale + (float)kerning * scale + margin);
+		draw_current_x += ((float)advance_width * scale + (float)kerning * scale + margin) * scX;
 		prev_glyph_draw = glyph_index;
 		char_count++;
 	}
