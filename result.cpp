@@ -1,4 +1,4 @@
-#include "result.h"
+﻿#include "result.h"
 #include "sprite2d.h"
 #include "texture.h"
 #include "keyboard.h"
@@ -12,6 +12,8 @@
 #include "scoresummaryloader.h"
 #include "scene.h"
 #include "MultiLineFontRenderer.h"
+#include <sstream>
+#include <iomanip>
 
 using namespace DirectX;
 
@@ -94,12 +96,16 @@ void Result_Initialize(void)
 		TA_START
 	);
 
+	// 難易度の小数点以下1桁まで表示するためのstringstreamを使用
+	std::stringstream ss;
+	ss << std::fixed << std::setprecision(1) << g_ResultScoreSummary.difficulty;
+
 	g_pMusicText = new MultiLineFontRenderer(
 		{ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 12 },
 		30.0f,
 		0.0f,
 		{ 1.0f, 1.0f, 0.0f, 1.0f },
-		g_ResultScoreSummary.musicname + "\n" + g_ResultScoreSummary.musicauthor + "\n" + g_ResultScoreSummary.scoreauthor + "\n難易度 : " + std::to_string(g_ResultScoreSummary.difficulty),
+		g_ResultScoreSummary.musicname + "\n" + g_ResultScoreSummary.musicauthor + "\n" + g_ResultScoreSummary.scoreauthor + "\n難易度 : " + ss.str(),
 		1.5f,												// 行間倍率
 		TA_MIDDLE
 	);
