@@ -83,28 +83,67 @@ static std::string GetSelectedJsonName()
 
 static void UpdateBgmFromSelection()
 {
-	// Nếu danh sách JSON trống hoặc chỉ số đĩa vượt quá số lượng bài hát thì không xử lý
-	if (g_ScoreSummaries.empty() || g_SelectedStage >= static_cast<int>(g_ScoreSummaries.size())) return;
+	//// Nếu danh sách JSON trống hoặc chỉ số đĩa vượt quá số lượng bài hát thì không xử lý
+	//if (g_ScoreSummaries.empty() || g_SelectedStage >= static_cast<int>(g_ScoreSummaries.size())) return;
 
-	// BƯỚC 2 & 3: Lấy thuộc tính "music" từ file JSON và lắp ráp đường dẫn
-	const ScoreSummary& summary = g_ScoreSummaries[g_SelectedStage];
-	std::string soundPath = "asset\\sound\\bgm\\" + summary.music;
+	//// BƯỚC 2 & 3: Lấy thuộc tính "music" từ file JSON và lắp ráp đường dẫn
+	//const ScoreSummary& summary = g_ScoreSummaries[g_SelectedStage];
+	//std::string soundPath = "asset\\sound\\bgm\\" + summary.music;
 
-	// Nếu bài hát đang chọn trùng với bài đang phát thì giữ nguyên
+	//// Nếu bài hát đang chọn trùng với bài đang phát thì giữ nguyên
+	//if (g_LoadedBgmPath == soundPath) return;
+
+	//// Dừng và giải phóng bài hát cũ để tránh tràn bộ nhớ RAM
+	//if (g_pCurrentBgmData != nullptr) {
+	//	StopSound(g_pCurrentBgmData);
+	//	UnloadSound(g_pCurrentBgmData);
+	//	g_pCurrentBgmData = nullptr;
+	//}
+
+	//// BƯỚC 4: Nạp file .mp3 từ thư mục vật lý lên RAM và phát nhạc
+	//g_pCurrentBgmData = LoadMP3(soundPath);
+
+	//if (g_pCurrentBgmData != nullptr) {
+	//	PlaySound(g_pCurrentBgmData, true); // Phát lặp lại liên tục
+	//	g_LoadedBgmPath = soundPath;
+	//}
+	//else {
+	//	g_LoadedBgmPath = "";
+	//}
+	if (g_ScoreSummaries.empty()) return;
+
+	// Tìm bài hát có vinylIndex khớp với Stage đang chọn
+	const ScoreSummary* matched = nullptr;
+	for (const auto& s : g_ScoreSummaries) {
+		if (s.vinylIndex == g_SelectedStage) {
+			matched = &s;
+			break;
+		}
+	}
+
+	// Không tìm thấy bài nào gán cho Stage này → dừng nhạc
+	if (matched == nullptr) {
+		if (g_pCurrentBgmData != nullptr) {
+			StopSound(g_pCurrentBgmData);
+			UnloadSound(g_pCurrentBgmData);
+			g_pCurrentBgmData = nullptr;
+		}
+		g_LoadedBgmPath = "";
+		return;
+	}
+
+	std::string soundPath = "asset\\sound\\bgm\\" + matched->music;
 	if (g_LoadedBgmPath == soundPath) return;
 
-	// Dừng và giải phóng bài hát cũ để tránh tràn bộ nhớ RAM
 	if (g_pCurrentBgmData != nullptr) {
 		StopSound(g_pCurrentBgmData);
 		UnloadSound(g_pCurrentBgmData);
 		g_pCurrentBgmData = nullptr;
 	}
 
-	// BƯỚC 4: Nạp file .mp3 từ thư mục vật lý lên RAM và phát nhạc
 	g_pCurrentBgmData = LoadMP3(soundPath);
-
 	if (g_pCurrentBgmData != nullptr) {
-		PlaySound(g_pCurrentBgmData, true); // Phát lặp lại liên tục
+		PlaySound(g_pCurrentBgmData, true);
 		g_LoadedBgmPath = soundPath;
 	}
 	else {
@@ -277,13 +316,13 @@ void StageSelect_Update(void)
 			g_NextStage = g_SelectedStage - 1;
 			if (g_NextStage < 0) g_NextStage = MAX_STAGES - 1;
 			isInputPressed = true;
-			ChangeSelectedScore(-1);
+			//ChangeSelectedScore(-1);
 		}
 		else if (Keyboard_IsKeyDownTrigger(KK_DOWN)) {
 			g_NextStage = g_SelectedStage + 1;
 			if (g_NextStage >= MAX_STAGES) g_NextStage = 0;
 			isInputPressed = true;
-			ChangeSelectedScore(1);
+			//ChangeSelectedScore(1);
 		}
 
 		//// Bấm mũi tên TRÁI / PHẢI để đổi bài hát trong danh sách dữ liệu JSON công phá điểm số
@@ -361,6 +400,17 @@ void StageSelect_Update(void)
 		// Khi kim vừa chạm đúng vị trí mặt đĩa (<= 0 độ), trả về trạng thái PLAYING tuần hoàn ổn định
 		if (g_ToneArmAngle <= 0.0f) {
 			g_CurrentState = STATE_PLAYING;
+			// ✅ Đồng bộ g_SelectedScoreIndex theo g_SelectedStage TRƯỚC khi gọi Update/Refresh
+		    // Tìm score entry đầu tiên có vinylIndex trùng với Stage vừa đổi sang
+			for (int i = 0; i < static_cast<int>(g_ScoreSummaries.size()); i++) {
+				if (g_ScoreSummaries[i].vinylIndex == g_SelectedStage) {
+					g_SelectedScoreIndex = i;
+					break;
+				}
+			}
+
+			RefreshSelectedScoreText(); // Cập nhật UI text đúng bài
+			UpdateBgmFromSelection();   // Phát nhạc đúng Stage
 		}
 		break;
 	}

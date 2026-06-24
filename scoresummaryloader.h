@@ -18,6 +18,7 @@ struct ScoreSummary
     float bpm = 0.0f;
     std::string thumbnail;
     std::string music;
+	int vinylIndex = -1;
 };
 
 inline std::vector<ScoreSummary> LoadScoreSummaries(const std::string& directoryPath = "asset\\score")
@@ -64,6 +65,7 @@ inline std::vector<ScoreSummary> LoadScoreSummaries(const std::string& directory
             summary.bpm = jsonData.value("bpm", 0.0f);
             summary.thumbnail = jsonData.value("thumbnail", "");
             summary.music = jsonData.value("music", "");
+			summary.vinylIndex = jsonData.value("vinylIndex", -1);
 
             summaries.push_back(summary);
         }
