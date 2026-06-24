@@ -1,4 +1,4 @@
-#include "result.h"
+﻿#include "result.h"
 #include "sprite2d.h"
 #include "texture.h"
 #include "keyboard.h"
@@ -69,7 +69,7 @@ void Result_Initialize(void)
 		30.0f,																				 // フォントサイズ
 		0.0f,																				 // 回転角（度）
 		{ 1.0f, 1.0f, 0.0f, 1.0f },															 // 文字色 RGBA
-		"SCORE :\nHIT数 :\nMAXCOMBO :\nSUCCESS :\nMISS :",						 // 初期テキスト（\nで改行）
+		"SCORE :\nHIT数 :\nMAXCOMBO :\nSUCCESS :\nMISS :",									 // 初期テキスト（\nで改行）
 		0.0f,																				 // 行間倍率（アニメーションで広げるため初期値0）
 		TA_START
 	);
