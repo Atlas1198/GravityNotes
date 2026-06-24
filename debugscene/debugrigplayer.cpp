@@ -62,7 +62,7 @@ void DebugRigPlayer_Initialize(void)
 		{ 0.1f, 0.1f, 0.1f },
 		{ 0.0f, 0.0f, 0.0f },
 		"asset\\model\\knight_run.fbx",
-		S_PHONG
+		S_LAMBERT
 	);
 
 	g_pFieldNormal = new Sprite3D(
@@ -75,10 +75,10 @@ void DebugRigPlayer_Initialize(void)
 
 	g_pBox1x1x1 = new Sprite3D(
 		{ 1.0f, 0.0f, 0.0f },
-		{ 1.0f, 1.0f, 1.0f },
+		{ 0.1f, 0.1f, 0.1f },
 		{ 0.0f, 0.0f, 0.0f },
-		"asset\\model\\cube.fbx",
-		S_PHONG
+		"asset\\model\\knight_run.fbx",
+		S_LAMBERT
 	);
 
 	if (g_pRigPlayer)
@@ -94,7 +94,7 @@ void DebugRigPlayer_Initialize(void)
 
 	g_pMainLight = new PointLight(
 		TRUE,
-		{ 0.0f, 5.0f, 0.0f, 1.0f },
+		{ 0.0f, 0.0f, 0.0f, 1.0f },
 		{ 1.0f, 1.0f, 1.0f, 1.0f },
 		100.0f,
 		2.0f
