@@ -1,4 +1,4 @@
-﻿#include "stageselect.h"
+#include "stageselect.h"
 #include "sprite2d.h"
 #include "texture.h"
 #include "keyboard.h"
@@ -19,57 +19,57 @@
 using namespace DirectX;
 
 // ==========================================
-// CÁC ĐỊNH NGHĨA TRẠNG THÁI VÀ BIẾN TOÀN CỤC
+// 状態定義およびグローバル変数
 // ==========================================
 
-// Máy trạng thái xử lý chuỗi hành động của máy phát đĩa
+// レコードプレーヤーの一連のアクションを処理するステートマシン
 enum VinylState {
-	STATE_PLAYING,         // Đang phát nhạc ổn định, đĩa xoay đều
-	STATE_LIFTING_ARM,     // Người chơi bấm đổi bài: Kim đang nhấc lên, đĩa hãm phanh
-	STATE_CHANGING_DISC,   // Kim đã ra ngoài, đĩa dừng: Tiến hành tráo đổi đĩa trong 1 frame
-	STATE_DROPPING_ARM     // Đã đổi đĩa xong: Kim đang từ từ hạ xuống đĩa mới
+	STATE_PLAYING,         // 音楽が安定して再生され、ディスクが均等に回転している状態
+	STATE_LIFTING_ARM,     // プレイヤーが曲を変更した：トーンアームが持ち上がり、ディスクが減速している状態
+	STATE_CHANGING_DISC,   // アームが元の位置に戻り、ディスクが停止した：1フレームでディスクを入れ替える状態
+	STATE_DROPPING_ARM     // ディスク交換完了：トーンアームが新しいディスクへゆっくり降下している状態
 };
 
-static VinylState g_CurrentState = STATE_PLAYING; // Trạng thái ban đầu
+static VinylState g_CurrentState = STATE_PLAYING; // 初期状態
 
-// Quản lý số lượng màn chơi / bài hát tương ứng với 5 Album đĩa bên trái
+// 左側の5つのレコードアルバムに対応するステージ数/曲数を管理
 const int MAX_STAGES = 5;
-static int g_SelectedStage = 0;                  // Màn chơi hiện tại đang phát
-static int g_NextStage = 0;                      // Màn chơi tạm thời (chờ chuyển cảnh xong)
+static int g_SelectedStage = 0;                  // 現在再生中のステージ
+static int g_NextStage = 0;                      // 次のステージ（遷移完了待ち）
 
-// Mảng chứa đường dẫn ảnh đĩa than riêng cho từng Stage
+// 各ステージのレコード盤テクスチャのパス配列
 static const wchar_t* g_StageTextures[MAX_STAGES] = {
-	L"asset\\texture\\vinmain.png",  // Stage 1
-	L"asset\\texture\\vinmain1.png", // Stage 2
-	L"asset\\texture\\vinmain2.png", // Stage 3
-	L"asset\\texture\\vinmain3.png", // Stage 4
-	L"asset\\texture\\vinmain4.png"  // Stage 5
+	L"asset\\texture\\vinmain.png",  // ステージ 1
+	L"asset\\texture\\vinmain1.png", // ステージ 2
+	L"asset\\texture\\vinmain2.png", // ステージ 3
+	L"asset\\texture\\vinmain3.png", // ステージ 4
+	L"asset\\texture\\vinmain4.png"  // ステージ 5
 };
 
-// Các thực thể đồ họa (Con trỏ Sprite & Font)
-static Sprite2D* g_pBackground = nullptr;         // Ảnh nền máy hát đĩa
-static Sprite2D* g_pMainVinyl = nullptr;          // Đĩa xoay chính ở giữa
-static Sprite2D* g_pToneArm = nullptr;            // Kim đọc đĩa (Tonearm)
-static Sprite2D* g_pStageDisks[MAX_STAGES] = { nullptr };     // Hàng đĩa nhỏ bên trái
-static ClickFont* g_pStageButtons[MAX_STAGES] = { nullptr };  // Chữ/Nút bấm "PLAY" hoặc "Stage" cho từng đĩa bên trái
+// グラフィックオブジェクト（スプライト＆フォントポインタ）
+static Sprite2D* g_pBackground = nullptr;         // レコードプレーヤーの背景画像
+static Sprite2D* g_pMainVinyl = nullptr;          // 中央のメイン回転ディスク
+static Sprite2D* g_pToneArm = nullptr;            // トーンアーム（レコードの針）
+static Sprite2D* g_pStageDisks[MAX_STAGES] = { nullptr };     // 左側の小さなディスクの列
+static ClickFont* g_pStageButtons[MAX_STAGES] = { nullptr };  // 左側の各ディスクの「PLAY」または「ステージ」テキスト/ボタン
 
-// Biến điều khiển chuyển động (Animations)
-static float g_VinylRotation = 0.0f;              // Góc xoay hiện tại của đĩa tính theo độ
-static float g_ToneArmAngle = 0.0f;               // Góc của kim (25 độ là trên đĩa, 0 độ là ở ngoài rìa)
-static float g_DiscSpeed = 0.5f;                  // Tốc độ xoay hiện tại (Dùng để giảm tốc mượt mà)
+// アニメーション制御変数
+static float g_VinylRotation = 0.0f;              // ディスクの現在の回転角度（度）
+static float g_ToneArmAngle = 0.0f;               // トーンアームの角度（25度はディスク上、0度は外側）
+static float g_DiscSpeed = 0.5f;                  // 現在の回転速度（スムーズな減速用）
 
-// Quản lý dữ liệu nhạc từ JSON và hiển thị điểm (Từ phần code Tiếng Nhật)
+// JSONからの譜面データの管理とスコア表示（日本語コード部分より）
 static MultiLineFontRenderer* g_pScoreInfoText = nullptr;
 static std::vector<ScoreSummary> g_ScoreSummaries;
 static int g_SelectedScoreIndex = 0;
 
 // ==========================================
-// CÁC HÀM TRỢ GIÚP LOGIC CHỌN NHẠC (HỆ JSON)
-static SoundData* g_pCurrentBgmData = nullptr;    // Con trỏ lưu trữ dữ liệu âm thanh bài hát đang phát hiện tại
-static std::string g_LoadedBgmPath = "";          // Lưu đường dẫn file âm thanh hiện tại để tránh load trùng
+// 選曲ロジックのヘルパー関数（JSONシステム）
+static SoundData* g_pCurrentBgmData = nullptr;    // 現在再生中の楽曲のサウンドデータポインタ
+static std::string g_LoadedBgmPath = "";          // 重複ロードを避けるための現在ロード中のサウンドファイルパス
 // ==========================================
 
-// Lấy tên file JSON đang được chọn hiện tại
+// 現在選択されているJSONファイル名を取得
 static std::string GetSelectedJsonName()
 {
 	if (g_ScoreSummaries.empty()) return "";
@@ -83,28 +83,58 @@ static std::string GetSelectedJsonName()
 
 static void UpdateBgmFromSelection()
 {
-	// Nếu danh sách JSON trống hoặc chỉ số đĩa vượt quá số lượng bài hát thì không xử lý
-	if (g_ScoreSummaries.empty() || g_SelectedStage >= static_cast<int>(g_ScoreSummaries.size())) return;
+	//// JSONリストが空、またはディスクインデックスが曲数を超えている場合は処理しない
+	//if (g_ScoreSummaries.empty() || g_SelectedStage >= static_cast<int>(g_ScoreSummaries.size())) return;
 
-	// BƯỚC 2 & 3: Lấy thuộc tính "music" từ file JSON và lắp ráp đường dẫn
-	const ScoreSummary& summary = g_ScoreSummaries[g_SelectedStage];
+	//// ステップ 2 & 3: JSONファイルから "music" 属性を取得し、パスを構築
+	//const ScoreSummary& summary = g_ScoreSummaries[g_SelectedStage];
+	//std::string soundPath = "asset\\sound\\bgm\\" + summary.music;
+
+	//// 選択された曲が現在再生中の曲と同じ場合はそのまま
+	//if (g_LoadedBgmPath == soundPath) return;
+
+	//// RAMのオーバーフローを防ぐため、古い曲を停止して解放
+	//if (g_pCurrentBgmData != nullptr) {
+	//	StopSound(g_pCurrentBgmData);
+	//	UnloadSound(g_pCurrentBgmData);
+	//	g_pCurrentBgmData = nullptr;
+	//}
+
+	//// ステップ 4: 物理ディレクトリから .mp3 ファイルを RAM にロードして再生
+	//g_pCurrentBgmData = LoadMP3(soundPath);
+
+	//if (g_pCurrentBgmData != nullptr) {
+	//	PlaySound(g_pCurrentBgmData, true); // ループ再生
+	//	g_LoadedBgmPath = soundPath;
+	//}
+	//else {
+	//	g_LoadedBgmPath = "";
+	//}
+	if (g_ScoreSummaries.empty()) return;
+
+	// 選択された曲のインデックスが範囲内であることを保証
+	if (g_SelectedScoreIndex < 0) g_SelectedScoreIndex = 0;
+	if (g_SelectedScoreIndex >= static_cast<int>(g_ScoreSummaries.size())) {
+		g_SelectedScoreIndex = static_cast<int>(g_ScoreSummaries.size()) - 1;
+	}
+
+	const ScoreSummary& summary = g_ScoreSummaries[g_SelectedScoreIndex];
 	std::string soundPath = "asset\\sound\\bgm\\" + summary.music;
 
-	// Nếu bài hát đang chọn trùng với bài đang phát thì giữ nguyên
+	// 選択された曲が現在再生中の曲と同じ場合はそのまま
 	if (g_LoadedBgmPath == soundPath) return;
 
-	// Dừng và giải phóng bài hát cũ để tránh tràn bộ nhớ RAM
+	// RAMのオーバーフローを防ぐため、古い曲を停止して解放
 	if (g_pCurrentBgmData != nullptr) {
 		StopSound(g_pCurrentBgmData);
 		UnloadSound(g_pCurrentBgmData);
 		g_pCurrentBgmData = nullptr;
 	}
 
-	// BƯỚC 4: Nạp file .mp3 từ thư mục vật lý lên RAM và phát nhạc
+	// 物理ディレクトリから .mp3 ファイルを RAM にロードして再生
 	g_pCurrentBgmData = LoadMP3(soundPath);
-
 	if (g_pCurrentBgmData != nullptr) {
-		PlaySound(g_pCurrentBgmData, true); // Phát lặp lại liên tục
+		PlaySound(g_pCurrentBgmData, true); // ループ再生
 		g_LoadedBgmPath = soundPath;
 	}
 	else {
@@ -112,7 +142,7 @@ static void UpdateBgmFromSelection()
 	}
 }
 
-// Làm mới văn bản hiển thị thông tin chi tiết của bài hát
+// 楽曲の詳細情報を表示するテキストを更新
 static void RefreshSelectedScoreText()
 {
 	if (g_pScoreInfoText == nullptr) return;
@@ -146,7 +176,7 @@ static void RefreshSelectedScoreText()
 	g_pScoreInfoText->SetText(buf);
 }
 
-// Thay đổi index bài hát khi bấm nút mũi tên Trái / Phải
+// 左右矢印キーが押されたときに選択されている曲のインデックスを変更
 static void ChangeSelectedScore(int delta)
 {
 	if (g_ScoreSummaries.empty()) return;
@@ -161,11 +191,11 @@ static void ChangeSelectedScore(int delta)
 }
 
 // ==========================================
-// HÀM KHỞI TẠO (INITIALIZE)
+// 初期化関数 (INITIALIZE)
 // ==========================================
 void StageSelect_Initialize(void)
 {
-	// 1. Khởi tạo hình nền (Kích thước tùy chỉnh theo texture của bạn)
+	// 1. 背景画像の初期化（テクスチャサイズに合わせて調整）
 	g_pBackground = new Sprite2D(
 		{ SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f },
 		{ 954.0f, 717.0f },
@@ -175,10 +205,10 @@ void StageSelect_Initialize(void)
 		L"asset\\texture\\1.png"
 	);
 
-	// 2. Khởi tạo hàng đĩa nhỏ xếp dọc ở góc bên trái
+	// 2. 左隅に縦に並ぶ小さなディスクの列を初期化
 	for (int i = 0; i < MAX_STAGES; i++) {
 		float posX = 90.0f;
-		float posY = 70.0f + (i * 130.0f); // Mỗi đĩa cách nhau theo chiều dọc mượt mà
+		float posY = 70.0f + (i * 130.0f); // 各ディスクを縦方向に等間隔で配置
 
 		g_pStageDisks[i] = new Sprite2D(
 			{ posX, posY },
@@ -186,10 +216,10 @@ void StageSelect_Initialize(void)
 			0.0f,
 			{ 1.0f, 1.0f, 1.0f, 1.0f },
 			BLENDSTATE_ALFA,
-			g_StageTextures[i] // Lấy đúng texture riêng biệt của từng Stage trong danh sách
+			g_StageTextures[i] // リストから各ステージに対応するテクスチャを取得
 		);
 
-		// Khởi tạo text hiển thị đè lên đĩa nhỏ để nhận diện chuột click
+		// クリック判定用に小さなディスクの上に表示するテキストを初期化
 		g_pStageButtons[i] = new ClickFont(
 			{ posX, posY },
 			20.0f,
@@ -200,7 +230,7 @@ void StageSelect_Initialize(void)
 		);
 	}
 
-	// 3. Khởi tạo đĩa chính nằm vừa vặn vào mâm xoay của hình nền
+	// 3. 背景のターンテーブルにぴったり収まるメインディスクを初期化
 	g_pMainVinyl = new Sprite2D(
 		{ (SCREEN_WIDTH / 2.0f) - 62.0f, (SCREEN_HEIGHT / 2.0f) + 2.0f },
 		{ 800.0f, 800.0f },
@@ -210,19 +240,19 @@ void StageSelect_Initialize(void)
 		g_StageTextures[g_SelectedStage]
 	);
 
-	// 4. Khởi tạo kim đọc đĩa (Nằm đè lên phía trên bên phải của đĩa chính)
+	// 4. トーンアーム（レコードの針）を初期化（メインディスクの右上へ重ねて配置）
 	g_pToneArm = new Sprite2D(
 		{ SCREEN_WIDTH / 2.0f + 210.0f, SCREEN_HEIGHT / 2.0f - 290.0f },
 		{ 400.0f, 400.0f },
-		75.0f, // Mặc định ban đầu góc 25 độ (đang đặt trên mặt đĩa)
+		75.0f, // デフォルトの初期角度（レコード盤の上に載っている状態）
 		{ 1.0f, 1.0f, 1.0f, 1.0f },
 		BLENDSTATE_ALFA,
 		L"asset\\texture\\tonearm2.png"
 	);
 
-	// 5. Khởi tạo bộ hiển thị thông tin bài hát / điểm số (Nằm ở góc phải màn hình)
+	// 5. 曲情報/スコア表示クラスを初期化（画面右側に配置）
 	g_pScoreInfoText = new MultiLineFontRenderer(
-		{ SCREEN_WIDTH - 150.0f, SCREEN_HEIGHT - 400.0f }, // Căn chỉnh lại vị trí để không bị lút khỏi màn hình
+		{ SCREEN_WIDTH - 150.0f, SCREEN_HEIGHT - 400.0f }, // 画面外にはみ出さないように位置を調整
 		28.0f,
 		0.0f,
 		{ 1.0f, 1.0f, 1.0f, 1.0f },
@@ -230,11 +260,11 @@ void StageSelect_Initialize(void)
 		1.35f
 	);
 
-	// Khởi tạo các biến quản lý dữ liệu nhạc nền
+	// BGMデータ管理用変数の初期化
 	g_pCurrentBgmData = nullptr;
 	g_LoadedBgmPath = "";
 
-	// Tải danh sách bài hát từ hệ thống JSON
+	// JSONシステムから楽曲リストをロード
 	g_ScoreSummaries = LoadScoreSummaries();
 	const bool loaded = !g_ScoreSummaries.empty();
 	hal::dout << "[StageSelect] Score summary reload: "
@@ -244,49 +274,49 @@ void StageSelect_Initialize(void)
 
 
 
-	// Tải toàn bộ danh sách các file JSON lên hệ thống
+	// システムにすべてのJSONファイルリストをロード
 	g_ScoreSummaries = LoadScoreSummaries();
 	g_SelectedStage = 0;
 
-	// Tự động tìm và kích hoạt bản BGM đầu tiên của đĩa 0
+	// ディスク0の最初のBGMを自動的に検索して再生
 	RefreshSelectedScoreText();
 
 	UpdateBgmFromSelection();
 
-	// Thiết lập lại các thông số trạng thái cơ học ban đầu ổn định
+	// メカニカルな動作の初期状態パラメータを再設定
 	g_CurrentState = STATE_PLAYING;
 	g_ToneArmAngle = 25.0f;
 	g_DiscSpeed = 0.5f;
 
-	UnLockMouse(); // Mở khóa chuột cho người dùng tương tác
+	UnLockMouse(); // ユーザー操作のためにマウスのロックを解除
 }
 
 // ==========================================
-// HÀM CẬP NHẬT LOGIC (UPDATE)
+// ロジック更新関数 (UPDATE)
 // ==========================================
 void StageSelect_Update(void)
 {
-	// --- PHẦN 1: ĐÓN NHẬN TƯƠNG TÁC BÀN PHÍM / CHUỘT ---
-	// Chỉ cho phép nhận lệnh đổi bài khi đĩa đang chạy ổn định (STATE_PLAYING)
+	// --- パート 1: キーボード/マウスの入力制御 ---
+	// ディスクが安定して回転している状態（STATE_PLAYING）でのみ曲変更コマンドを受け付ける
 	if (g_CurrentState == STATE_PLAYING)
 	{
 		bool isInputPressed = false;
 
-		// Bấm mũi tên LÊN / XUỐNG để đổi Stage đĩa than
+		// 上下矢印キーでレコードのステージを変更
 		if (Keyboard_IsKeyDownTrigger(KK_UP)) {
 			g_NextStage = g_SelectedStage - 1;
 			if (g_NextStage < 0) g_NextStage = MAX_STAGES - 1;
 			isInputPressed = true;
-			ChangeSelectedScore(-1);
+			//ChangeSelectedScore(-1);
 		}
 		else if (Keyboard_IsKeyDownTrigger(KK_DOWN)) {
 			g_NextStage = g_SelectedStage + 1;
 			if (g_NextStage >= MAX_STAGES) g_NextStage = 0;
 			isInputPressed = true;
-			ChangeSelectedScore(1);
+			//ChangeSelectedScore(1);
 		}
 
-		//// Bấm mũi tên TRÁI / PHẢI để đổi bài hát trong danh sách dữ liệu JSON công phá điểm số
+		//// 左右矢印キーでJSONデータリスト内の楽曲を変更
 		//if (Keyboard_IsKeyDownTrigger(KK_LEFT)) {
 		//	ChangeSelectedScore(-1);
 		//}
@@ -294,95 +324,109 @@ void StageSelect_Update(void)
 		//	ChangeSelectedScore(1);
 		//}
 
-		// Kích hoạt chuỗi hành động nhấc kim nếu có tương tác đổi Stage đĩa
+		// ステージが変更された場合、アームを持ち上げる一連のアクションを開始
 		if (isInputPressed) {
 			g_CurrentState = STATE_LIFTING_ARM;
 			if (g_pCurrentBgmData != nullptr) {
 				StopSound(g_pCurrentBgmData);
+				UnloadSound(g_pCurrentBgmData);
+				g_pCurrentBgmData = nullptr;
 			}
+			g_LoadedBgmPath = "";
 		}
 	}
 
-	// --- PHẦN 2: XỬ LÝ MÁY TRẠNG THÁI CHUYỂN ĐỘNG (STATE MACHINE) ---
+	// --- パート 2: 状態遷移（ステートマシン）の処理 ---
 	switch (g_CurrentState)
 	{
 	case STATE_PLAYING:
-		g_DiscSpeed = 0.5f;     // Tốc độ đĩa quay đều ổn định
-		g_ToneArmAngle = 0.0f;  // Giữ nguyên vị trí kim trên đĩa (Góc 0 bám đĩa)
+		g_DiscSpeed = 0.5f;     // ディスクが安定して一定速度で回転
+		g_ToneArmAngle = 0.0f;  // ディスク上のトーンアームの位置を維持（アーム角度0度）
 		break;
 
 	case STATE_LIFTING_ARM:
-		// Kim dịch chuyển mượt mà từ trong đĩa ra ngoài rìa (tăng góc lên 25 độ để nhấc lên)
+		// トーンアームがディスク上から外側へスムーズに移動（角度を25度まで上げる）
 		if (g_ToneArmAngle < 25.0f) {
-			g_ToneArmAngle += 1.0f; // Tốc độ nhấc kim
+			g_ToneArmAngle += 1.0f; // トーンアームの移動速度
 		}
 
-		// Đĩa không dừng đột ngột mà hãm phanh chậm dần đều do ma sát quán tính
+		// 慣性によりディスクが急停止せず、滑らかに減速する
 		if (g_DiscSpeed > 0.0f) {
 			g_DiscSpeed -= 0.02f;
 			if (g_DiscSpeed < 0.0f) g_DiscSpeed = 0.0f;
 		}
 
-		// Điều kiện chuyển trạng thái: Kim đã nhấc ra hẳn biên (>=25độ) AND Đĩa đã đứng im hoàn toàn
+		// 遷移条件：トーンアームが外側に完全に移動し（>=25度）、ディスクが完全に停止していること
 		if (g_ToneArmAngle >= 25.0f && g_DiscSpeed <= 0.0f) {
 			g_CurrentState = STATE_CHANGING_DISC;
 		}
 		break;
 
 	case STATE_CHANGING_DISC:
-		// Cập nhật chỉ số Album Stage chính thức
+		// 正式なステージのアルバムインデックスを更新
 		g_SelectedStage = g_NextStage;
 
-		// Xóa thực thể ảnh đĩa cũ để tránh rò rỉ bộ nhớ (Memory Leak)
+		// メモリリークを防ぐため、古いディスクのテクスチャオブジェクトを削除
 		if (g_pMainVinyl != nullptr) {
 			SAFE_DELETE(g_pMainVinyl);
 		}
 
-		// Nạp đĩa mới của Stage vừa chọn vào mâm xoay chính
+		// 選択されたステージの新しいディスクをメインのターンテーブルにロード
 		g_pMainVinyl = new Sprite2D(
 			{ (SCREEN_WIDTH / 2.0f) - 62.0f, (SCREEN_HEIGHT / 2.0f) + 2.0f },
 			{ 800.0f, 800.0f },
-			g_VinylRotation, // Giữ nguyên góc quay dở dang để đĩa không bị giật khựng texture
+			g_VinylRotation, // テクスチャの回転がカクつかないように現在の回転角度を維持
 			{ 1.0f, 1.0f, 1.0f, 1.0f },
 			BLENDSTATE_ALFA,
 			g_StageTextures[g_SelectedStage]
 		);
 
-		// Ngay sau khi đổi đĩa xong, kích hoạt trạng thái hạ kim xuống đĩa mới
+		// ディスク交換直後、トーンアームを新しいディスクに降下させる状態に移行
 		g_CurrentState = STATE_DROPPING_ARM;
 		break;
 
 	case STATE_DROPPING_ARM:
-		// Kim dịch chuyển từ từ từ ngoài biên vào trong mặt đĩa mới (giảm góc về 0 độ)
+		// トーンアームが外側から新しいディスクへ徐々に降下（角度を0度へ戻す）
 		if (g_ToneArmAngle > 0.0f) {
 			g_ToneArmAngle -= 1.0f;
 		}
 
-		// Khi kim vừa chạm đúng vị trí mặt đĩa (<= 0 độ), trả về trạng thái PLAYING tuần hoàn ổn định
+		// トーンアームがディスクに接触したら（<= 0度）、安定再生状態（PLAYING）に戻る
 		if (g_ToneArmAngle <= 0.0f) {
 			g_CurrentState = STATE_PLAYING;
+			// ✅ Update/Refresh を呼び出す前に、g_SelectedStage に合わせて g_SelectedScoreIndex を同期する
+			// 切り替えたステージと一致する vinylIndex を持つ最初のスコアエントリを検索
+			for (int i = 0; i < static_cast<int>(g_ScoreSummaries.size()); i++) {
+				if (g_ScoreSummaries[i].vinylIndex == g_SelectedStage) {
+					g_SelectedScoreIndex = i;
+					break;
+				}
+			}
+
+			RefreshSelectedScoreText(); // UIテキストを対応する曲に更新
+			UpdateBgmFromSelection();   // 正しいステージの音楽を再生
 		}
 		break;
 	}
 
-	// --- PHẦN 3: ÁP DỤNG THÔNG SỐ VÀO BIẾN ĐỒ HỌA DIRECTX ---
-	// Tính toán góc xoay liên tục cho đĩa dựa trên g_DiscSpeed hiện tại của khung hình
+	// --- パート 3: DirectXグラフィック変数へのパラメータ適用 ---
+	// 現在フレームの g_DiscSpeed に基づいてディスクの連続回転角度を計算
 	if (g_DiscSpeed > 0.0f) {
 		g_VinylRotation += g_DiscSpeed;
 		if (g_VinylRotation >= 360.0f) g_VinylRotation -= 360.0f;
 	}
 
-	// Cập nhật xoay cho đĩa chính
+	// メインディスクの回転を更新
 	if (g_pMainVinyl != nullptr) {
 		g_pMainVinyl->SetRot(g_VinylRotation);
 	}
 
-	// Cập nhật xoay/dịch chuyển góc nâng cho kim đĩa
+	// トーンアームの回転/アーム角度を更新
 	if (g_pToneArm != nullptr) {
 		g_pToneArm->SetRot(g_ToneArmAngle);
 	}
 
-	// --- PHẦN 4: XỬ LÝ HÀNG ĐĨA NHỎ BÊN TRÁI & CLICK CHUỘT ---
+	// --- パート 4: 左側の小さなディスク列の処理とマウスクリック検出 ---
 	for (int i = 0; i < MAX_STAGES; i++)
 	{
 		g_pStageButtons[i]->Update();
@@ -397,18 +441,23 @@ void StageSelect_Update(void)
 		if (g_pStageButtons[i]->IsClick() && g_CurrentState == STATE_PLAYING && g_SelectedStage != i)
 		{
 			g_NextStage = i;
+			g_SelectedScoreIndex = i;
+			RefreshSelectedScoreText();
 			g_CurrentState = STATE_LIFTING_ARM;
 			if (g_pCurrentBgmData != nullptr) {
 				StopSound(g_pCurrentBgmData);
+				UnloadSound(g_pCurrentBgmData);
+				g_pCurrentBgmData = nullptr;
 			}
+			g_LoadedBgmPath = "";
 		}
 	}
 
-	// --- PHẦN 5: XÁC NHẬN VÀO GAME (ENTER / SPACE) ---
-	// Chỉ cho phép chuyển cảnh vào game khi đĩa đang phát nhạc ổn định, tuân thủ nghiêm ngặt thứ tự SetPlayJson -> SetSceneFade
+	// --- パート 5: ゲーム開始の決定 (ENTER / SPACE) ---
+	// ディスクが安定して再生している場合のみゲーム開始への遷移を許可し、SetPlayJson -> SetSceneFade の順序を厳密に遵守する
 	if (g_CurrentState == STATE_PLAYING) {
 		if (Keyboard_IsKeyDownTrigger(KK_BACK) || Keyboard_IsKeyDownTrigger(KK_ENTER)) {
-			// Giải phóng nhạc nền phòng chờ trước khi chuyển cảnh sang màn chơi chính thức
+			// 本番のステージに遷移する前に、待機中のBGMを解放する
 			if (g_pCurrentBgmData != nullptr) {
 				StopSound(g_pCurrentBgmData);
 				UnloadSound(g_pCurrentBgmData);
@@ -423,15 +472,15 @@ void StageSelect_Update(void)
 }
 
 // ==========================================
-// HÀM VẼ ĐỒ HỌA (DRAW)
+// 描画関数 (DRAW)
 // ==========================================
 void StageSelect_Draw(void)
 {
-	// Quy tắc vẽ layer: Lớp nào nằm dưới vẽ trước, lớp nào nằm trên vẽ đè lên sau
-	g_pBackground->Draw(); // 1. Vẽ nền máy hát dưới cùng
-	g_pMainVinyl->Draw(); // 3. Vẽ đĩa xoay chính ở giữa màn hình
-	g_pToneArm->Draw();   // 4. Vẽ kim đọc đĩa đè lên trên mặt đĩa chính
-	// 2. Vẽ toàn bộ danh sách đĩa nhỏ và nút chữ tương ứng ở bên trái
+	// レイヤー描画ルール: 下にあるレイヤーから順に重ねて描画する
+	g_pBackground->Draw(); // 1. 最背面にレコードプレーヤーの背景を描画
+	g_pMainVinyl->Draw(); // 3. 画面中央のメインディスクを描画
+	g_pToneArm->Draw();   // 4. メインディスクの上に重なるようにトーンアームを描画
+	// 2. 左側のすべての小さなディスクと対応するテキストボタンを描画
 	for (int i = 0; i < MAX_STAGES; i++) {
 		g_pStageDisks[i]->Draw();
 		g_pStageButtons[i]->Draw();
@@ -440,15 +489,15 @@ void StageSelect_Draw(void)
 
 
 
-	g_pScoreInfoText->Draw(); // 5. Vẽ bảng thông tin bài hát & điểm số JSON lên trên cùng góc phải
+	g_pScoreInfoText->Draw(); // 5. 最前面の右上に曲情報とスコアのJSONテキストを描画
 }
 
 // ==========================================
-// HÀM GIẢI PHÓNG BỘ NHỚ (FINALIZE)
+// メモリ解放関数 (FINALIZE)
 // ==========================================
 void StageSelect_Finalize(void)
 {
-	// Dừng nhạc và giải phóng dữ liệu âm thanh để tránh bị rò rỉ bộ nhớ (Memory Leak)
+	// メモリリークを防ぐため、曲を停止してサウンドデータを解放する
 	if (g_pCurrentBgmData != nullptr) {
 		StopSound(g_pCurrentBgmData);
 		UnloadSound(g_pCurrentBgmData);

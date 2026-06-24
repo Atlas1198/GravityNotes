@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include <Windows.h>
 #include <algorithm>
@@ -10,14 +10,15 @@
 
 struct ScoreSummary
 {
-	std::string jsonname;
-	std::string musicname;
-	std::string musicauthor;
-	std::string scoreauthor;
-	float difficulty = 0.0f;
-	float bpm = 0.0f;
-	std::string thumbnail;
-	std::string music;
+    std::string jsonname;
+    std::string musicname;
+    std::string musicauthor;
+    std::string scoreauthor;
+    float difficulty = 0.0f;
+    float bpm = 0.0f;
+    std::string thumbnail;
+    std::string music;
+  	int vinylIndex = -1;
 };
 
 inline ScoreSummary LoadSingleScoreSummary(const std::string& jsonName, const std::string& directoryPath = "asset\\score")
@@ -51,6 +52,7 @@ inline ScoreSummary LoadSingleScoreSummary(const std::string& jsonName, const st
 		summary.bpm = jsonData.value("bpm", 0.0f);
 		summary.thumbnail = jsonData.value("thumbnail", "");
 		summary.music = jsonData.value("music", "");
+		summary.vinylIndex = jsonData.value("vinylIndex", -1);
 	}
 	catch (...)
 	{
@@ -71,7 +73,6 @@ inline std::vector<ScoreSummary> LoadScoreSummaries(const std::string& directory
 	{
 		return summaries;
 	}
-
 	do
 	{
 		if ((findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)

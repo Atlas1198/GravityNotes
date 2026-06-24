@@ -17,7 +17,7 @@ enum DEBUG_TYPE {
 	DEBUG_MAX
 };
 
-static DEBUG_TYPE g_type = DEBUG_MODEL;
+static DEBUG_TYPE g_type = DEBUG_RIG;
 
 void DebugScene_Initialize(void)
 {
