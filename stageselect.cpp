@@ -1,4 +1,4 @@
-﻿#include "stageselect.h"
+#include "stageselect.h"
 #include "sprite2d.h"
 #include "texture.h"
 #include "keyboard.h"
@@ -83,11 +83,17 @@ static std::string GetSelectedJsonName()
 
 static void UpdateBgmFromSelection()
 {
-	// Nếu danh sách JSON trống hoặc chỉ số đĩa vượt quá số lượng bài hát thì không xử lý
-	if (g_ScoreSummaries.empty() || g_SelectedStage >= static_cast<int>(g_ScoreSummaries.size())) return;
+	// Nếu danh sách JSON trống thì không xử lý
+	if (g_ScoreSummaries.empty()) return;
+
+	// Đảm bảo chỉ số điểm số được chọn hợp lệ
+	if (g_SelectedScoreIndex < 0) g_SelectedScoreIndex = 0;
+	if (g_SelectedScoreIndex >= static_cast<int>(g_ScoreSummaries.size())) {
+		g_SelectedScoreIndex = static_cast<int>(g_ScoreSummaries.size()) - 1;
+	}
 
 	// BƯỚC 2 & 3: Lấy thuộc tính "music" từ file JSON và lắp ráp đường dẫn
-	const ScoreSummary& summary = g_ScoreSummaries[g_SelectedStage];
+	const ScoreSummary& summary = g_ScoreSummaries[g_SelectedScoreIndex];
 	std::string soundPath = "asset\\sound\\bgm\\" + summary.music;
 
 	// Nếu bài hát đang chọn trùng với bài đang phát thì giữ nguyên
@@ -299,7 +305,10 @@ void StageSelect_Update(void)
 			g_CurrentState = STATE_LIFTING_ARM;
 			if (g_pCurrentBgmData != nullptr) {
 				StopSound(g_pCurrentBgmData);
+				UnloadSound(g_pCurrentBgmData);
+				g_pCurrentBgmData = nullptr;
 			}
+			g_LoadedBgmPath = "";
 		}
 	}
 
@@ -361,6 +370,7 @@ void StageSelect_Update(void)
 		// Khi kim vừa chạm đúng vị trí mặt đĩa (<= 0 độ), trả về trạng thái PLAYING tuần hoàn ổn định
 		if (g_ToneArmAngle <= 0.0f) {
 			g_CurrentState = STATE_PLAYING;
+			UpdateBgmFromSelection();
 		}
 		break;
 	}
@@ -397,10 +407,15 @@ void StageSelect_Update(void)
 		if (g_pStageButtons[i]->IsClick() && g_CurrentState == STATE_PLAYING && g_SelectedStage != i)
 		{
 			g_NextStage = i;
+			g_SelectedScoreIndex = i;
+			RefreshSelectedScoreText();
 			g_CurrentState = STATE_LIFTING_ARM;
 			if (g_pCurrentBgmData != nullptr) {
 				StopSound(g_pCurrentBgmData);
+				UnloadSound(g_pCurrentBgmData);
+				g_pCurrentBgmData = nullptr;
 			}
+			g_LoadedBgmPath = "";
 		}
 	}
 
