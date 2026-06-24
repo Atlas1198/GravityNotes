@@ -1,12 +1,13 @@
 ﻿#include "game.h"
+#include "define.h"
 #include "sprite2d.h"
 #include "texture.h"
-#include "keyboard.h"
 #include "fade.h"
 #include "debug_ostream.h"
-#include "define.h"
 #include "font.h"
 #include "mouse.h"
+#include "keyboard.h"
+#include "gamepad.h"
 #include "model.h"
 #include "debugcamera.h"
 #include "debug_ui.h"
@@ -63,7 +64,7 @@ void Game_Initialize(void)
 		"Selected JSON: " + (selectedJson.empty() ? std::string("(none)") : selectedJson)
 	);*/
 
-	int pad = Gamepad_FindConnectedPlayer();
+	//int pad = Gamepad_FindConnectedPlayer();
 	//if (pad < 0)return;//デバック時必要なし
 
   //各種初期化
@@ -73,7 +74,8 @@ void Game_Initialize(void)
 	g_pField->Init();
 
 	g_pNoteManager = new NoteManager();
-	g_pNoteManager->Init("asset/score/score.json");
+
+	g_pNoteManager->Init("asset/score/" + GetPlayJson());
 
 	g_pPlayer = new Player();
 	g_pPlayer->Init(g_pNoteManager);
@@ -83,7 +85,7 @@ void Game_Initialize(void)
 
 void Game_Update(void)
 {
-	//3D描画
+	//3D
 	{
 		GameCamera::Update(g_pPlayer);
 		SetCameraPosition(GetCamera()->GetPos());
@@ -108,6 +110,19 @@ void Game_Update(void)
 
 	if (Keyboard_IsKeyDownTrigger(KK_D2))Mouse_SetVisible(true);
 	if (Keyboard_IsKeyDownTrigger(KK_D3))Mouse_SetVisible(false);
+
+	if (Keyboard_IsKeyDownTrigger(KK_ENTER)) {
+		RESULT r;
+		r.score = 13232;
+		r.rank = "A";
+		r.accurary = 87.45;
+		r.maxCombo = 175;
+		r.success = 312;
+		r.miss = 26;
+
+		SetResult(r);
+		SetSceneFade(SCENE_RESULT);
+	}
 }
 
 void Game_Draw(void)

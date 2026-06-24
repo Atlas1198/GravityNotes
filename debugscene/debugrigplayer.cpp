@@ -59,7 +59,7 @@ void DebugRigPlayer_Initialize(void)
 		{ 0.0f, -6.0f, 5.0f },
 		{ 0.1f, 0.1f, 0.1f },
 		{ 0.0f, 0.0f, 0.0f },
-		"asset\\model\\rigtest.fbx",
+		"asset\\model\\knight_run.fbx",
 		S_PHONG
 	);
 
@@ -176,17 +176,9 @@ void DebugRigPlayer_Draw(void)
 
 void DebugRigPlayer_Finalize(void)
 {
-	delete g_pRigPlayer;
-	g_pRigPlayer = nullptr;
-
-	delete g_pMainLight;
-	g_pMainLight = nullptr;
-
-	delete g_pGuideFont;
-	g_pGuideFont = nullptr;
-
-	delete g_pAnimInfoFont;
-	g_pAnimInfoFont = nullptr;
-
+	SAFE_DELETE(g_pRigPlayer);
+	SAFE_DELETE(g_pMainLight);
+	SAFE_DELETE(g_pGuideFont);
+	SAFE_DELETE(g_pAnimInfoFont);
 	DebugCamera_Finalize();
 }

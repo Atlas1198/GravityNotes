@@ -7,6 +7,7 @@
 #pragma once
 
 #include <d3d11.h>
+#include <string>
 #include "define.h"
 
 //ゲームシーンにおける定数定義

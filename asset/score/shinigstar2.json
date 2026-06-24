@@ -11,25 +11,25 @@
 		{
 			"beat": 0.0,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Down"
 		},
 		{
 			"beat": 1.0,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Down"
 		},
 		{
 			"beat": 2.0,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Down"
 		},
 		{
 			"beat": 3.0,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Down"
 		},
 		{
@@ -43,13 +43,13 @@
 		{
 			"beat": 4.5,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Down"
 		},
 		{
 			"beat": 5.0,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Down"
 		},
 		{
@@ -63,43 +63,43 @@
 		{
 			"beat": 7.5,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Down"
 		},
 		{
 			"beat": 7.0,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Down"
 		},
 		{
 			"beat": 6.5,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Down"
 		},
 		{
 			"beat": 8.0,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Down"
 		},
 		{
 			"beat": 9.0,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Down"
 		},
 		{
 			"beat": 10.0,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Down"
 		},
 		{
 			"beat": 11.0,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Down"
 		},
 		{
@@ -113,13 +113,13 @@
 		{
 			"beat": 12.5,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Down"
 		},
 		{
 			"beat": 13.0,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Down"
 		},
 		{
@@ -133,19 +133,19 @@
 		{
 			"beat": 20.0,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Left"
 		},
 		{
 			"beat": 20.5,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Left"
 		},
 		{
 			"beat": 21.0,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Left"
 		},
 		{
@@ -159,43 +159,43 @@
 		{
 			"beat": 24.0,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Left"
 		},
 		{
 			"beat": 25.0,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Left"
 		},
 		{
 			"beat": 26.0,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Left"
 		},
 		{
 			"beat": 27.0,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Left"
 		},
 		{
 			"beat": 28.0,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Left"
 		},
 		{
 			"beat": 28.5,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Left"
 		},
 		{
 			"beat": 29.0,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Left"
 		},
 		{
@@ -209,31 +209,31 @@
 		{
 			"beat": 30.5,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Left"
 		},
 		{
 			"beat": 31.0,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Left"
 		},
 		{
 			"beat": 36.0,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Right"
 		},
 		{
 			"beat": 36.5,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Right"
 		},
 		{
 			"beat": 37.0,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Right"
 		},
 		{
@@ -247,43 +247,43 @@
 		{
 			"beat": 40.0,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Right"
 		},
 		{
 			"beat": 42.0,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Right"
 		},
 		{
 			"beat": 41.0,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Right"
 		},
 		{
 			"beat": 43.0,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Right"
 		},
 		{
 			"beat": 43.5,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Right"
 		},
 		{
 			"beat": 44.5,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Right"
 		},
 		{
 			"beat": 45.5,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Right"
 		},
 		{
@@ -297,7 +297,7 @@
 		{
 			"beat": 63.5,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Right"
 		},
 		{
@@ -311,13 +311,13 @@
 		{
 			"beat": 65.5,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Right"
 		},
 		{
 			"beat": 67.5,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Right"
 		},
 		{
@@ -331,25 +331,25 @@
 		{
 			"beat": 68.0,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Right"
 		},
 		{
 			"beat": 68.5,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Right"
 		},
 		{
 			"beat": 69.0,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Right"
 		},
 		{
 			"beat": 69.5,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Right"
 		},
 		{
@@ -371,7 +371,7 @@
 		{
 			"beat": 51.0,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Down"
 		},
 		{
@@ -401,7 +401,7 @@
 		{
 			"beat": 55.0,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Down"
 		},
 		{
@@ -415,13 +415,13 @@
 		{
 			"beat": 60.5,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Up"
 		},
 		{
 			"beat": 61.0,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Up"
 		},
 		{
@@ -435,7 +435,7 @@
 		{
 			"beat": 63.0,
 			"lane": 1,
-			"type": "Tap",
+			"type": "Enemy",
 			"wall": "Up"
 		}
 	]

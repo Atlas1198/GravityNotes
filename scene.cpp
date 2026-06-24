@@ -10,8 +10,11 @@
 #include "define.h"
 using namespace DirectX;
 
-static SCENE scene = SCENE_GAME;
+static SCENE scene = SCENE_TITLE;
+
+//SCENE_STAGESELECTからSCENE_GAMEへの読み込み指定　.jsonまで含まれている
 static std::string playjson;
+static RESULT result = {};
 
 void Init( void )
 {
@@ -131,4 +134,11 @@ void SetPlayJson(const std::string& jsonName)
 const std::string& GetPlayJson(void)
 {
 	return playjson;
+}
+
+void SetResult(const RESULT& r) {
+	result = r;
+}
+const RESULT* GetResult() {
+	return &result;
 }

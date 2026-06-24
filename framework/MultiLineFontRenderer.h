@@ -20,13 +20,14 @@ class MultiLineFontRenderer : public FontRenderer
 {
 public:
 MultiLineFontRenderer(XMFLOAT2 pos, float fontSize, float rotation,
-XMFLOAT4 color, const std::string& text, float lineSpacing = 1.5f);
+XMFLOAT4 color, const std::string& text, float lineSpacing = 1.5f, TextAlignment align = TA_MIDDLE);
 ~MultiLineFontRenderer() = default;
 
 void Draw() override;
 void SetText(const std::string& text) override;
 
 void SetLineSpacing(float lineSpacing);
+void SetAlignment(TextAlignment align);
 float GetLineSpacing() const { return m_LineSpacing; }
 const std::vector<FontLineRect>& GetLineRects() const { return m_LineRects; }
 

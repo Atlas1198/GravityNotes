@@ -1,4 +1,4 @@
-﻿#include "stageselect.h"
+#include "stageselect.h"
 #include "sprite2d.h"
 #include "texture.h"
 #include "keyboard.h"
@@ -338,7 +338,10 @@ void StageSelect_Update(void)
 			g_CurrentState = STATE_LIFTING_ARM;
 			if (g_pCurrentBgmData != nullptr) {
 				StopSound(g_pCurrentBgmData);
+				UnloadSound(g_pCurrentBgmData);
+				g_pCurrentBgmData = nullptr;
 			}
+			g_LoadedBgmPath = "";
 		}
 	}
 
@@ -447,10 +450,15 @@ void StageSelect_Update(void)
 		if (g_pStageButtons[i]->IsClick() && g_CurrentState == STATE_PLAYING && g_SelectedStage != i)
 		{
 			g_NextStage = i;
+			g_SelectedScoreIndex = i;
+			RefreshSelectedScoreText();
 			g_CurrentState = STATE_LIFTING_ARM;
 			if (g_pCurrentBgmData != nullptr) {
 				StopSound(g_pCurrentBgmData);
+				UnloadSound(g_pCurrentBgmData);
+				g_pCurrentBgmData = nullptr;
 			}
+			g_LoadedBgmPath = "";
 		}
 	}
 
@@ -466,6 +474,7 @@ void StageSelect_Update(void)
 			}
 			g_LoadedBgmPath = "";
 
+			SetPlayJson(GetSelectedJsonName());
 			SetSceneFade(SCENE_GAME);
 		}
 	}
