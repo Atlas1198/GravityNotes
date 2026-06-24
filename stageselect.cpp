@@ -1,4 +1,4 @@
-#include "stageselect.h"
+﻿#include "stageselect.h"
 #include "sprite2d.h"
 #include "texture.h"
 #include "keyboard.h"
@@ -57,6 +57,9 @@ static ClickFont* g_pStageButtons[MAX_STAGES] = { nullptr };  // Chữ/Nút bấ
 static float g_VinylRotation = 0.0f;              // Góc xoay hiện tại của đĩa tính theo độ
 static float g_ToneArmAngle = 0.0f;               // Góc của kim (25 độ là trên đĩa, 0 độ là ở ngoài rìa)
 static float g_DiscSpeed = 0.5f;                  // Tốc độ xoay hiện tại (Dùng để giảm tốc mượt mà)
+
+static float g_ScrollOffset = 0.0f;      // Offset hiện tại (float để lerp mượt)
+static float g_ScrollTarget = 0.0f;      // Offset đích cần đến
 
 // Quản lý dữ liệu nhạc từ JSON và hiển thị điểm (Từ phần code Tiếng Nhật)
 static MultiLineFontRenderer* g_pScoreInfoText = nullptr;
@@ -305,6 +308,10 @@ void StageSelect_Initialize(void)
 // ==========================================
 void StageSelect_Update(void)
 {
+	g_ScrollOffset += (g_ScrollTarget - g_ScrollOffset) * 0.15f;
+
+	float anchorY = 70.0f;
+	float spacing = 130.0f;
 	// --- PHẦN 1: ĐÓN NHẬN TƯƠNG TÁC BÀN PHÍM / CHUỘT ---
 	// Chỉ cho phép nhận lệnh đổi bài khi đĩa đang chạy ổn định (STATE_PLAYING)
 	if (g_CurrentState == STATE_PLAYING)
@@ -317,12 +324,14 @@ void StageSelect_Update(void)
 			if (g_NextStage < 0) g_NextStage = MAX_STAGES - 1;
 			isInputPressed = true;
 			//ChangeSelectedScore(-1);
+			g_ScrollTarget -= 1.0f;  // Trượt xuống 1 bậc
 		}
 		else if (Keyboard_IsKeyDownTrigger(KK_DOWN)) {
 			g_NextStage = g_SelectedStage + 1;
 			if (g_NextStage >= MAX_STAGES) g_NextStage = 0;
 			isInputPressed = true;
 			//ChangeSelectedScore(1);
+			g_ScrollTarget += 1.0f;  // Trượt xuống 1 bậc
 		}
 
 		//// Bấm mũi tên TRÁI / PHẢI để đổi bài hát trong danh sách dữ liệu JSON công phá điểm số
@@ -436,7 +445,7 @@ void StageSelect_Update(void)
 	}
 
 	// --- PHẦN 4: XỬ LÝ HÀNG ĐĨA NHỎ BÊN TRÁI & CLICK CHUỘT ---
-	for (int i = 0; i < MAX_STAGES; i++)
+	/*for (int i = 0; i < MAX_STAGES; i++)
 	{
 		g_pStageButtons[i]->Update();
 
@@ -460,7 +469,39 @@ void StageSelect_Update(void)
 			}
 			g_LoadedBgmPath = "";
 		}
+		}*/
+	for (int i = 0; i < MAX_STAGES; i++)
+	{
+		// Dùng g_ScrollOffset thay vì g_SelectedStage để tính vị trí
+    float offset = (float)i - g_ScrollOffset;
+
+    // Wrap vòng tròn dạng float
+    while (offset < 0.0f)          offset += (float)MAX_STAGES;
+    while (offset >= (float)MAX_STAGES) offset -= (float)MAX_STAGES;
+
+    float posX = 90.0f;
+    float posY = anchorY + (offset * spacing);
+
+    g_pStageDisks[i]->SetPos({ posX, posY });
+    g_pStageButtons[i]->SetPos({ posX, posY });
+
+    // Đĩa đang chọn = đĩa gần offset 0 nhất
+    if (i == g_SelectedStage) {
+        g_pStageDisks[i]->SetRotation(g_VinylRotation * 2.0f);
+    } else {
+        g_pStageDisks[i]->SetRotation(0.0f);
+    }
+
+    if (g_pStageButtons[i]->IsClick() && g_CurrentState == STATE_PLAYING && g_SelectedStage != i)
+    {
+        g_NextStage = i;
+        g_CurrentState = STATE_LIFTING_ARM;
+        if (g_pCurrentBgmData != nullptr) {
+            StopSound(g_pCurrentBgmData);
+        }
+    }
 	}
+	
 
 	// --- PHẦN 5: XÁC NHẬN VÀO GAME (ENTER / SPACE) ---
 	// Chỉ cho phép chuyển cảnh vào game khi đĩa đang phát nhạc ổn định, tuân thủ nghiêm ngặt thứ tự SetPlayJson -> SetSceneFade
