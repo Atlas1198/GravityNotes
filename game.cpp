@@ -75,7 +75,7 @@ void Game_Initialize(void)
 
 	g_pNoteManager = new NoteManager();
 
-	g_pNoteManager->Init("asset/score/" + GetPlayJson());
+	//g_pNoteManager->Init("asset/score/" + GetPlayJson());
 
 	g_pPlayer = new Player();
 	g_pPlayer->Init(g_pNoteManager);

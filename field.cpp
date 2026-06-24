@@ -5,14 +5,16 @@
 using namespace DirectX;
 
 void Field::Init() {
-	const XMFLOAT3 pos   = { 0.0f, 0.0f, 10.0f };
+
+	const XMFLOAT3 pos   = { -2.1f, 0.0f, 0.0f };
+	const XMFLOAT3 posFlipped = { 2.1f,0.0f,0.0f };
 	const XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f };
 	const XMFLOAT3 rot   = { 0.0f, 0.0f, 0.0f };
-	const XMFLOAT3 rotFlipped = { 0.0f, XM_PI, 0.0f };
+	const XMFLOAT3 rotFlipped = { 0.0f, 180.0f, 0.0f };
 
 	m_Floor = new Sprite3D(pos, scale, rot, "asset/model/Floor_model.fbx", S_UNLIT);
 	m_WallLeft = new Sprite3D(pos, scale, rot, "asset/model/Wall_model.fbx", S_UNLIT);
-	m_WallRight = new Sprite3D(pos, scale, rotFlipped, "asset/model/Wall_model.fbx", S_UNLIT);
+	m_WallRight = new Sprite3D(posFlipped, scale, rotFlipped, "asset/model/Wall_model.fbx", S_UNLIT);
 	m_Ceiling = new Sprite3D(pos, scale, rot, "asset/model/Ceiling_model.fbx", S_LAMBERT);
 }
 

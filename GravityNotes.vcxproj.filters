@@ -140,8 +140,9 @@
     <ClCompile Include="orb_note.cpp">
       <Filter>SCENE_GAME\cpp</Filter>
     </ClCompile>
-    <ClCompile Include="debugscene\debugrigplayer.cpp">
-      <Filter>デバッグ</Filter>
+    <ClCompile Include="debugscene\debugrigplayer.cpp" />
+    <ClCompile Include="light_game.cpp">
+      <Filter>SCENE_GAME\cpp</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -319,8 +320,9 @@
     <ClInclude Include="orb_note.h">
       <Filter>SCENE_GAME\h</Filter>
     </ClInclude>
-    <ClInclude Include="debugscene\debugrigplayer.h">
-      <Filter>デバッグ</Filter>
+    <ClInclude Include="debugscene\debugrigplayer.h" />
+    <ClInclude Include="light_game.h">
+      <Filter>SCENE_GAME\h</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

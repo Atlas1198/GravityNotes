@@ -10,6 +10,8 @@
 
 void Player::Init(NoteManager* nm)
 {
+	m_Scale = { 0.02f,0.02f,0.02f };
+
 	m_pNoteManager = nm;
 	m_GravityFace = FACE::FACE_FLOOR;
 	m_LaneIndex = LANE_CENTER;
@@ -28,7 +30,38 @@ void Player::Init(NoteManager* nm)
 	m_Rotation = { 0.0f,180.0f,0.0f };
 	m_GravityStartPos = m_Position;
 	m_GravityStartRot = m_Rotation;
+
+	SetAnimationBlendDuration(0.2);
+	if (GetAnimationCount() > 0)
+	{
+		PlayAnimationByIndex(0, true);
+		UpdateAnimation(dt);
+	}
 }
+
+//仮置き
+static int GetTriggeredAnimationSlot()
+{
+	static const Keyboard_Keys keys[] = {
+		KK_D5,
+		KK_D6,
+		KK_D7,
+		KK_D8,
+		KK_D9,
+		KK_D0,
+	};
+
+	for (int i = 0; i < (int)ARRAYSIZE(keys); i++)
+	{
+		if (Keyboard_IsKeyDownTrigger(keys[i]))
+		{
+			return i;
+		}
+	}
+
+	return -1;
+}
+
 
 void Player::Update()
 {
@@ -37,6 +70,7 @@ void Player::Update()
 	if (connected < 0) {
 		return;
 	}
+
 	//lane移動入力
 	Gamepad_ThumbStick ls = Gamepad_GetLeftStick(pad);
 	if (m_GravityFace == FACE::FACE_FLOOR || m_GravityFace == FACE::FACE_CEILING)
@@ -101,6 +135,19 @@ void Player::Update()
 		m_Rotation.z = m_GravityStartRot.z + (m_TargetRot.z - m_GravityStartRot.z) * eased;
 	}
 
+	int animSlot = GetTriggeredAnimationSlot();
+	unsigned int animCount = GetAnimationCount();
+
+	if (animSlot >= 0 && (unsigned int)animSlot < animCount)
+	{
+		if (PlayAnimationByIndex((unsigned int)animSlot, true))
+		{
+			UpdateAnimation(dt);
+		}
+	}
+
+	UpdateAnimation(dt);
+
 	//ノーツヒット入力
 	if (Keyboard_IsKeyDownTrigger(KK_SPACE) ||
 		Gamepad_GetLeftTrigger(pad) > 0.5f ||
@@ -114,17 +161,8 @@ void Player::Update()
 
 void Player::Draw()
 {
-	if (m_Model) {
-		ModelDraw(
-			m_Model,
-			m_Position,
-			m_Rotation,
-			m_Scale,
-			m_Color,
-			false,
-			S_UNLIT
-		);
-	}
+	UpdateBoneMatrices();
+	AnimSprite3D::Draw();
 }
 
 void Player::Finalize()
