@@ -70,7 +70,7 @@ void DebugRigPlayer_Initialize(void)
 		{ 1.0f, 1.0f, 1.0f },
 		{ 0.0f, 0.0f, 0.0f },
 		"asset\\model\\field_normal.fbx",
-		S_LAMBERT
+		S_PHONG
 	);
 
 	g_pBox1x1x1 = new Sprite3D(
