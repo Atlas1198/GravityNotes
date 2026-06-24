@@ -8,12 +8,18 @@ constexpr float kFontHitWidthScale = 0.5f;
 }
 
 MultiLineFontRenderer::MultiLineFontRenderer(XMFLOAT2 pos, float fontSize, float rotation,
-XMFLOAT4 color, const std::string& text, float lineSpacing)
-: FontRenderer(pos, fontSize, rotation, color, text)
+XMFLOAT4 color, const std::string& text, float lineSpacing, TextAlignment align)
+: FontRenderer(pos, fontSize, rotation, color, text, align)
 , m_SourceText(text)
 , m_FontSize(fontSize)
 , m_LineSpacing((std::max)(lineSpacing, 0.1f))
 {
+RebuildLayout();
+}
+
+void MultiLineFontRenderer::SetAlignment(TextAlignment align)
+{
+FontRenderer::SetAlignment(align);
 RebuildLayout();
 }
 
@@ -69,8 +75,16 @@ const float width = static_cast<float>(codePointCount) * m_FontSize * kFontHitWi
 const float centerY = basePos.y + static_cast<float>(i) * lineHeight;
 
 FontLineRect rect{};
-rect.left = basePos.x - width * 0.5f;
-rect.right = basePos.x + width * 0.5f;
+if (GetAlignment() == TA_MIDDLE) {
+    rect.left = basePos.x - width * 0.5f;
+    rect.right = basePos.x + width * 0.5f;
+} else if (GetAlignment() == TA_START) {
+    rect.left = basePos.x;
+    rect.right = basePos.x + width;
+} else if (GetAlignment() == TA_END) {
+    rect.left = basePos.x - width;
+    rect.right = basePos.x;
+}
 rect.top = centerY - lineHeight * 0.5f;
 rect.bottom = centerY + lineHeight * 0.5f;
 m_LineRects.push_back(rect);

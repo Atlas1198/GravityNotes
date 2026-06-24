@@ -12,7 +12,7 @@ constexpr float kFontHitWidthScale = 0.5f;
 }
 
 MultiLineClickFont::MultiLineClickFont(XMFLOAT2 pos, float fontSize, float rotation,
-XMFLOAT4 normalColor, XMFLOAT4 hoverColor, const std::string& text, float lineSpacing)
+XMFLOAT4 normalColor, XMFLOAT4 hoverColor, const std::string& text, float lineSpacing, TextAlignment align)
 : ClickFont(pos, fontSize, rotation, normalColor, hoverColor, text)
 , m_NormalColorEx(normalColor)
 , m_HoverColorEx(hoverColor)
@@ -24,6 +24,7 @@ XMFLOAT4 normalColor, XMFLOAT4 hoverColor, const std::string& text, float lineSp
 , m_IsClickEx(false)
 , m_ClickedLineIndex(-1)
 {
+SetAlignment(align);
 RebuildLayout();
 }
 
@@ -102,8 +103,16 @@ const float width = static_cast<float>(codePointCount) * m_FontSize * kFontHitWi
 const float centerY = basePos.y + static_cast<float>(i) * lineHeight;
 
 FontLineRect rect{};
-rect.left = basePos.x - width * 0.5f;
-rect.right = basePos.x + width * 0.5f;
+if (GetAlignment() == TA_MIDDLE) {
+    rect.left = basePos.x - width * 0.5f;
+    rect.right = basePos.x + width * 0.5f;
+} else if (GetAlignment() == TA_START) {
+    rect.left = basePos.x;
+    rect.right = basePos.x + width;
+} else if (GetAlignment() == TA_END) {
+    rect.left = basePos.x - width;
+    rect.right = basePos.x;
+}
 rect.top = centerY - lineHeight * 0.5f;
 rect.bottom = centerY + lineHeight * 0.5f;
 m_LineRects.push_back(rect);
