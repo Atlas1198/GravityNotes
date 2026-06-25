@@ -4,16 +4,8 @@
 
 class Field: public Sprite3D
 {
-private:
-	Sprite3D* m_Floor;
-	Sprite3D* m_WallLeft;
-	Sprite3D* m_WallRight;
-	Sprite3D* m_Ceiling;
-
 public:
-	Field()
-		: Sprite3D(), m_Floor(nullptr), m_WallLeft(nullptr), m_WallRight(nullptr), m_Ceiling(nullptr)
-	{}
+	Field() : Sprite3D() {}
     void Init();
     void Update();
     void Draw();
