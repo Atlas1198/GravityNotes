@@ -1,4 +1,4 @@
-﻿#include "model.h"
+#include "model.h"
 #include "anim_sprite3d.h"
 
 #include "camera.h"
@@ -63,7 +63,12 @@ static void CalcBoneMatricesRecursive(
 	double time,
 	const std::unordered_map<std::string, int>& nodeToAnimIndex,
 	MODEL* model,
-	BoneMatrices& outMatrices)
+	BoneMatrices& outMatrices,
+	const AnimationClip* overrideClip = nullptr,
+	double overrideTime = 0.0,
+	const std::unordered_map<std::string, int>* overrideNodeToAnimIndex = nullptr,
+	const std::vector<std::string>* overrideBoneNames = nullptr,
+	bool isOverrideActive = false)
 {
 	std::string nodeName = node->mName.data;
 
@@ -76,35 +81,78 @@ static void CalcBoneMatricesRecursive(
 	// $AssimpFbx$ ノードの変換をそのまま残すと二重変換になる。
 	// 対応するアニメーションチャンネルが存在する場合、$AssimpFbx$ ノードの変換を単位行列に置き換える。
 	std::string baseName = GetAssimpFbxBaseName(nodeName);
-	if (!baseName.empty())
+	bool isFbxSubNode = !baseName.empty();
+	std::string checkName = isFbxSubNode ? baseName : nodeName;
+
+	// オーバーライド状態の決定
+	bool currentOverrideActive = isOverrideActive;
+	if (!currentOverrideActive && overrideBoneNames)
 	{
-		// このノードは $AssimpFbx$ 分解ノード
+		for (const auto& boneName : *overrideBoneNames)
+		{
+			if (checkName == boneName)
+			{
+				currentOverrideActive = true;
+				break;
+			}
+		}
+	}
+
+	if (isFbxSubNode)
+	{
 		// 対応する元ノードにアニメーションチャンネルが存在する場合は変換を無視
-		if (nodeToAnimIndex.find(baseName) != nodeToAnimIndex.end())
+		const auto& targetMap = (currentOverrideActive && overrideNodeToAnimIndex) ? *overrideNodeToAnimIndex : nodeToAnimIndex;
+		if (targetMap.find(baseName) != targetMap.end())
 		{
 			nodeTransform = XMMatrixIdentity();
 		}
 	}
 
 	// アニメーションチャンネルがあれば補間値で上書き
-	auto it = nodeToAnimIndex.find(nodeName);
-	if (it != nodeToAnimIndex.end())
+	if (currentOverrideActive && overrideClip && overrideNodeToAnimIndex)
 	{
-		int trackIdx = it->second;
-		if (trackIdx >= 0 && trackIdx < (int)clip.tracks.size())
+		auto it = overrideNodeToAnimIndex->find(nodeName);
+		if (it != overrideNodeToAnimIndex->end())
 		{
-			const BoneKeyframes& kf = clip.tracks[trackIdx];
+			int trackIdx = it->second;
+			if (trackIdx >= 0 && trackIdx < (int)overrideClip->tracks.size())
+			{
+				const BoneKeyframes& kf = overrideClip->tracks[trackIdx];
 
-			XMFLOAT3 trans = AnimSprite3D::InterpolateVec3(kf.trans, time);
-			XMFLOAT4 rot = AnimSprite3D::InterpolateQuat(kf.rot, time);
-			XMFLOAT3 scale = AnimSprite3D::InterpolateVec3(kf.scale, time);
-			if (kf.scale.empty()) scale = XMFLOAT3(1.0f, 1.0f, 1.0f);
+				XMFLOAT3 trans = AnimSprite3D::InterpolateVec3(kf.trans, overrideTime);
+				XMFLOAT4 rot = AnimSprite3D::InterpolateQuat(kf.rot, overrideTime);
+				XMFLOAT3 scale = AnimSprite3D::InterpolateVec3(kf.scale, overrideTime);
+				if (kf.scale.empty()) scale = XMFLOAT3(1.0f, 1.0f, 1.0f);
 
-			XMMATRIX S = XMMatrixScaling(scale.x, scale.y, scale.z);
-			XMMATRIX R = QuatToMatrix(rot);
-			XMMATRIX T = XMMatrixTranslation(trans.x, trans.y, trans.z);
+				XMMATRIX S = XMMatrixScaling(scale.x, scale.y, scale.z);
+				XMMATRIX R = QuatToMatrix(rot);
+				XMMATRIX T = XMMatrixTranslation(trans.x, trans.y, trans.z);
 
-			nodeTransform = S * R * T;
+				nodeTransform = S * R * T;
+			}
+		}
+	}
+	else
+	{
+		auto it = nodeToAnimIndex.find(nodeName);
+		if (it != nodeToAnimIndex.end())
+		{
+			int trackIdx = it->second;
+			if (trackIdx >= 0 && trackIdx < (int)clip.tracks.size())
+			{
+				const BoneKeyframes& kf = clip.tracks[trackIdx];
+
+				XMFLOAT3 trans = AnimSprite3D::InterpolateVec3(kf.trans, time);
+				XMFLOAT4 rot = AnimSprite3D::InterpolateQuat(kf.rot, time);
+				XMFLOAT3 scale = AnimSprite3D::InterpolateVec3(kf.scale, time);
+				if (kf.scale.empty()) scale = XMFLOAT3(1.0f, 1.0f, 1.0f);
+
+				XMMATRIX S = XMMatrixScaling(scale.x, scale.y, scale.z);
+				XMMATRIX R = QuatToMatrix(rot);
+				XMMATRIX T = XMMatrixTranslation(trans.x, trans.y, trans.z);
+
+				nodeTransform = S * R * T;
+			}
 		}
 	}
 
@@ -124,7 +172,20 @@ static void CalcBoneMatricesRecursive(
 	// 子ノードを再帰
 	for (unsigned int i = 0; i < node->mNumChildren; i++)
 	{
-		CalcBoneMatricesRecursive(node->mChildren[i], globalTransform, clip, time, nodeToAnimIndex, model, outMatrices);
+		CalcBoneMatricesRecursive(
+			node->mChildren[i],
+			globalTransform,
+			clip,
+			time,
+			nodeToAnimIndex,
+			model,
+			outMatrices,
+			overrideClip,
+			overrideTime,
+			overrideNodeToAnimIndex,
+			overrideBoneNames,
+			currentOverrideActive
+		);
 	}
 }
 
@@ -301,6 +362,37 @@ void AnimSprite3D::UpdateAnimation(float dt)
 		}
 	}
 
+	// オーバーライド用の時間更新
+	if (m_OverrideAnimState.isActive && m_OverrideAnimState.play)
+	{
+		double overrideTicksPerSecond = m_OverrideAnimState.clip.tps;
+		if (overrideTicksPerSecond <= 0.0)
+		{
+			overrideTicksPerSecond = 24.0;
+		}
+
+		m_OverrideAnimState.time += dt * overrideTicksPerSecond;
+
+		if (m_OverrideAnimState.time >= m_OverrideAnimState.clip.duration)
+		{
+			if (m_OverrideAnimState.loop)
+			{
+				double duration = m_OverrideAnimState.clip.duration;
+				if (duration > 0.0)
+				{
+					m_OverrideAnimState.time = fmod(m_OverrideAnimState.time, duration);
+					if (m_OverrideAnimState.time < 0.0)
+						m_OverrideAnimState.time += duration;
+				}
+			}
+			else
+			{
+				m_OverrideAnimState.time = m_OverrideAnimState.clip.duration;
+				m_OverrideAnimState.play = false;
+			}
+		}
+	}
+
 	UpdateBoneMatrices();
 }
 
@@ -350,6 +442,20 @@ void AnimSprite3D::UpdateBoneMatrices()
 	if (time < 0.0) time = 0.0;
 	if (time > clip.duration) time = clip.duration;
 
+	// 部分アニメーションオーバーライドが有効であれば取得
+	const AnimationClip* pOverrideClip = nullptr;
+	double overrideTime = 0.0;
+	const std::unordered_map<std::string, int>* pOverrideNodeToAnimIndex = nullptr;
+	const std::vector<std::string>* pOverrideBoneNames = nullptr;
+
+	if (m_OverrideAnimState.isActive && m_OverrideAnimState.play)
+	{
+		pOverrideClip = &m_OverrideAnimState.clip;
+		overrideTime = m_OverrideAnimState.time;
+		pOverrideNodeToAnimIndex = &m_OverrideAnimState.nodeToAnimIndex;
+		pOverrideBoneNames = &m_OverrideAnimState.startBoneNames;
+	}
+
 	// ノード階層走査を開始（ルートノードから）
 	CalcBoneMatricesRecursive(
 		m_Model->AiScene->mRootNode,
@@ -357,7 +463,12 @@ void AnimSprite3D::UpdateBoneMatrices()
 		clip, time,
 		m_Model->NodeToAnimIndex,
 		m_Model,
-		m_BoneMatrices
+		m_BoneMatrices,
+		pOverrideClip,
+		overrideTime,
+		pOverrideNodeToAnimIndex,
+		pOverrideBoneNames,
+		false
 	);
 
 	m_BoneMatrices.boneCount = m_Model->TotalBoneCount;
@@ -638,4 +749,77 @@ void AnimSprite3D::UpdateBoneMatricesForState(const AnimationState& state, BoneM
 	);
 
 	outMatrices.boneCount = m_Model->TotalBoneCount;
+}
+
+bool AnimSprite3D::PlayOverrideAnimation(const char* animName, const char* startBoneName, bool loop)
+{
+	std::vector<std::string> bones;
+	if (startBoneName)
+	{
+		bones.push_back(startBoneName);
+	}
+	return PlayOverrideAnimation(animName, bones, loop);
+}
+
+bool AnimSprite3D::PlayOverrideAnimation(const char* animName, const std::vector<std::string>& startBoneNames, bool loop)
+{
+	if (!m_Model || !m_Model->AiScene || !animName || startBoneNames.empty())
+	{
+		return false;
+	}
+
+	aiAnimation* foundAnim = nullptr;
+
+	// 完全一致で検索
+	for (unsigned int i = 0; i < m_Model->AiScene->mNumAnimations; i++)
+	{
+		aiAnimation* aiAnim = m_Model->AiScene->mAnimations[i];
+		if (strcmp(aiAnim->mName.data, animName) == 0)
+		{
+			foundAnim = aiAnim;
+			break;
+		}
+	}
+
+	// 部分一致で検索
+	if (!foundAnim)
+	{
+		for (unsigned int i = 0; i < m_Model->AiScene->mNumAnimations; i++)
+		{
+			aiAnimation* aiAnim = m_Model->AiScene->mAnimations[i];
+			std::string name = aiAnim->mName.data;
+			if (name.find(animName) != std::string::npos)
+			{
+				foundAnim = aiAnim;
+				break;
+			}
+		}
+	}
+
+	if (foundAnim)
+	{
+		m_OverrideAnimState.nodeToAnimIndex.clear();
+		for (unsigned int c = 0; c < foundAnim->mNumChannels; c++)
+		{
+			m_OverrideAnimState.nodeToAnimIndex[foundAnim->mChannels[c]->mNodeName.data] = c;
+		}
+
+		m_OverrideAnimState.clip = ExtractAnimationFromAssimp(foundAnim);
+		m_OverrideAnimState.time = 0.0;
+		m_OverrideAnimState.play = true;
+		m_OverrideAnimState.loop = loop;
+		m_OverrideAnimState.currentAnimName = animName;
+		m_OverrideAnimState.startBoneNames = startBoneNames;
+		m_OverrideAnimState.isActive = true;
+
+		return true;
+	}
+
+	return false;
+}
+
+void AnimSprite3D::StopOverrideAnimation()
+{
+	m_OverrideAnimState.isActive = false;
+	m_OverrideAnimState.play = false;
 }

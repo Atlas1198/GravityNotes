@@ -1,4 +1,4 @@
-﻿#include "debugrigplayer.h"
+#include "debugrigplayer.h"
 #include "light.h"
 #include "sprite2d.h"
 #include "texture.h"
@@ -84,12 +84,22 @@ void DebugRigPlayer_Initialize(void)
 	if (g_pRigPlayer)
 	{
 		g_pRigPlayer->SetAnimationBlendDuration(0.2);
-		unsigned int animCount = g_pRigPlayer->GetAnimationCount();
-		if (animCount > 0)
+		// 初期状態で "run" アニメーションをベース、"attack" アニメーションを右肩と武器ボーンから上書き
+		if (g_pRigPlayer->PlayAnimationByName("run", true))
 		{
-			g_pRigPlayer->PlayAnimationByIndex(0, true);
-			g_pRigPlayer->UpdateAnimation(0.0f);
+			std::vector<std::string> overrideBones = { "BJnt_R_shoulder", "BJnt_sword" };
+			g_pRigPlayer->PlayOverrideAnimation("attack", overrideBones, true);
+			// フォントの初期化は後で行われるが、ここでは再生成功したため後続のテキスト設定で上書きする
 		}
+		else
+		{
+			unsigned int animCount = g_pRigPlayer->GetAnimationCount();
+			if (animCount > 0)
+			{
+				g_pRigPlayer->PlayAnimationByIndex(0, true);
+			}
+		}
+		g_pRigPlayer->UpdateAnimation(0.0f);
 	}
 
 	g_pMainLight = new PointLight(
@@ -122,7 +132,8 @@ void DebugRigPlayer_Initialize(void)
 		22.0f,
 		0.0f,
 		{ 1.0f, 1.0f, 1.0f, 1.0f },
-		"Animation: none"
+		(g_pRigPlayer && g_pRigPlayer->IsOverrideAnimationActive()) ? 
+			"Animation: run (Override: attack @ BJnt_R_shoulder & BJnt_sword)" : "Animation: none"
 	);
 	g_pAnimInfoFont->PreCacheGlyphs();
 }
@@ -145,18 +156,37 @@ void DebugRigPlayer_Update(void)
 	{
 		int animSlot = GetTriggeredAnimationSlot();
 		unsigned int animCount = g_pRigPlayer->GetAnimationCount();
-		if (animSlot >= 0 && (unsigned int)animSlot < animCount)
+		if (animSlot >= 0)
 		{
-			if (g_pRigPlayer->PlayAnimationByIndex((unsigned int)animSlot, true))
+			// キー0 (スロット9) が押された場合は部分アニメーション上書きを設定
+			if (animSlot == 9)
 			{
-				g_pRigPlayer->UpdateAnimation(0.0f);
-				const char* animName = g_pRigPlayer->GetAnimationName((unsigned int)animSlot);
-				if (g_pAnimInfoFont)
+				if (g_pRigPlayer->PlayAnimationByName("run", true))
 				{
-					std::string text = "Animation: ";
-					text += (animName && animName[0] != '\0') ? animName : "<noname>";
-					g_pAnimInfoFont->SetText(text);
-					g_pAnimInfoFont->PreCacheGlyphs();
+					std::vector<std::string> overrideBones = { "BJnt_R_shoulder", "BJnt_sword" };
+					g_pRigPlayer->PlayOverrideAnimation("attack", overrideBones, true);
+					if (g_pAnimInfoFont)
+					{
+						g_pAnimInfoFont->SetText("Animation: run (Override: attack @ BJnt_R_shoulder & BJnt_sword)");
+						g_pAnimInfoFont->PreCacheGlyphs();
+					}
+				}
+			}
+			else if ((unsigned int)animSlot < animCount)
+			{
+				// 通常のアニメーション切り替え時はオーバーライドを停止
+				g_pRigPlayer->StopOverrideAnimation();
+				if (g_pRigPlayer->PlayAnimationByIndex((unsigned int)animSlot, true))
+				{
+					g_pRigPlayer->UpdateAnimation(0.0f);
+					const char* animName = g_pRigPlayer->GetAnimationName((unsigned int)animSlot);
+					if (g_pAnimInfoFont)
+					{
+						std::string text = "Animation: ";
+						text += (animName && animName[0] != '\0') ? animName : "<noname>";
+						g_pAnimInfoFont->SetText(text);
+						g_pAnimInfoFont->PreCacheGlyphs();
+					}
 				}
 			}
 		}

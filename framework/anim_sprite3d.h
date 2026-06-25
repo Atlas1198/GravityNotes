@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include <d3d11.h>
 #include "renderer.h"
@@ -11,6 +11,7 @@ using namespace DirectX;
 #include <DirectXMath.h>
 #include <vector>
 #include <string>
+#include <unordered_map>
 
 // アニメーション用キーフレーム構造体
 struct KeyVec3 { double time; XMFLOAT3 value; };
@@ -56,12 +57,25 @@ struct AnimationBlendState {
 	AnimationState previousState;     // 遷移前のアニメーション状態（スナップショット）
 };
 
+// 部分アニメーション再生（オーバーライド）状態
+struct OverrideAnimationState {
+	bool isActive = false;             // 部分オーバーライド有効フラグ
+	AnimationClip clip;                // 部分オーバーライド用アニメーションクリップ
+	double time = 0.0;                 // 現在の再生位置（単位: ティック）
+	bool play = false;                 // 再生中フラグ
+	bool loop = true;                  // ループフラグ
+	std::string currentAnimName = "";  // 現在再生中の部分アニメーション名
+	std::vector<std::string> startBoneNames; // オーバーライドを開始する親ボーン名のリスト
+	std::unordered_map<std::string, int> nodeToAnimIndex; // アニメーションチャンネルインデックス
+};
+
 class AnimSprite3D : public Sprite3D
 {
 protected:
 	AnimationState m_AnimState;
 	AnimationClip m_AnimClip;
 	AnimationBlendState m_BlendState;  // アニメーション遷移用
+	OverrideAnimationState m_OverrideAnimState; // 部分アニメーションオーバーライド用
 	BoneMatrices m_BoneMatrices;
 	int m_BoneCount = 0;
 
@@ -187,6 +201,13 @@ public:
 
 	// 現在のブレンド状態を取得
 	bool IsAnimationBlending() const { return m_BlendState.isBlending; }
+
+	// 部分アニメーションオーバーライドの再生・制御
+	bool PlayOverrideAnimation(const char* animName, const char* startBoneName, bool loop = true);
+	bool PlayOverrideAnimation(const char* animName, const std::vector<std::string>& startBoneNames, bool loop = true);
+	void StopOverrideAnimation();
+	bool IsOverrideAnimationActive() const { return m_OverrideAnimState.isActive && m_OverrideAnimState.play; }
+	const char* GetOverrideAnimationName() const { return m_OverrideAnimState.currentAnimName.c_str(); }
 
 private:
 	// 内部用：FBX内のアニメーションから AnimationClip を作成・設定
