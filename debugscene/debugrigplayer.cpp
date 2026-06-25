@@ -1,4 +1,4 @@
-#include "debugrigplayer.h"
+﻿#include "debugrigplayer.h"
 #include "light.h"
 #include "sprite2d.h"
 #include "texture.h"
@@ -58,16 +58,16 @@ static int GetTriggeredAnimationSlot()
 void DebugRigPlayer_Initialize(void)
 {
 	g_pRigPlayer = new AnimSprite3D(
-		{ 0.0f, -6.0f, 5.0f },
-		{ 0.1f, 0.1f, 0.1f },
 		{ 0.0f, 0.0f, 0.0f },
-		"asset\\model\\knight_run.fbx",
+		{ 0.01f, 0.01f, 0.01f },
+		{ 0.0f, 0.0f, 0.0f },
+		"asset\\model\\knight_02.fbx",
 		S_LAMBERT
 	);
 
 	g_pFieldNormal = new Sprite3D(
-		{ 0.0f, 0.0f, 0.0f },
-		{ 1.0f, 1.0f, 1.0f },
+		{ 0.0f, 2.0f, 0.0f },
+		{ 4.0f, 4.0f, 4.0f },
 		{ 0.0f, 0.0f, 0.0f },
 		"asset\\model\\field_normal.fbx",
 		S_LAMBERT
@@ -75,9 +75,9 @@ void DebugRigPlayer_Initialize(void)
 
 	g_pBox1x1x1 = new Sprite3D(
 		{ 1.0f, 0.0f, 0.0f },
-		{ 0.1f, 0.1f, 0.1f },
+		{ 1.0f, 1.0f, 1.0f },
 		{ 0.0f, 0.0f, 0.0f },
-		"asset\\model\\knight_run.fbx",
+		"asset\\model\\cube.fbx",
 		S_LAMBERT
 	);
 
