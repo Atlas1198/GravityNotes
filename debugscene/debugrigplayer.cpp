@@ -94,10 +94,10 @@ void DebugRigPlayer_Initialize(void)
 
 	g_pMainLight = new PointLight(
 		TRUE,
-		{ 0.0f, 0.0f, 0.0f, 1.0f },
+		{ 0.0f, 3.0f, 0.0f, 1.0f },
 		{ 1.0f, 1.0f, 1.0f, 1.0f },
 		100.0f,
-		2.0f
+		1.0f
 	);
 	g_pMainLight->Apply(g_AmbientLight);
 
