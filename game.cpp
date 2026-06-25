@@ -21,6 +21,7 @@
 #include "player.h"
 #include "gamecamera.h"
 #include "note_manager.h"
+#include "light_game.h"
 
 using namespace DirectX;
 
@@ -69,6 +70,7 @@ void Game_Initialize(void)
 
   //各種初期化
 	GameCamera::Init();
+	GameLight::Init();
 
 	g_pField = new Field();
 	g_pField->Init();
@@ -159,5 +161,6 @@ void Game_Finalize(void)
 	SAFE_DELETE(g_pField);
 	SAFE_DELETE(g_pPlayer);
 	if (g_pNoteManager) { g_pNoteManager->Finalize(); SAFE_DELETE(g_pNoteManager); }
+	GameLight::Finalize();
 	GameCamera::Finalize();
 }
