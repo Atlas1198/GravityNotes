@@ -8,6 +8,8 @@ float3 CalcNormalMapWorldNormal(PS_IN In)
 {
     float3 baseNormal = normalize(In.Normal.xyz);
     float3 normalSample = g_NormalMap.Sample(g_SamplerState, In.TexCoord).xyz * 2.0f - 1.0f;
+    float3 tangent;
+    float3 bitangent;
 
     float3 dp1 = ddx(In.WorldPosition.xyz);
     float3 dp2 = ddy(In.WorldPosition.xyz);
@@ -15,14 +17,21 @@ float3 CalcNormalMapWorldNormal(PS_IN In)
     float2 duv2 = ddy(In.TexCoord);
 
     float det = duv1.x * duv2.y - duv1.y * duv2.x;
-    if (abs(det) < 0.00001f)
+    if (abs(det) > 0.00000001f)
     {
-        return baseNormal;
+        float invDet = 1.0f / det;
+        tangent = (dp1 * duv2.y - dp2 * duv1.y) * invDet;
+        bitangent = (dp2 * duv1.x - dp1 * duv2.x) * invDet;
+    }
+    else
+    {
+        float3 axis = (abs(baseNormal.y) < 0.99f) ? float3(0.0f, 1.0f, 0.0f) : float3(1.0f, 0.0f, 0.0f);
+        tangent = cross(axis, baseNormal);
+        bitangent = cross(baseNormal, tangent);
     }
 
-    float invDet = 1.0f / det;
-    float3 tangent = normalize((dp1 * duv2.y - dp2 * duv1.y) * invDet);
-    float3 bitangent = normalize((dp2 * duv1.x - dp1 * duv2.x) * invDet);
+    tangent = normalize(tangent);
+    bitangent = normalize(bitangent);
 
     return normalize(
         normalSample.x * tangent +
@@ -51,14 +60,7 @@ void main(in PS_IN In, out float4 outDiffuse : SV_Target)
     }
 
     // スペキュラー反射（ブリン・フォン）
-    float3 L = lightDirection;
-    float3 V = normalize(CameraPosition.xyz - In.WorldPosition.xyz);
-    float3 H = normalize(L + V);
     float specular = 0.0f;
-    if (Light.Enable)
-    {
-        specular = pow(saturate(dot(worldNormal, H)), 50.0) * attenuation;
-    }
 
     // テクスチャサンプリング
     float4 texColor = g_Texture.Sample(g_SamplerState, In.TexCoord);
