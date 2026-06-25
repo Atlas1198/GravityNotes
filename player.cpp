@@ -149,11 +149,23 @@ void Player::Update()
 	UpdateAnimation(dt);
 
 	//ノーツヒット入力
-	if (Keyboard_IsKeyDownTrigger(KK_SPACE) ||
-		Gamepad_GetLeftTrigger(pad) > 0.5f ||
-		Gamepad_GetRightTrigger(pad) > 0.5f)
+	bool isPressed  = Keyboard_IsKeyDownTrigger(KK_SPACE) ||
+					  Gamepad_GetLeftTrigger(pad) > 0.5f   ||
+					  Gamepad_GetRightTrigger(pad) > 0.5f;
+	bool isHolding  = Keyboard_IsKeyDown(KK_SPACE) ||
+					  Gamepad_GetLeftTrigger(pad) > 0.5f   ||
+					  Gamepad_GetRightTrigger(pad) > 0.5f;
+
+	if (isPressed)
 	{
+		// 押した瞬間：Tap・Hold 共通で最近ノーツを判定
 		JUDGE result = m_pNoteManager->Judge(m_LaneIndex, m_GravityFace);
+		// TODO: result に基づいてスコア・コンボ処理
+	}
+	else if (isHolding)
+	{
+		// 長押し中：Hold 子ノートのみ継続判定
+		JUDGE result = m_pNoteManager->JudgeHold(m_LaneIndex, m_GravityFace);
 		// TODO: result に基づいてスコア・コンボ処理
 	}
 

@@ -201,6 +201,7 @@
     <ClCompile Include="framework\sprite2d.cpp" />
     <ClCompile Include="framework\texture.cpp" />
     <ClCompile Include="gamecamera.cpp" />
+    <ClCompile Include="hold_note.cpp" />
     <ClCompile Include="light_game.cpp" />
     <ClCompile Include="mouse.cpp" />
     <ClCompile Include="game.cpp" />
@@ -272,6 +273,7 @@
     <ClInclude Include="framework\stb_truetype.h" />
     <ClInclude Include="framework\texture.h" />
     <ClInclude Include="gamecamera.h" />
+    <ClInclude Include="hold_note.h" />
     <ClInclude Include="light_game.h" />
     <ClInclude Include="mathhelper.h" />
     <ClInclude Include="mouse.h" />

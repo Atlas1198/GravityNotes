@@ -3,7 +3,7 @@
 
 void EnemyNote::Init(int lane, int face, float spawnZ, float speed)
 {
-	NoteBase::Init(lane, face, spawnZ, speed, "asset/model/enban.fbx");
+	NoteBase::Init(lane, face, spawnZ, speed, "asset/model/.fbx");
 	SetColor(1.0f, 0.0f, 0.0f);
 }
 

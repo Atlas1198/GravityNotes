@@ -4,6 +4,7 @@
 #include "enemy_note.h"
 #include "orb_note.h"
 #include "barrier_note.h"
+#include "hold_note.h"
 
 static const float HIT_ZONE_Z     = 3.0f;
 static const float PASSIVE_ZONE_Z = 0.5f; // Orb・Barrier の自動判定Z
@@ -56,26 +57,39 @@ void NoteManager::Update(int playerLane, int playerFace)
 		float hitTime = ev.beat * 60.0f / m_ScoreData.bpm;
 		float initZ   = (hitTime - m_ElapsedTime) * m_NoteSpeed + HIT_ZONE_Z;
 
+		// JSON lane (0=左, 1=中央, 2=右) → ゲーム lane (-1=左, 0=中央, 1=右) に変換
+		int gameLane = ev.lane - 1;
+
 		switch (ev.type)
 		{
 		case ScoreType::Enemy:
 		{
 			EnemyNote* note = new EnemyNote();
-			note->Init(ev.lane, face, initZ, m_NoteSpeed);
+			note->Init(gameLane, face, initZ, m_NoteSpeed);
 			m_Notes.push_back(note);
 			break;
 		}
 		case ScoreType::Orb:
 		{
 			OrbNote* note = new OrbNote();
-			note->Init(ev.lane, face, initZ, m_NoteSpeed);
+			note->Init(gameLane, face, initZ, m_NoteSpeed);
 			m_Notes.push_back(note);
 			break;
 		}
 		case ScoreType::Barrier:
 		{
 			BarrierNote* note = new BarrierNote();
-			note->Init(ev.lane, face, initZ, m_NoteSpeed);
+			note->Init(gameLane, face, initZ, m_NoteSpeed);
+			m_Notes.push_back(note);
+			break;
+		}
+		case ScoreType::Hold:
+		{
+			float endHitTime = ev.endBeat * 60.0f / m_ScoreData.bpm;
+			float endZ       = (endHitTime - m_ElapsedTime) * m_NoteSpeed + HIT_ZONE_Z;
+
+			HoldNote* note = new HoldNote();
+			note->Init(ev.lane, ev.endLane, face, initZ, endZ, m_NoteSpeed, m_ScoreData.bpm);
 			m_Notes.push_back(note);
 			break;
 		}
@@ -119,7 +133,8 @@ void NoteManager::Update(int playerLane, int playerFace)
 				}
 			}
 			// Enemy: 判定窓を通過したら押し逃しMiss
-			else if (z < HIT_ZONE_Z - GOOD_WINDOW)
+			// HoldNote は Update() 内部で子ノートのMissを処理するのでスキップ
+			else if (!dynamic_cast<HoldNote*>(m_Notes[i]) && z < HIT_ZONE_Z - GOOD_WINDOW)
 			{
 				m_Notes[i]->OnMiss();
 			}
@@ -170,5 +185,23 @@ JUDGE NoteManager::Judge(int lane, int face)
 
 	if (bestDist < PERFECT_WINDOW) { bestNote->OnHit(); return JUDGE_PERFECT; }
 	if (bestDist < GOOD_WINDOW)    { bestNote->OnHit(); return JUDGE_GOOD; }
+	return JUDGE_MISS;
+}
+
+// Hold 長押し中の継続判定（HoldNote の子ノートのみ対象）
+JUDGE NoteManager::JudgeHold(int lane, int face)
+{
+	for (NoteBase* note : m_Notes)
+	{
+		HoldNote* hold = dynamic_cast<HoldNote*>(note);
+		if (!hold || !hold->IsActive()) continue;
+
+		EnemyNote* child = hold->GetNearestActiveChild(lane, face);
+		if (!child) continue;
+
+		float dist = fabsf(child->GetPosZ() - HIT_ZONE_Z);
+		if (dist < PERFECT_WINDOW) { child->OnHit(); return JUDGE_PERFECT; }
+		if (dist < GOOD_WINDOW)    { child->OnHit(); return JUDGE_GOOD; }
+	}
 	return JUDGE_MISS;
 }
