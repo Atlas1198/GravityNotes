@@ -1,4 +1,4 @@
-#include "debugrigplayer.h"
+﻿#include "debugrigplayer.h"
 #include "light.h"
 #include "sprite2d.h"
 #include "texture.h"
@@ -69,7 +69,7 @@ void DebugRigPlayer_Initialize(void)
 		{ 0.0f, 2.0f, 0.0f },
 		{ 4.0f, 4.0f, 4.0f },
 		{ 0.0f, 0.0f, 0.0f },
-		"asset\\model\\field_normal.fbx",
+		"asset\\model\\field_allnormal.fbx",
 		S_PHONG
 	);
 

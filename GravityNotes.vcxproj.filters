@@ -121,7 +121,6 @@
     <ClCompile Include="debugscene\debugscene.cpp">
       <Filter>デバッグ</Filter>
     </ClCompile>
-    <ClCompile Include="debug_ui.cpp" />
     <ClCompile Include="gamecamera.cpp">
       <Filter>SCENE_GAME\cpp</Filter>
     </ClCompile>
@@ -145,6 +144,9 @@
     </ClCompile>
     <ClCompile Include="debugscene\debugrigplayer.cpp">
       <Filter>デバッグ</Filter>
+    </ClCompile>
+    <ClCompile Include="debug_ui.cpp">
+      <Filter>SCENE_GAME</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -301,12 +303,9 @@
     <ClInclude Include="scoresummaryloader.h">
       <Filter>譜面読み込み</Filter>
     </ClInclude>
-    <ClInclude Include="debug_params.h" />
-    <ClInclude Include="debug_ui.h" />
     <ClInclude Include="gamecamera.h">
       <Filter>SCENE_GAME\h</Filter>
     </ClInclude>
-    <ClInclude Include="mathhelper.h" />
     <ClInclude Include="note_base.h">
       <Filter>SCENE_GAME\h</Filter>
     </ClInclude>
@@ -327,6 +326,15 @@
     </ClInclude>
     <ClInclude Include="debugscene\debugrigplayer.h">
       <Filter>デバッグ</Filter>
+    </ClInclude>
+    <ClInclude Include="debug_params.h">
+      <Filter>SCENE_GAME</Filter>
+    </ClInclude>
+    <ClInclude Include="debug_ui.h">
+      <Filter>SCENE_GAME</Filter>
+    </ClInclude>
+    <ClInclude Include="mathhelper.h">
+      <Filter>SCENE_GAME</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
