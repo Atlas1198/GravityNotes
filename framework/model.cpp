@@ -24,6 +24,131 @@ static ID3D11VertexShader* g_SkinningVertexShader = nullptr;
 static ID3D11InputLayout* g_SkinningVertexLayout = nullptr;
 static ID3D11Buffer* g_SkinningBoneBuffer = nullptr;
 
+static bool IsEmbeddedTextureRef(const std::string& path)
+{
+	return !path.empty() && path[0] == '*';
+}
+
+static std::string GetDirectoryName(const char* path)
+{
+	std::string value = path ? path : "";
+	size_t slashPos = value.find_last_of("/\\");
+	return (slashPos == std::string::npos) ? "" : value.substr(0, slashPos + 1);
+}
+
+static std::wstring ToWideString(const std::string& value)
+{
+	return std::wstring(value.begin(), value.end());
+}
+
+static std::string ResolveTexturePath(const char* modelPath, const std::string& texturePath)
+{
+	if (texturePath.empty() || IsEmbeddedTextureRef(texturePath))
+	{
+		return texturePath;
+	}
+	if (texturePath.size() > 1 && texturePath[1] == ':')
+	{
+		return texturePath;
+	}
+	if (GetFileAttributesA(texturePath.c_str()) != INVALID_FILE_ATTRIBUTES)
+	{
+		return texturePath;
+	}
+
+	std::string relativePath = GetDirectoryName(modelPath) + texturePath;
+	if (GetFileAttributesA(relativePath.c_str()) != INVALID_FILE_ATTRIBUTES)
+	{
+		return relativePath;
+	}
+
+	return texturePath;
+}
+
+static ID3D11ShaderResourceView* CreateFlatNormalTexture()
+{
+	const unsigned int pixel = 0xFFFF8080; // RGBA = (0.5, 0.5, 1.0, 1.0)
+
+	D3D11_TEXTURE2D_DESC desc = {};
+	desc.Width = 1;
+	desc.Height = 1;
+	desc.MipLevels = 1;
+	desc.ArraySize = 1;
+	desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	desc.SampleDesc.Count = 1;
+	desc.Usage = D3D11_USAGE_DEFAULT;
+	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+
+	D3D11_SUBRESOURCE_DATA data = {};
+	data.pSysMem = &pixel;
+	data.SysMemPitch = sizeof(pixel);
+
+	ID3D11Texture2D* texture = nullptr;
+	if (FAILED(GetDevice()->CreateTexture2D(&desc, &data, &texture)))
+	{
+		return nullptr;
+	}
+
+	ID3D11ShaderResourceView* srv = nullptr;
+	if (FAILED(GetDevice()->CreateShaderResourceView(texture, nullptr, &srv)))
+	{
+		texture->Release();
+		return nullptr;
+	}
+
+	texture->Release();
+	return srv;
+}
+
+static ID3D11ShaderResourceView* FindCachedTexture(MODEL* model, const std::string& texturePath)
+{
+	auto it = model->Texture.find(texturePath);
+	if (it != model->Texture.end())
+	{
+		return it->second;
+	}
+
+	if (IsEmbeddedTextureRef(texturePath))
+	{
+		int texIdx = atoi(texturePath.c_str() + 1);
+		if (texIdx >= 0 && (unsigned int)texIdx < model->AiScene->mNumTextures)
+		{
+			const aiTexture* pTex = model->AiScene->mTextures[texIdx];
+			if (pTex && pTex->mFilename.length > 0)
+			{
+				it = model->Texture.find(pTex->mFilename.data);
+				if (it != model->Texture.end())
+				{
+					return it->second;
+				}
+			}
+		}
+	}
+
+	return nullptr;
+}
+
+static ID3D11ShaderResourceView* LoadNormalTexture(MODEL* model, const char* modelPath, const std::string& texturePath)
+{
+	ID3D11ShaderResourceView* cached = FindCachedTexture(model, texturePath);
+	if (cached)
+	{
+		return cached;
+	}
+	if (IsEmbeddedTextureRef(texturePath))
+	{
+		return nullptr;
+	}
+
+	std::string resolvedPath = ResolveTexturePath(modelPath, texturePath);
+	ID3D11ShaderResourceView* texture = LoadTextureLinear(ToWideString(resolvedPath).c_str());
+	if (texture)
+	{
+		model->Texture[texturePath] = texture;
+	}
+	return texture;
+}
+
 static XMMATRIX QuatToMatrixForNodeAnimation(const XMFLOAT4& q)
 {
 	return XMMatrixRotationQuaternion(XMLoadFloat4(&q));
@@ -140,6 +265,8 @@ static void RenderAnimatedNodeRecursive(
 
 		ID3D11ShaderResourceView* textureToSet = model->MeshMaterials[meshIndex].textureView;
 		GetDeviceContext()->PSSetShaderResources(0, 1, &textureToSet);
+		ID3D11ShaderResourceView* normalTextureToSet = model->MeshMaterials[meshIndex].normalTextureView;
+		GetDeviceContext()->PSSetShaderResources(2, 1, &normalTextureToSet);
 
 		UINT stride = sizeof(Vertex3D);
 		UINT offset = 0;
@@ -326,6 +453,8 @@ void RenderNode(MODEL* model, aiNode* node, XMMATRIX parentTransform, const XMFL
 		// テクスチャをシェーダーに設定(プリキャッシュされた値を使用)
 		ID3D11ShaderResourceView* textureToSet = model->MeshMaterials[meshIndex].textureView;
 		GetDeviceContext()->PSSetShaderResources(0, 1, &textureToSet);
+		ID3D11ShaderResourceView* normalTextureToSet = model->MeshMaterials[meshIndex].normalTextureView;
+		GetDeviceContext()->PSSetShaderResources(2, 1, &normalTextureToSet);
 
 
 		// 頂点バッファ設定
@@ -416,6 +545,8 @@ void RenderNodeAnimation(MODEL* model, aiNode* node, XMMATRIX parentTransform, c
 		// テクスチャをシェーダーに設定
 		ID3D11ShaderResourceView* textureToSet = model->MeshMaterials[meshIndex].textureView;
 		GetDeviceContext()->PSSetShaderResources(0, 1, &textureToSet);
+		ID3D11ShaderResourceView* normalTextureToSet = model->MeshMaterials[meshIndex].normalTextureView;
+		GetDeviceContext()->PSSetShaderResources(2, 1, &normalTextureToSet);
 
 		// 頂点バッファ設定
 		UINT stride = sizeof(Vertex3D);
@@ -644,6 +775,20 @@ MODEL* ModelLoad(const char* FileName)
 			{
 				model->MeshMaterials[m].hasTexture = false;
 				model->MeshMaterials[m].texturePath.clear();
+			}
+
+			aiString normalTexturePath;
+			if (AI_SUCCESS == material->GetTexture(aiTextureType_NORMALS, 0, &normalTexturePath) ||
+				AI_SUCCESS == material->GetTexture(aiTextureType_HEIGHT, 0, &normalTexturePath) ||
+				AI_SUCCESS == material->GetTexture(aiTextureType_NORMAL_CAMERA, 0, &normalTexturePath))
+			{
+				model->MeshMaterials[m].hasNormalTexture = true;
+				model->MeshMaterials[m].normalTexturePath = normalTexturePath.data;
+			}
+			else
+			{
+				model->MeshMaterials[m].hasNormalTexture = false;
+				model->MeshMaterials[m].normalTexturePath.clear();
 			}
 
 			// Blinn/光沢度パラメータも取得可能（参考）
@@ -977,7 +1122,7 @@ MODEL* ModelLoad(const char* FileName)
 
 		if (texture)
 		{
-			model->Texture[aitexture->mFilename.data] = texture;
+			model->Texture[texFileName] = texture;
 		}
 		else
 		{
@@ -989,6 +1134,7 @@ MODEL* ModelLoad(const char* FileName)
 	if (!model->WhiteTexture)
 	{
 	}
+	model->FlatNormalTexture = CreateFlatNormalTexture();
 
 	// メッシュごとのテクスチャをプリキャッシュ
 	for (unsigned int m = 0; m < model->AiScene->mNumMeshes; m++)
@@ -1040,6 +1186,18 @@ MODEL* ModelLoad(const char* FileName)
 		else
 		{
 			model->MeshMaterials[m].textureView = model->WhiteTexture;
+		}
+
+		if (model->MeshMaterials[m].hasNormalTexture)
+		{
+			std::string normalPath = model->MeshMaterials[m].normalTexturePath;
+			ID3D11ShaderResourceView* normalTexture = LoadNormalTexture(model, FileName, normalPath);
+			model->MeshMaterials[m].normalTextureView = normalTexture ? normalTexture : model->FlatNormalTexture;
+			hal::dout << "[Model] Mesh[" << m << "] NormalMap: " << normalPath.c_str() << "\n";
+		}
+		else
+		{
+			model->MeshMaterials[m].normalTextureView = model->FlatNormalTexture;
 		}
 	}
 
@@ -1094,6 +1252,8 @@ void ModelRelease(MODEL* model)
 
 	if (model->WhiteTexture)
 		model->WhiteTexture->Release();
+	if (model->FlatNormalTexture)
+		model->FlatNormalTexture->Release();
 
 	if (model->AiScene)
 		aiReleaseImport(model->AiScene);
@@ -1280,6 +1440,8 @@ void ModelAnimationDraw(MODEL* model, XMFLOAT3 pos, XMFLOAT3 rot, XMFLOAT3 scale
 
 		ID3D11ShaderResourceView* pSRV = model->MeshMaterials[m].textureView;
 		context->PSSetShaderResources(0, 1, &pSRV);
+		ID3D11ShaderResourceView* pNormalSRV = model->MeshMaterials[m].normalTextureView;
+		context->PSSetShaderResources(2, 1, &pNormalSRV);
 
 		UINT stride = sizeof(Vertex3D);
 		UINT offset = 0;
