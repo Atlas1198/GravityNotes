@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <vector>
 #include "note_base.h"
 #include "scoreloader.h"
@@ -28,6 +28,7 @@ public:
 	void  Update(int playerLane, int playerFace);
 	void  Draw();
 	void  Finalize();
+	float GetNoteSpeed() const { return m_NoteSpeed; }
 
 	JUDGE Judge(int lane, int face);
 	JUDGE JudgeHold(int lane, int face); // Hold 長押し中の継続判定

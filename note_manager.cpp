@@ -1,4 +1,4 @@
-﻿#include "define.h"
+#include "define.h"
 #include "game.h"
 #include "note_manager.h"
 #include "enemy_note.h"
@@ -33,7 +33,7 @@ int NoteManager::WallToFace(ScoreWall wall) const
 
 void NoteManager::Init(const std::string& scoreFilePath)
 {
-	m_NoteSpeed      = 20.0f;
+	m_NoteSpeed      = 10.0f;
 	m_SpawnZ         = 80.0f;
 	m_ElapsedTime    = 0.0f;
 	m_NextEventIndex = 0;

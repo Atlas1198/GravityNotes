@@ -82,8 +82,8 @@ void Game_Initialize(void)
 
 	g_pNoteManager = new NoteManager();
 
-	//g_pNoteManager->Init("asset/score/" + GetPlayJson());
-	g_pNoteManager->Init("asset/score/shiningstar.json");
+	g_pNoteManager->Init("asset/score/" + GetPlayJson());
+	//g_pNoteManager->Init("asset/score/shiningstar.json");
 
 	g_pPlayer = new Player();
 	g_pPlayer->Init(g_pNoteManager, g_pStatusManager);
@@ -98,7 +98,7 @@ void Game_Update(void)
 		GameCamera::Update(g_pPlayer);
 		SetCameraPosition(GetCamera()->GetPos());
 
-		g_pField->Update();
+		g_pField->Update(g_pNoteManager->GetNoteSpeed());
 		g_pPlayer->Update();
 		g_pNoteManager->Update(g_pPlayer->GetLaneIndex(), g_pPlayer->GetGravityFace());
 

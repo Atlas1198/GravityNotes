@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "renderer.h"
 #include "define.h"
 using namespace DirectX;
@@ -43,7 +43,7 @@ public:
 		float fov = 45.0f,
 		float aspect = DRAW_SCREEN_WIDTH / DRAW_SCREEN_HEIGHT,
 		float near_ = 0.2f,//アンダーバーは定数回避
-		float far_ = 100.0f)
+		float far_ = 500.0f)
 		:m_Pos(pos), m_AtPos(atpos), m_UpVec(upvec),
 		m_Fov(fov), m_Aspect(aspect), m_Near(near_), m_Far(far_),
 		m_pitch(0.0f), m_yaw(0.0f), m_lastPitch(0.0f), m_lastYaw(0.0f),
