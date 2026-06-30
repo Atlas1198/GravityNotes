@@ -12,7 +12,7 @@
 
 //ゲームシーンにおける定数定義
 constexpr float dt = 1.0f / FPS;
-constexpr float LANE_WIDTH = 2.5f;
+constexpr float LANE_WIDTH = 2.0f;
 
 void Game_Initialize(void);
 void Game_Finalize(void);

@@ -30,4 +30,5 @@ public:
 	void  Finalize();
 
 	JUDGE Judge(int lane, int face);
+	JUDGE JudgeHold(int lane, int face); // Hold 長押し中の継続判定
 };

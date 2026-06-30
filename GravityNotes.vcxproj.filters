@@ -121,6 +121,7 @@
     <ClCompile Include="debugscene\debugscene.cpp">
       <Filter>デバッグ</Filter>
     </ClCompile>
+    <ClCompile Include="debug_ui.cpp" />
     <ClCompile Include="gamecamera.cpp">
       <Filter>SCENE_GAME\cpp</Filter>
     </ClCompile>
@@ -139,14 +140,13 @@
     <ClCompile Include="orb_note.cpp">
       <Filter>SCENE_GAME\cpp</Filter>
     </ClCompile>
+    <ClCompile Include="debugscene\debugrigplayer.cpp" />
     <ClCompile Include="light_game.cpp">
       <Filter>SCENE_GAME\cpp</Filter>
     </ClCompile>
-    <ClCompile Include="debugscene\debugrigplayer.cpp">
-      <Filter>デバッグ</Filter>
-    </ClCompile>
-    <ClCompile Include="debug_ui.cpp">
-      <Filter>SCENE_GAME</Filter>
+    <ClCompile Include="hold_note.cpp" />
+    <ClCompile Include="status_manager.cpp">
+      <Filter>SCENE_GAME\cpp</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -303,9 +303,12 @@
     <ClInclude Include="scoresummaryloader.h">
       <Filter>譜面読み込み</Filter>
     </ClInclude>
+    <ClInclude Include="debug_params.h" />
+    <ClInclude Include="debug_ui.h" />
     <ClInclude Include="gamecamera.h">
       <Filter>SCENE_GAME\h</Filter>
     </ClInclude>
+    <ClInclude Include="mathhelper.h" />
     <ClInclude Include="note_base.h">
       <Filter>SCENE_GAME\h</Filter>
     </ClInclude>
@@ -321,20 +324,13 @@
     <ClInclude Include="orb_note.h">
       <Filter>SCENE_GAME\h</Filter>
     </ClInclude>
+    <ClInclude Include="debugscene\debugrigplayer.h" />
     <ClInclude Include="light_game.h">
       <Filter>SCENE_GAME\h</Filter>
     </ClInclude>
-    <ClInclude Include="debugscene\debugrigplayer.h">
-      <Filter>デバッグ</Filter>
-    </ClInclude>
-    <ClInclude Include="debug_params.h">
-      <Filter>SCENE_GAME</Filter>
-    </ClInclude>
-    <ClInclude Include="debug_ui.h">
-      <Filter>SCENE_GAME</Filter>
-    </ClInclude>
-    <ClInclude Include="mathhelper.h">
-      <Filter>SCENE_GAME</Filter>
+    <ClInclude Include="hold_note.h" />
+    <ClInclude Include="status_manager.h">
+      <Filter>SCENE_GAME\h</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

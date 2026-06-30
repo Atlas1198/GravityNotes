@@ -30,7 +30,13 @@ void NoteBase::Init(int lane, int face, float spawnZ, float speed, const char* m
 	case 3: pos.x =  NOTE_TUNNEL_HALF;  pos.y =  laneVal;          break;
 	}
 	SetPos(pos);
-	SetRot({ 0.0f, 0.0f, 0.0f });
+	switch (face)
+	{
+	case 0: SetRot({ 0.0f, 0.0f,   0.0f }); break; // FLOOR
+	case 1: SetRot({ 0.0f, 0.0f, -90.0f }); break; // LEFT_WALL
+	case 2: SetRot({ 0.0f, 0.0f, 180.0f }); break; // CEILING
+	case 3: SetRot({ 0.0f, 0.0f,  90.0f }); break; // RIGHT_WALL
+	}
 	SetSize({ 1.0f, 1.0f, 1.0f });
 }
 

@@ -6,13 +6,15 @@
 
 #include "game.h"
 #include "note_manager.h"
+#include "status_manager.h"
 #include "player.h"
 
-void Player::Init(NoteManager* nm)
+void Player::Init(NoteManager* nm, StatusManager* sm)
 {
 	m_Scale = { 0.02f,0.02f,0.02f };
 
-	m_pNoteManager = nm;
+	m_pNoteManager   = nm;
+	m_pStatusManager = sm;
 	m_GravityFace = FACE::FACE_FLOOR;
 	m_LaneIndex = LANE_CENTER;
 	m_TargetLaneIndex = LANE_CENTER;
@@ -149,12 +151,24 @@ void Player::Update()
 	UpdateAnimation(dt);
 
 	//ノーツヒット入力
-	if (Keyboard_IsKeyDownTrigger(KK_SPACE) ||
-		Gamepad_GetLeftTrigger(pad) > 0.5f ||
-		Gamepad_GetRightTrigger(pad) > 0.5f)
+	bool isPressed  = Keyboard_IsKeyDownTrigger(KK_SPACE) ||
+					  Gamepad_GetLeftTrigger(pad) > 0.5f   ||
+					  Gamepad_GetRightTrigger(pad) > 0.5f;
+	bool isHolding  = Keyboard_IsKeyDown(KK_SPACE) ||
+					  Gamepad_GetLeftTrigger(pad) > 0.5f   ||
+					  Gamepad_GetRightTrigger(pad) > 0.5f;
+
+	if (isPressed)
 	{
+		// 押した瞬間：Tap・Hold 共通で最近ノーツを判定
 		JUDGE result = m_pNoteManager->Judge(m_LaneIndex, m_GravityFace);
-		// TODO: result に基づいてスコア・コンボ処理
+		m_pStatusManager->OnJudge(result);
+	}
+	else if (isHolding)
+	{
+		// 長押し中：Hold 子ノートのみ継続判定
+		JUDGE result = m_pNoteManager->JudgeHold(m_LaneIndex, m_GravityFace);
+		m_pStatusManager->OnJudgeHold(result);
 	}
 
 }
