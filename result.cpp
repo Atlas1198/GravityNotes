@@ -18,7 +18,8 @@
 using namespace DirectX;
 
 // ①インスタンス、ポインタ用意
-static Sprite2D* g_pResultSprite = nullptr;
+static Sprite2D* g_pResultBG = nullptr;
+static Sprite2D* g_pResultBackUI = nullptr;
 static ClickFont* g_pChangeSceneText = nullptr;
 static ScoreSummary g_ResultScoreSummary;
 static RESULT g_Result;
@@ -53,19 +54,23 @@ void Result_Initialize(void)
 	g_Result.accurary = 99.99f;
 	g_Result.rank = "SSS";
 
-	g_ResultScoreSummary.musicname = "シャイニングスター";
-	g_ResultScoreSummary.musicauthor = "森田 交一";
-	g_ResultScoreSummary.difficulty = 5.0f;
-	g_ResultScoreSummary.scoreauthor = "北側 歩";
+	g_pResultBG = new Sprite2D(
+		{ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 },					//位置
+		{ SCREEN_WIDTH, SCREEN_HEIGHT },							//サイズ
+		0.0f,														//回転（度）
+		{ 1.0f, 1.0f, 1.0f, 1.0f },									//RGBA
+		BLENDSTATE_ALFA,											//BlendState
+		L"asset\\texture\\Result_BG_kari.png"						//テクスチャパス
+	);
 
-	//g_pResultSprite = new Sprite2D(
-	//	{ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 3 },					//位置
-	//	{ 300.0f, 300.0f },											//サイズ
-	//	0.0f,														//回転（度）
-	//	{ 1.0f, 1.0f, 1.0f, 1.0f },									//RGBA
-	//	BLENDSTATE_NONE,											//BlendState
-	//	L"asset\\texture\\tex.png"									//テクスチャパス
-	//);
+	g_pResultBackUI = new Sprite2D(
+		{ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 },					//位置
+		{ SCREEN_WIDTH, SCREEN_HEIGHT },							//サイズ
+		0.0f,														//回転（度）
+		{ 1.0f, 1.0f, 1.0f, 0.5f },									//RGBA
+		BLENDSTATE_ALFA,											//BlendState
+		L"asset\\texture\\Result_Back_UI.png"						//テクスチャパス
+	);
 
 	g_pChangeSceneText = new ClickFont(
 		{ SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 4.0f * 3 },			//位置
@@ -73,7 +78,7 @@ void Result_Initialize(void)
 		0.0f,														//回転（度）
 		{ 1.0f, 1.0f, 1.0f, 1.0f },									//通常色
 		{ 1.0f, 0.8f, 0.2f, 1.0f },									//ホバー色
-		"[result.cpp] タイトルへ"										//テキスト
+		"曲選択へ"									//テキスト
 	);
 
 	g_pDetailText = new MultiLineFontRenderer(
@@ -221,14 +226,15 @@ void Result_Update(void)
 	if (g_pChangeSceneText->IsClick())
 	{
 		SetPlayJson("");//resultを抜けるときに初期化
-		SetSceneFade(SCENE_TITLE);
+		SetSceneFade(SCENE_STAGESELECT);
 	}
 }
 
 void Result_Draw(void)
 {
 	//④描画
-	//g_pResultSprite->Draw();
+	g_pResultBG->Draw();
+	g_pResultBackUI->Draw();
 	g_pChangeSceneText->Draw();
 	g_pDetailText->Draw();
 	g_pScoreText->Draw();
@@ -239,7 +245,8 @@ void Result_Draw(void)
 void Result_Finalize(void)
 {
 	//⑤解放
-	//SAFE_DELETE(g_pResultSprite);
+	SAFE_DELETE(g_pResultBG);
+	SAFE_DELETE(g_pResultBackUI);
 	SAFE_DELETE(g_pChangeSceneText);
 	SAFE_DELETE(g_pDetailText);
 	SAFE_DELETE(g_pScoreText);
