@@ -13,6 +13,10 @@ struct DebugParams
     float laneWidth         = 2.0f;   // レーン間の距離 (units)
     float gravityTransTime  = 0.3f;   // 重力移動にかかる時間 (sec)
 
+    // スコア
+    int   baseScore         = 100;    // 1ヒットあたりの基本スコア
+    float comboMultiplier   = 0.1f;   // コンボ数 × この値が倍率に加算（1.0 + combo * multiplier）
+
     static DebugParams& Get()
     {
         static DebugParams s;
