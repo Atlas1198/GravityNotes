@@ -87,13 +87,13 @@ void Result_Initialize(void)
 		{ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 },					//位置
 		{ SCREEN_WIDTH, SCREEN_HEIGHT },							//サイズ
 		0.0f,														//回転（度）
-		{ 1.0f, 1.0f, 1.0f, 0.5f },									//RGBA
+		{ 1.0f, 1.0f, 1.0f, 0.8f },									//RGBA
 		BLENDSTATE_ALFA,											//BlendState
 		L"asset\\texture\\Result_Back_UI.png"						//テクスチャパス
 	);
 
 	g_pChangeSceneText = new ClickFont(
-		{ SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 4.0f * 3 },			//位置
+		{ SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT * 5 / 6 },			//位置
 		50.0f,														//文字サイズ
 		0.0f,														//回転（度）
 		{ 1.0f, 1.0f, 1.0f, 1.0f },									//通常色
@@ -113,10 +113,10 @@ void Result_Initialize(void)
 	float lineSpacing = 60.0f; // 行間隔
 
 	g_ResultRows[0] = { "SCORE :",    "", g_Result.score,                   startX,  startY };
-	g_ResultRows[1] = { "HIT数 :",    "", g_Result.success + g_Result.miss, startX +25.0f,  startY + lineSpacing };
-	g_ResultRows[2] = { "MAXCOMBO :", "", g_Result.maxCombo,                startX +45.0f,	 startY + lineSpacing * 2 };
-	g_ResultRows[3] = { "SUCCESS :",  "", g_Result.success,                 startX +65.0f,  startY + lineSpacing * 3 };
-	g_ResultRows[4] = { "MISS :",     "", g_Result.miss,                    startX +85.0f,	 startY + lineSpacing * 4 };
+	g_ResultRows[1] = { "HIT数 :",    "", g_Result.success + g_Result.miss, startX ,  startY + lineSpacing };
+	g_ResultRows[2] = { "MAXCOMBO :", "", g_Result.maxCombo,                startX ,	 startY + lineSpacing * 2 };
+	g_ResultRows[3] = { "SUCCESS :",  "", g_Result.success,                 startX ,  startY + lineSpacing * 3 };
+	g_ResultRows[4] = { "MISS :",     "", g_Result.miss,                    startX ,	 startY + lineSpacing * 4 };
 
 
 	// 難易度の小数点以下1桁まで表示するためのstringstreamを使用
@@ -134,8 +134,8 @@ void Result_Initialize(void)
 	);
 
 	g_pRankTextre = new Sprite2D(
-		{ SCREEN_WIDTH * 4 / 5 , SCREEN_HEIGHT * 4 / 5 },			//位置
-		{ 200, 200 },												//サイズ
+		{ SCREEN_WIDTH / 2 + 350.0f , SCREEN_HEIGHT / 3 + 100.0f },			//位置
+		{ 500, 500 },												//サイズ
 		0.0f,														//回転（度）
 		{ 1.0f, 1.0f, 1.0f, 1.0f },									//RGBA
 		BLENDSTATE_ALFA,											//BlendState
@@ -161,7 +161,7 @@ void Result_Update(void)
 
 		// 初期座標リセット
 		for (int i = 0; i < MAX_ROWS; ++i) {
-			g_ResultRows[i].currentX = 100.0f; // startX
+			g_ResultRows[i].currentX = 100.0f ; // startX
 			g_ResultRows[i].valueStr = ""; // 表示リセット
 		}
 	}    
@@ -223,14 +223,14 @@ void Result_Draw(void)
 
 			// ラベルの開始時間を過ぎていたら描画
 			if (g_ResultSceneTimer >= labelStartTime) {
-				g_pLabelFont->SetPos({ g_ResultRows[i].currentX, g_ResultRows[i].y });
+				g_pLabelFont->SetPos({ g_ResultRows[i].currentX + (i * 20.0f), g_ResultRows[i].y });
 				g_pLabelFont->SetText(g_ResultRows[i].label);
 				g_pLabelFont->Draw();
 			}
 
 			// valueStr が空でなければ数値を描画（Update側で制御済み）
 			if (!g_ResultRows[i].valueStr.empty()) {
-				g_pValueFont->SetPos({ g_ResultRows[i].currentX + 260.0f, g_ResultRows[i].y + 5.0f });
+				g_pValueFont->SetPos({ g_ResultRows[i].currentX + 260.0f + (i * 20.0f), g_ResultRows[i].y});
 				g_pValueFont->SetText(g_ResultRows[i].valueStr);
 				g_pValueFont->Draw();
 			}
