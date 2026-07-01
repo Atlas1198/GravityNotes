@@ -13,6 +13,7 @@
 #include "scoresummaryloader.h"
 #include "scene.h"
 #include <cstdio>
+#include <cmath>
 #include <vector>
 #include <string>
 
@@ -308,7 +309,21 @@ void StageSelect_Initialize(void)
 // ==========================================
 void StageSelect_Update(void)
 {
-	g_ScrollOffset += (g_ScrollTarget - g_ScrollOffset) * 0.15f;
+	// Di chuyển với TỐC ĐỘ KHÔNG ĐỔI (constant speed) thay vì lerp theo %.
+	// Lý do: lerp theo % (offset += (target-offset)*0.15f) càng gần đích càng chậm dần
+	// theo cấp số nhân => đĩa nằm ở rìa danh sách (offset gần chạm biên wrap 0 hoặc
+	// MAX_STAGES) sẽ "khựng/đứng hình" hàng chục frame gần biên rồi mới đột ngột nhảy
+	// (snap) khi cuối cùng cũng chạm ngưỡng. Dùng bước cố định giúp luôn chạm ĐÚNG target
+	// trong một số frame cố định, chuyển động đều tay, không còn hiện tượng khựng-rồi-nhảy.
+	const float SCROLL_STEP = 1.0f / 25.0f; // hoàn thành 1 bậc trong ~25 frame (đồng bộ với thời gian nhấc/hạ kim)
+	if (g_ScrollOffset < g_ScrollTarget) {
+		g_ScrollOffset += SCROLL_STEP;
+		if (g_ScrollOffset > g_ScrollTarget) g_ScrollOffset = g_ScrollTarget;
+	}
+	else if (g_ScrollOffset > g_ScrollTarget) {
+		g_ScrollOffset -= SCROLL_STEP;
+		if (g_ScrollOffset < g_ScrollTarget) g_ScrollOffset = g_ScrollTarget;
+	}
 
 	float anchorY = 70.0f;
 	float spacing = 130.0f;
@@ -413,7 +428,7 @@ void StageSelect_Update(void)
 		if (g_ToneArmAngle <= 0.0f) {
 			g_CurrentState = STATE_PLAYING;
 			// ✅ Đồng bộ g_SelectedScoreIndex theo g_SelectedStage TRƯỚC khi gọi Update/Refresh
-		    // Tìm score entry đầu tiên có vinylIndex trùng với Stage vừa đổi sang
+			// Tìm score entry đầu tiên có vinylIndex trùng với Stage vừa đổi sang
 			for (int i = 0; i < static_cast<int>(g_ScoreSummaries.size()); i++) {
 				if (g_ScoreSummaries[i].vinylIndex == g_SelectedStage) {
 					g_SelectedScoreIndex = i;
@@ -473,35 +488,36 @@ void StageSelect_Update(void)
 	for (int i = 0; i < MAX_STAGES; i++)
 	{
 		// Dùng g_ScrollOffset thay vì g_SelectedStage để tính vị trí
-    float offset = (float)i - g_ScrollOffset;
+		float offset = (float)i - g_ScrollOffset;
 
-    // Wrap vòng tròn dạng float
-    while (offset < 0.0f)          offset += (float)MAX_STAGES;
-    while (offset >= (float)MAX_STAGES) offset -= (float)MAX_STAGES;
+		// Wrap vòng tròn dạng float
+		while (offset < 0.0f)          offset += (float)MAX_STAGES;
+		while (offset >= (float)MAX_STAGES) offset -= (float)MAX_STAGES;
 
-    float posX = 90.0f;
-    float posY = anchorY + (offset * spacing);
+		float posX = 90.0f;
+		float posY = anchorY + (offset * spacing);
 
-    g_pStageDisks[i]->SetPos({ posX, posY });
-    g_pStageButtons[i]->SetPos({ posX, posY });
+		g_pStageDisks[i]->SetPos({ posX, posY });
+		g_pStageButtons[i]->SetPos({ posX, posY });
 
-    // Đĩa đang chọn = đĩa gần offset 0 nhất
-    if (i == g_SelectedStage) {
-        g_pStageDisks[i]->SetRotation(g_VinylRotation * 2.0f);
-    } else {
-        g_pStageDisks[i]->SetRotation(0.0f);
-    }
+		// Đĩa đang chọn = đĩa gần offset 0 nhất
+		if (i == g_SelectedStage) {
+			g_pStageDisks[i]->SetRotation(g_VinylRotation * 2.0f);
+		}
+		else {
+			g_pStageDisks[i]->SetRotation(0.0f);
+		}
 
-    if (g_pStageButtons[i]->IsClick() && g_CurrentState == STATE_PLAYING && g_SelectedStage != i)
-    {
-        g_NextStage = i;
-        g_CurrentState = STATE_LIFTING_ARM;
-        if (g_pCurrentBgmData != nullptr) {
-            StopSound(g_pCurrentBgmData);
-        }
-    }
+		if (g_pStageButtons[i]->IsClick() && g_CurrentState == STATE_PLAYING && g_SelectedStage != i)
+		{
+			g_NextStage = i;
+			g_CurrentState = STATE_LIFTING_ARM;
+			if (g_pCurrentBgmData != nullptr) {
+				StopSound(g_pCurrentBgmData);
+			}
+		}
 	}
-	
+
 
 	// --- PHẦN 5: XÁC NHẬN VÀO GAME (ENTER / SPACE) ---
 	// Chỉ cho phép chuyển cảnh vào game khi đĩa đang phát nhạc ổn định, tuân thủ nghiêm ngặt thứ tự SetPlayJson -> SetSceneFade
