@@ -21,6 +21,8 @@
 #include "player.h"
 #include "gamecamera.h"
 #include "note_manager.h"
+#include "light_game.h"
+#include "status_manager.h"
 
 using namespace DirectX;
 
@@ -29,9 +31,10 @@ static Sprite2D* g_pGameSprite = nullptr;
 static ClickFont* g_pChangeSceneText = nullptr;
 static FontRenderer* g_pSelectedJsonText = nullptr;
 
-static Field* g_pField=nullptr;
-static Player* g_pPlayer = nullptr;
-static NoteManager* g_pNoteManager = nullptr;
+static Field*         g_pField         = nullptr;
+static Player*        g_pPlayer        = nullptr;
+static NoteManager*   g_pNoteManager   = nullptr;
+static StatusManager* g_pStatusManager = nullptr;
 
 void Game_Initialize(void)
 {
@@ -69,16 +72,21 @@ void Game_Initialize(void)
 
   //各種初期化
 	GameCamera::Init();
+	GameLight::Init();
 
 	g_pField = new Field();
 	g_pField->Init();
 
+	g_pStatusManager = new StatusManager();
+	g_pStatusManager->Init();
+
 	g_pNoteManager = new NoteManager();
 
 	g_pNoteManager->Init("asset/score/" + GetPlayJson());
+	//g_pNoteManager->Init("asset/score/shiningstar.json");
 
 	g_pPlayer = new Player();
-	g_pPlayer->Init(g_pNoteManager);
+	g_pPlayer->Init(g_pNoteManager, g_pStatusManager);
 
 	//UnLockMouse();//マウスアンロック
 }
@@ -90,7 +98,7 @@ void Game_Update(void)
 		GameCamera::Update(g_pPlayer);
 		SetCameraPosition(GetCamera()->GetPos());
 
-		g_pField->Update();
+		g_pField->Update(g_pNoteManager->GetNoteSpeed());
 		g_pPlayer->Update();
 		g_pNoteManager->Update(g_pPlayer->GetLaneIndex(), g_pPlayer->GetGravityFace());
 
@@ -158,6 +166,8 @@ void Game_Finalize(void)
 
 	SAFE_DELETE(g_pField);
 	SAFE_DELETE(g_pPlayer);
-	if (g_pNoteManager) { g_pNoteManager->Finalize(); SAFE_DELETE(g_pNoteManager); }
+	if (g_pNoteManager)   { g_pNoteManager->Finalize();   SAFE_DELETE(g_pNoteManager); }
+	if (g_pStatusManager) { g_pStatusManager->Finalize(); SAFE_DELETE(g_pStatusManager); }
+	GameLight::Finalize();
 	GameCamera::Finalize();
 }

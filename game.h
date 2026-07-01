@@ -11,8 +11,8 @@
 #include "define.h"
 
 //ゲームシーンにおける定数定義
-#define dt	(1.0f/FPS)//
-#define LANE_WIDTH	(2.5f)//レーンの間隔
+constexpr float dt = 1.0f / FPS;
+constexpr float LANE_WIDTH = 2.0f;
 
 void Game_Initialize(void);
 void Game_Finalize(void);

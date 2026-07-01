@@ -1,9 +1,10 @@
 ﻿#pragma once
 #include "renderer.h"
-#include "sprite3d.h"
+#include "anim_sprite3d.h"
 #include "mathhelper.h"
 
-class NoteManager;//前方宣言
+class NoteManager;    // 前方宣言
+class StatusManager;  // 前方宣言
 
 enum LANE {
 	LANE_LEFT = -1,	//=DOWN
@@ -18,7 +19,7 @@ enum FACE {
 	FACE_RIGHT_WALL
 };
 
-class Player :public Sprite3D
+class Player :public AnimSprite3D
 {
 private:
 	int m_LaneIndex;//現在のレーン
@@ -37,15 +38,16 @@ private:
 	XMFLOAT3 m_GravityStartPos;
 	XMFLOAT3 m_GravityStartRot;
 
-	NoteManager* m_pNoteManager;
+	NoteManager*   m_pNoteManager;
+	StatusManager* m_pStatusManager;
 
 public:
 	// デフォルトコンストラクタを追加し、基底 Sprite3D のコンストラクタを呼ぶ
 	Player()
-		: Sprite3D(XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f),
-			"asset/model/kirbyanim.fbx", S_UNLIT)
+		: AnimSprite3D(XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f),
+			"asset/model/knight_run.fbx", S_PHONG)
 	{}
-	void Init(NoteManager* nm);
+	void Init(NoteManager* nm, StatusManager* sm);
 	void Update();
 	void Draw();
 	void Finalize();

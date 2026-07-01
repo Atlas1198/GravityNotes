@@ -1,35 +1,70 @@
-﻿#include "field.h"
+#include "field.h"
 #include "shadermanager.h"
 #include "define.h"
+#include "game.h"
+#include <float.h>
 
 using namespace DirectX;
 
 void Field::Init() {
-	const XMFLOAT3 pos   = { 0.0f, 0.0f, 10.0f };
-	const XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f };
-	const XMFLOAT3 rot   = { 0.0f, 0.0f, 0.0f };
-	const XMFLOAT3 rotFlipped = { 0.0f, XM_PI, 0.0f };
+	m_Scale = { 5.0f,5.0f,5.0f };
+	m_Model = ModelLoad("asset/model/field_allnormal.fbx");
+	m_ShaderType = S_LAMBERT;
 
-	m_Floor = new Sprite3D(pos, scale, rot, "asset/model/Floor_model.fbx", S_UNLIT);
-	m_WallLeft = new Sprite3D(pos, scale, rot, "asset/model/Wall_model.fbx", S_UNLIT);
-	m_WallRight = new Sprite3D(pos, scale, rotFlipped, "asset/model/Wall_model.fbx", S_UNLIT);
-	m_Ceiling = new Sprite3D(pos, scale, rot, "asset/model/Ceiling_model.fbx", S_LAMBERT);
+	// Sprite3Dのメンバ変数を初期化
+	m_ModelSize = ModelGetSize(m_Model);
+	m_OriginalColor = ModelGetAverageMaterialColor(m_Model);
+
+	float L = GetDisplaySize().z;
+	if (L <= 0.1f) {
+		L = 20.0f; // フォールバック値
+	}
+
+	for (int i = 0; i < NUM_FIELDS; ++i) {
+		m_ScrollPos[i] = (float)i * L;
+	}
 }
 
-void Field::Update(){
+void Field::Update(float speed){
+	float L = GetDisplaySize().z;
+	if (L <= 0.1f) {
+		L = 20.0f; // フォールバック値
+	}
 
+	// すべてのフィールドを手前にスクロール
+	for (int i = 0; i < NUM_FIELDS; ++i) {
+		m_ScrollPos[i] -= speed * dt;
+	}
+
+	// 画角から見切れたらまた奥に戻す
+	// カメラのZ座標は -8.0f。手前見切れ境界を -10.0f とする。
+	// モデルの中心が m_ScrollPos[i] で、長さが L なので、モデルの奥側端は m_ScrollPos[i] + L / 2.0f
+	float limitZ = -10.0f;
+	for (int i = 0; i < NUM_FIELDS; ++i) {
+		if (m_ScrollPos[i] + L / 2.0f < limitZ) {
+			// 最も奥にあるモデルのZ座標を探す
+			float maxZ = -FLT_MAX;
+			for (int j = 0; j < NUM_FIELDS; ++j) {
+				if (m_ScrollPos[j] > maxZ) {
+					maxZ = m_ScrollPos[j];
+				}
+			}
+			// その奥に連結して配置
+			m_ScrollPos[i] = maxZ + L;
+		}
+	}
 }
 
 void Field::Draw() {
-	if (m_Floor) m_Floor->Draw();
-	if (m_WallLeft) m_WallLeft->Draw();
-	if (m_WallRight) m_WallRight->Draw();
-	if (m_Ceiling) m_Ceiling->Draw();
+	XMFLOAT3 originalPos = GetPos();
+	for (int i = 0; i < NUM_FIELDS; ++i) {
+		XMFLOAT3 tempPos = originalPos;
+		tempPos.z = m_ScrollPos[i];
+		SetPos(tempPos);
+		Sprite3D::Draw();
+	}
+	SetPos(originalPos);
 }
 
 void Field::Finalize() {
-	delete m_Floor; m_Floor = nullptr;
-	delete m_WallLeft; m_WallLeft = nullptr;
-	delete m_WallRight; m_WallRight = nullptr;
-	delete m_Ceiling; m_Ceiling = nullptr;
 }

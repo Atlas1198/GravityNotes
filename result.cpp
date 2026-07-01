@@ -12,20 +12,27 @@
 #include "scoresummaryloader.h"
 #include "scene.h"
 #include "MultiLineFontRenderer.h"
+#include <sstream>
+#include <iomanip>
 
 using namespace DirectX;
 
 // ①インスタンス、ポインタ用意
-static Sprite2D* g_pResultSprite = nullptr;
+static Sprite2D* g_pResultBG = nullptr;
+static Sprite2D* g_pResultBackUI = nullptr;
 static ClickFont* g_pChangeSceneText = nullptr;
 static ScoreSummary g_ResultScoreSummary;
 static RESULT g_Result;
 static MultiLineFontRenderer* g_pDetailText = nullptr;
 static MultiLineFontRenderer* g_pScoreText = nullptr;
+static MultiLineFontRenderer* g_pMusicText = nullptr;
+static MultiLineFontRenderer* g_pRunkText = nullptr;
+
 static float g_CountUpTimer = 0.0f;
 static const float COUNT_UP_MAX_TIME = 90.0f; // 90フレーム(1.5秒)でカウントアップ
-
-	
+static float g_ResultSceneTimer = 0.0f;
+static const float RANK_ANIM_START_TIME = 120.0f; // 120フレーム(2秒)
+static const float RANK_ANIM_DURATION = 30.0f; // 30フレーム(0.5秒)
 
 void Result_Initialize(void)
 {
@@ -39,6 +46,7 @@ void Result_Initialize(void)
 	//デバッグ出力（構造体の中身をいい感じに表示すればOK）
 	hal::dout << "[result.cpp]" << g_ResultScoreSummary.musicname << std::endl;
 	hal::dout << "[result.cpp]" << g_Result.maxCombo << std::endl;
+
 	g_Result.score += 100000; //デバッグ用にスコアを加算
 	g_Result.success += 100000;
 	g_Result.maxCombo += 100000;
@@ -46,14 +54,23 @@ void Result_Initialize(void)
 	g_Result.accurary = 99.99f;
 	g_Result.rank = "SSS";
 
-	//g_pResultSprite = new Sprite2D(
-	//	{ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 3 },					//位置
-	//	{ 300.0f, 300.0f },											//サイズ
-	//	0.0f,														//回転（度）
-	//	{ 1.0f, 1.0f, 1.0f, 1.0f },									//RGBA
-	//	BLENDSTATE_NONE,											//BlendState
-	//	L"asset\\texture\\tex.png"									//テクスチャパス
-	//);
+	g_pResultBG = new Sprite2D(
+		{ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 },					//位置
+		{ SCREEN_WIDTH, SCREEN_HEIGHT },							//サイズ
+		0.0f,														//回転（度）
+		{ 1.0f, 1.0f, 1.0f, 1.0f },									//RGBA
+		BLENDSTATE_ALFA,											//BlendState
+		L"asset\\texture\\Result_BG_kari.png"						//テクスチャパス
+	);
+
+	g_pResultBackUI = new Sprite2D(
+		{ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 },					//位置
+		{ SCREEN_WIDTH, SCREEN_HEIGHT },							//サイズ
+		0.0f,														//回転（度）
+		{ 1.0f, 1.0f, 1.0f, 0.5f },									//RGBA
+		BLENDSTATE_ALFA,											//BlendState
+		L"asset\\texture\\Result_Back_UI.png"						//テクスチャパス
+	);
 
 	g_pChangeSceneText = new ClickFont(
 		{ SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 4.0f * 3 },			//位置
@@ -61,11 +78,11 @@ void Result_Initialize(void)
 		0.0f,														//回転（度）
 		{ 1.0f, 1.0f, 1.0f, 1.0f },									//通常色
 		{ 1.0f, 0.8f, 0.2f, 1.0f },									//ホバー色
-		"[result.cpp] タイトルへ"										//テキスト
+		"曲選択へ"									//テキスト
 	);
 
 	g_pDetailText = new MultiLineFontRenderer(
-		{ SCREEN_WIDTH / 5, SCREEN_HEIGHT / 6 },											 // 表示基準位置
+		{ SCREEN_WIDTH / 5, SCREEN_HEIGHT / 3 },											 // 表示基準位置
 		30.0f,																				 // フォントサイズ
 		0.0f,																				 // 回転角（度）
 		{ 1.0f, 1.0f, 0.0f, 1.0f },															 // 文字色 RGBA
@@ -75,7 +92,7 @@ void Result_Initialize(void)
 	);
 
 	g_pScoreText = new MultiLineFontRenderer(
-		{ SCREEN_WIDTH / 3, SCREEN_HEIGHT / 6  },            
+		{ SCREEN_WIDTH / 3, SCREEN_HEIGHT / 3  },            
 		30.0f,												
 		0.0f,												
 		{ 1.0f, 1.0f, 0.0f, 1.0f },							
@@ -84,7 +101,32 @@ void Result_Initialize(void)
 		TA_START
 	);
 
+	// 難易度の小数点以下1桁まで表示するためのstringstreamを使用
+	std::stringstream ss;
+	ss << std::fixed << std::setprecision(1) << g_ResultScoreSummary.difficulty;
+
+	g_pMusicText = new MultiLineFontRenderer(
+		{ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 12 },
+		30.0f,
+		0.0f,
+		{ 1.0f, 1.0f, 0.0f, 1.0f },
+		g_ResultScoreSummary.musicname + "\n" + g_ResultScoreSummary.musicauthor + "\n" + g_ResultScoreSummary.scoreauthor + "\n難易度 : " + ss.str(),
+		1.5f,												// 行間倍率
+		TA_MIDDLE
+	);
+
+	g_pRunkText = new MultiLineFontRenderer(
+		{ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 },
+		30.0f,
+		0.0f,
+		{ 1.0f, 1.0f, 0.0f, 1.0f },
+		g_Result.rank,
+		1.5f,												// 行間倍率
+		TA_MIDDLE
+	);
+
 	g_CountUpTimer = 0.0f;
+	g_ResultSceneTimer = 0.0f;
 
 	UnLockMouse();//マウスアンロック
 }
@@ -93,6 +135,15 @@ void Result_Update(void)
 {
 	//③処理
 	g_pChangeSceneText->Update();
+
+	// デバッグ用: Rキーでアニメーションをリスタート
+	if (Keyboard_IsKeyDownTrigger(KK_R))
+	{
+		g_CountUpTimer = 0.0f;
+		g_ResultSceneTimer = 0.0f;
+	}
+
+	g_ResultSceneTimer += 1.0f;
 
 	if (g_CountUpTimer < COUNT_UP_MAX_TIME)
 	{
@@ -151,28 +202,54 @@ void Result_Update(void)
 		g_pScoreText->SetText(scoreStr);
 	}
 
+	if (g_ResultSceneTimer > RANK_ANIM_START_TIME)
+	{
+		g_pRunkText->SetText(g_Result.rank);
+
+		// アニメーション進行度 (0.0 ～ 1.0)
+		float animProgress = (g_ResultSceneTimer - RANK_ANIM_START_TIME) / RANK_ANIM_DURATION;
+		if (animProgress > 1.0f) animProgress = 1.0f;
+
+		// イージング (Ease-Out Quad)
+		float easeProgress = 1.0f - (1.0f - animProgress) * (1.0f - animProgress);
+
+		// 最終スケールは元のフォントの3倍
+		float scale = 3.0f * easeProgress;
+		g_pRunkText->SetSize({ scale, scale });
+	}
+	else
+	{
+		g_pRunkText->SetText("");
+	}
+
 	//ClickFontがクリックされた
 	if (g_pChangeSceneText->IsClick())
 	{
 		SetPlayJson("");//resultを抜けるときに初期化
-		SetSceneFade(SCENE_TITLE);
+		SetSceneFade(SCENE_STAGESELECT);
 	}
 }
 
 void Result_Draw(void)
 {
 	//④描画
-	//g_pResultSprite->Draw();
+	g_pResultBG->Draw();
+	g_pResultBackUI->Draw();
 	g_pChangeSceneText->Draw();
 	g_pDetailText->Draw();
 	g_pScoreText->Draw();
+	g_pMusicText->Draw();
+	g_pRunkText->Draw();
 }
 
 void Result_Finalize(void)
 {
 	//⑤解放
-	//SAFE_DELETE(g_pResultSprite);
+	SAFE_DELETE(g_pResultBG);
+	SAFE_DELETE(g_pResultBackUI);
 	SAFE_DELETE(g_pChangeSceneText);
 	SAFE_DELETE(g_pDetailText);
 	SAFE_DELETE(g_pScoreText);
+	SAFE_DELETE(g_pMusicText);
+	SAFE_DELETE(g_pRunkText);
 }

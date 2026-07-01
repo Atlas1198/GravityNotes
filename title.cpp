@@ -16,6 +16,7 @@ using namespace DirectX;
 // ①インスタンス、ポインタ用意
 static Sprite2D* g_pTitleSprite = nullptr;
 static ClickFont* g_pChangeSceneText = nullptr;
+static ClickFont* g_pDebugSceneText = nullptr;
 static Movie* g_pTitleMovie;
 
 
@@ -30,23 +31,32 @@ void Title_Initialize(void)
 		L"asset\\movie\\nullmovie.mp4"
 	);
 
-	// ②各種初期化
+	// 仮の画像
 	g_pTitleSprite = new Sprite2D(
-		{ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 3 },					//位置
-		{ 300.0f, 300.0f },											//サイズ
+		{ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 },					//位置
+		{ SCREEN_WIDTH, SCREEN_HEIGHT },											//サイズ
 		0.0f,														//回転（度）
 		{ 1.0f, 1.0f, 1.0f, 1.0f },									//RGBA
 		BLENDSTATE_NONE,											//BlendState
-		L"asset\\texture\\tex.png"									//テクスチャパス
+		L"asset\\texture\\karititle.png"									//テクスチャパス
 	);
 
 	g_pChangeSceneText = new ClickFont(
-		{ SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 4.0f * 3 },			//位置
+		{ SCREEN_WIDTH / 3.0f, 600.0f },			//位置
 		50.0f,														//文字サイズ
 		0.0f,														//回転（度）
 		{ 1.0f, 1.0f, 1.0f, 1.0f },									//通常色
 		{ 1.0f, 0.8f, 0.2f, 1.0f },									//ホバー色
-		"[title.cpp] ステージセレクトへ"										//テキスト
+		"Game Start"										//テキスト
+	);
+
+	g_pDebugSceneText = new ClickFont(
+		{ SCREEN_WIDTH - 100.0f, 50.0f },			//位置
+		20.0f,														//文字サイズ
+		0.0f,														//回転（度）
+		{ 1.0f, 1.0f, 1.0f, 0.5f },									//通常色
+		{ 1.0f, 0.8f, 0.2f, 1.0f },									//ホバー色
+		"[debug] "										//テキスト
 	);
 
 
@@ -59,14 +69,19 @@ void Title_Initialize(void)
 void Title_Update(void)
 {
 	//③処理
-	g_pTitleMovie->Update();
+	//g_pTitleMovie->Update();
 
 	g_pChangeSceneText->Update();
+	g_pDebugSceneText->Update();
 
 	//ClickFontがクリックされた
 	if (g_pChangeSceneText->IsClick())
 	{
 		SetSceneFade(SCENE_STAGESELECT);
+	}
+	if (g_pDebugSceneText->IsClick())
+	{
+		SetSceneFade(SCENE_DEBUG);
 	}
 
 }
@@ -74,10 +89,10 @@ void Title_Update(void)
 void Title_Draw(void)
 {
 	//④描画
-	g_pTitleMovie->Draw();
-
-	//g_pTitleSprite->Draw();
+	//g_pTitleMovie->Draw();
+	g_pTitleSprite->Draw();	//仮のタイトルスプライト
 	g_pChangeSceneText->Draw();
+	g_pDebugSceneText->Draw();
 
 }
 
@@ -89,6 +104,5 @@ void Title_Finalize(void)
 
 	SAFE_DELETE(g_pTitleSprite);
 	SAFE_DELETE(g_pChangeSceneText);
-
-
+	SAFE_DELETE(g_pDebugSceneText);
 }

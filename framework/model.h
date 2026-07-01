@@ -39,9 +39,12 @@ struct BoneMatrices
 struct MeshMaterial
 {
 	XMFLOAT4 diffuseColor;
-	bool hasTexture;
+	bool hasTexture = false;
 	std::string texturePath;
-	ID3D11ShaderResourceView* textureView;
+	ID3D11ShaderResourceView* textureView = nullptr;
+	bool hasNormalTexture = false;
+	std::string normalTexturePath;
+	ID3D11ShaderResourceView* normalTextureView = nullptr;
 	bool isFaceMesh = false;  // 顔テクスチャ差し替え対象かどうか
 };
 
@@ -66,6 +69,7 @@ struct MODEL
 	XMMATRIX GlobalInverseTransform;
 
 	std::unordered_map<std::string, ID3D11ShaderResourceView*> Texture;
+	ID3D11ShaderResourceView* FlatNormalTexture = nullptr;
 
 	// メッシュ単位のインデックス数
 	unsigned int* MeshIndexCounts;

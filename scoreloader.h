@@ -12,7 +12,8 @@ enum class ScoreType
 {
 	Enemy,
 	Barrier,
-	Orb
+	Orb,
+	Hold
 };
 
 enum class ScoreWall
@@ -35,6 +36,7 @@ inline ScoreType ParseScoreType(const std::string& value)
 	if (token == "enemy") return ScoreType::Enemy;
 	if (token == "barrier") return ScoreType::Barrier;
 	if (token == "orb") return ScoreType::Orb;
+	if (token == "hold") return ScoreType::Hold;
 
 	//throw std::runtime_error("Invalid score type: " + value);
 }
@@ -53,9 +55,12 @@ inline ScoreWall ParseScoreWall(const std::string& value)
 struct ScoreEvent
 {
 	float beat;
-	int lane;
+	int   lane;
 	ScoreType type;
 	ScoreWall wall;
+	// Hold 専用フィールド（Hold 以外では beat・lane と同値）
+	float endBeat;
+	int   endLane;
 };
 
 // スコアデータの構造体
@@ -89,10 +94,13 @@ inline ScoreData LoadScore(const std::string& filePath)
 		for (const auto& event : jsonData["events"])
 		{
 			ScoreEvent scoreEvent;
-			scoreEvent.beat = event["beat"].get<float>();
-			scoreEvent.lane = event["lane"].get<int>();
-			scoreEvent.type = ParseScoreType(event["type"].get<std::string>());
-			scoreEvent.wall = ParseScoreWall(event["wall"].get<std::string>());
+			scoreEvent.beat    = event["beat"].get<float>();
+			scoreEvent.lane    = event["lane"].get<int>();
+			scoreEvent.type    = ParseScoreType(event["type"].get<std::string>());
+			scoreEvent.wall    = ParseScoreWall(event["wall"].get<std::string>());
+			// Hold 専用フィールド（なければ beat・lane と同値にフォールバック）
+			scoreEvent.endBeat = event.value("endBeat", scoreEvent.beat);
+			scoreEvent.endLane = event.value("endLane", scoreEvent.lane);
 
 			scoreData.events.push_back(scoreEvent);
 		}

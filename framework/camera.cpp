@@ -1,4 +1,4 @@
-﻿#include "camera.h"
+#include "camera.h"
 #include "d3d11.h"
 #include "DirectXMath.h"
 using namespace DirectX;
@@ -30,7 +30,7 @@ void Camera_Initialize(void)
 		45.0f,
 		(float)DRAW_SCREEN_WIDTH / DRAW_SCREEN_HEIGHT,
 		1.0f,
-		50.0f
+		500.0f
 	);
 }
 
