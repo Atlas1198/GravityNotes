@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include <d3d11.h>
 #include <DirectXMath.h>
@@ -8,3 +8,4 @@ void Result_Initialize(void);
 void Result_Update(void);
 void Result_Draw(void);
 void Result_Finalize(void);
+void Result_DebugUIDraw(void);

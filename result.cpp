@@ -14,6 +14,8 @@
 #include "MultiLineFontRenderer.h"
 #include <sstream>
 #include <iomanip>
+#include "imgui/imgui.h"
+#include <string>
 
 using namespace DirectX;
 
@@ -23,16 +25,34 @@ static Sprite2D* g_pResultBackUI = nullptr;
 static ClickFont* g_pChangeSceneText = nullptr;
 static ScoreSummary g_ResultScoreSummary;
 static RESULT g_Result;
-static MultiLineFontRenderer* g_pDetailText = nullptr;
-static MultiLineFontRenderer* g_pScoreText = nullptr;
+
 static MultiLineFontRenderer* g_pMusicText = nullptr;
-static MultiLineFontRenderer* g_pRunkText = nullptr;
+static Sprite2D* g_pRankTextre = nullptr;
+
+
+// アニメーション用の構造体
+struct ResultRowData {
+	std::string label;		 // 左側の文字 (例: "SCORE :")
+	std::string valueStr;	 // 右側の数字 (例: "12345" ※演出で文字化けする)
+	int targetValue{};       // 最終的に表示する数値
+	float currentX{};        // 現在のX座標
+	float y{};               // Y座標
+};
+
+static const int MAX_ROWS = 5;
+static ResultRowData g_ResultRows[MAX_ROWS];
+static FontRenderer* g_pLabelFont = nullptr;
+static FontRenderer* g_pValueFont = nullptr;
+	
 
 static float g_CountUpTimer = 0.0f;
 static const float COUNT_UP_MAX_TIME = 90.0f; // 90フレーム(1.5秒)でカウントアップ
 static float g_ResultSceneTimer = 0.0f;
 static const float RANK_ANIM_START_TIME = 120.0f; // 120フレーム(2秒)
 static const float RANK_ANIM_DURATION = 30.0f; // 30フレーム(0.5秒)
+
+static const float ROW_DELAY = 30.0f;               // 1行ごとの遅延フレーム
+static const float VALUE_START_DELAY = 30.0f;       // ラベルがすべて表示された後に数値を開始するまでの待機フレーム
 
 void Result_Initialize(void)
 {
@@ -81,25 +101,23 @@ void Result_Initialize(void)
 		"曲選択へ"									//テキスト
 	);
 
-	g_pDetailText = new MultiLineFontRenderer(
-		{ SCREEN_WIDTH / 5, SCREEN_HEIGHT / 3 },											 // 表示基準位置
-		30.0f,																				 // フォントサイズ
-		0.0f,																				 // 回転角（度）
-		{ 1.0f, 1.0f, 0.0f, 1.0f },															 // 文字色 RGBA
-		"SCORE :\nHIT数 :\nMAXCOMBO :\nSUCCESS :\nMISS :",									 // 初期テキスト（\nで改行）
-		0.0f,																				 // 行間倍率（アニメーションで広げるため初期値0）
-		TA_START
-	);
 
-	g_pScoreText = new MultiLineFontRenderer(
-		{ SCREEN_WIDTH / 3, SCREEN_HEIGHT / 3  },            
-		30.0f,												
-		0.0f,												
-		{ 1.0f, 1.0f, 0.0f, 1.0f },							
-		"0\n0\n0\n0\n0",						 
-		0.0f,												// 行間倍率（アニメーションで広げるため初期値0）
-		TA_START
-	);
+	// フォントの生成（空文字で初期化し、Draw時にセットする）
+	g_pLabelFont = new FontRenderer({ 0, 0 }, 43.0f, 0.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, "", TA_START);
+	g_pValueFont = new FontRenderer({ 0, 0 }, 43.0f, 0.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, "", TA_START);
+
+	// 各行の初期状態と目標値をセット
+	float startX = 100.0f;    
+	float targetX = 180.0f;    // 所定のX座標へ
+	float startY = 294.0f;
+	float lineSpacing = 60.0f; // 行間隔
+
+	g_ResultRows[0] = { "SCORE :",    "", g_Result.score,                   startX,  startY };
+	g_ResultRows[1] = { "HIT数 :",    "", g_Result.success + g_Result.miss, startX +25.0f,  startY + lineSpacing };
+	g_ResultRows[2] = { "MAXCOMBO :", "", g_Result.maxCombo,                startX +45.0f,	 startY + lineSpacing * 2 };
+	g_ResultRows[3] = { "SUCCESS :",  "", g_Result.success,                 startX +65.0f,  startY + lineSpacing * 3 };
+	g_ResultRows[4] = { "MISS :",     "", g_Result.miss,                    startX +85.0f,	 startY + lineSpacing * 4 };
+
 
 	// 難易度の小数点以下1桁まで表示するためのstringstreamを使用
 	std::stringstream ss;
@@ -115,14 +133,13 @@ void Result_Initialize(void)
 		TA_MIDDLE
 	);
 
-	g_pRunkText = new MultiLineFontRenderer(
-		{ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 },
-		30.0f,
-		0.0f,
-		{ 1.0f, 1.0f, 0.0f, 1.0f },
-		g_Result.rank,
-		1.5f,												// 行間倍率
-		TA_MIDDLE
+	g_pRankTextre = new Sprite2D(
+		{ SCREEN_WIDTH * 4 / 5 , SCREEN_HEIGHT * 4 / 5 },			//位置
+		{ 200, 200 },												//サイズ
+		0.0f,														//回転（度）
+		{ 1.0f, 1.0f, 1.0f, 1.0f },									//RGBA
+		BLENDSTATE_ALFA,											//BlendState
+		L"asset\\texture\\Result_Rank_SS_UI.png"						//テクスチャパス
 	);
 
 	g_CountUpTimer = 0.0f;
@@ -139,87 +156,45 @@ void Result_Update(void)
 	// デバッグ用: Rキーでアニメーションをリスタート
 	if (Keyboard_IsKeyDownTrigger(KK_R))
 	{
-		g_CountUpTimer = 0.0f;
+		// 既存のタイマーリセット（g_CountUpTimerは廃止してもOK）
 		g_ResultSceneTimer = 0.0f;
-	}
+
+		// 初期座標リセット
+		for (int i = 0; i < MAX_ROWS; ++i) {
+			g_ResultRows[i].currentX = 100.0f; // startX
+			g_ResultRows[i].valueStr = ""; // 表示リセット
+		}
+	}    
+	
 
 	g_ResultSceneTimer += 1.0f;
 
-	if (g_CountUpTimer < COUNT_UP_MAX_TIME)
+	for (int i = 0; i < MAX_ROWS; ++i)
 	{
-		g_CountUpTimer += 1.0f;
-		float progress = g_CountUpTimer / COUNT_UP_MAX_TIME;
-		if (progress > 1.0f) progress = 1.0f;
-
-		// イージング (Ease-Out Quad)
-		float easeProgress = 1.0f - (1.0f - progress) * (1.0f - progress);
-
-		// 行間の展開アニメーション (0.0f から 1.4f へ)
-		float currentSpacing = 1.4f * easeProgress;
-		g_pDetailText->SetLineSpacing(currentSpacing);
-		g_pScoreText->SetLineSpacing(currentSpacing);
-
-		// スロット＆グリッチ風の数字変換ヘルパー
-		auto ApplySlotGlitch = [&](int currentVal, int targetVal) -> std::string {
-			if (progress >= 1.0f) return std::to_string(targetVal);
-
-			std::string str = std::to_string(currentVal);
-			if (str.empty()) return str;
-
-			// イージングの進行度に応じて、右側の文字をランダム化
-			int randomCount = static_cast<int>(str.length() * (1.0f - progress));
-			if (randomCount < 1 && progress < 1.0f) {
-				randomCount = 1; // 完了するまでは最低下1桁を回す
+		// 数値のアニメーション（ただのカウントアップ）
+		float valueStartTime = (MAX_ROWS * ROW_DELAY) + VALUE_START_DELAY + (i * ROW_DELAY);
+		if (g_ResultSceneTimer >= valueStartTime)
+		{
+			// 数値アニメーションの進行度 (0.0 ~ 1.0)
+			float valueProgress = (g_ResultSceneTimer - valueStartTime) / COUNT_UP_MAX_TIME;
+			if (valueProgress >= 1.0f)
+			{
+				valueProgress = 1.0f;
+				g_ResultRows[i].valueStr = std::to_string(g_ResultRows[i].targetValue);
 			}
-
-			// 右側をランダムな数字にする
-			for (size_t i = str.length() - randomCount; i < str.length(); ++i) {
-				str[i] = '0' + (rand() % 10);
+			else
+			{
+				// イージング (Ease-Out Quad)
+				float easeProgress = 1.0f - (1.0f - valueProgress) * (1.0f - valueProgress);
+				int curVal = static_cast<int>(g_ResultRows[i].targetValue * easeProgress);
+				g_ResultRows[i].valueStr = std::to_string(curVal);
 			}
-
-			// 10%の確率で、それ以外の確定している桁も一瞬だけ文字化けする（グリッチ演出）
-			if (rand() % 100 < 10) {
-				int idx = rand() % str.length();
-				str[idx] = '0' + (rand() % 10);
-			}
-
-			return str;
-		};
-
-		int curScore = static_cast<int>(g_Result.score * easeProgress);
-		int curHit = static_cast<int>((g_Result.success + g_Result.miss) * easeProgress);
-		int curMaxCombo = static_cast<int>(g_Result.maxCombo * easeProgress);
-		int curSuccess = static_cast<int>(g_Result.success * easeProgress);
-		int curMiss = static_cast<int>(g_Result.miss * easeProgress);
-
-		int targetHit = g_Result.success + g_Result.miss;
-
-		std::string scoreStr = ApplySlotGlitch(curScore, g_Result.score) + "\n" +
-							   ApplySlotGlitch(curHit, targetHit) + "\n" +
-							   ApplySlotGlitch(curMaxCombo, g_Result.maxCombo) + "\n" +
-							   ApplySlotGlitch(curSuccess, g_Result.success) + "\n" +
-							   ApplySlotGlitch(curMiss, g_Result.miss);
-		g_pScoreText->SetText(scoreStr);
-	}
-
-	if (g_ResultSceneTimer > RANK_ANIM_START_TIME)
-	{
-		g_pRunkText->SetText(g_Result.rank);
-
-		// アニメーション進行度 (0.0 ～ 1.0)
-		float animProgress = (g_ResultSceneTimer - RANK_ANIM_START_TIME) / RANK_ANIM_DURATION;
-		if (animProgress > 1.0f) animProgress = 1.0f;
-
-		// イージング (Ease-Out Quad)
-		float easeProgress = 1.0f - (1.0f - animProgress) * (1.0f - animProgress);
-
-		// 最終スケールは元のフォントの3倍
-		float scale = 3.0f * easeProgress;
-		g_pRunkText->SetSize({ scale, scale });
-	}
-	else
-	{
-		g_pRunkText->SetText("");
+		}
+		else
+		{
+			// まだ開始時間になっていない場合は空にしておく
+			g_ResultRows[i].valueStr = "";
+		}
 	}
 
 	//ClickFontがクリックされた
@@ -236,10 +211,31 @@ void Result_Draw(void)
 	g_pResultBG->Draw();
 	g_pResultBackUI->Draw();
 	g_pChangeSceneText->Draw();
-	g_pDetailText->Draw();
-	g_pScoreText->Draw();
 	g_pMusicText->Draw();
-	g_pRunkText->Draw();
+	g_pRankTextre->Draw();
+
+
+	if (g_pLabelFont && g_pValueFont)
+	{
+		for (int i = 0; i < MAX_ROWS; ++i)
+		{
+			float labelStartTime = i * ROW_DELAY;
+
+			// ラベルの開始時間を過ぎていたら描画
+			if (g_ResultSceneTimer >= labelStartTime) {
+				g_pLabelFont->SetPos({ g_ResultRows[i].currentX, g_ResultRows[i].y });
+				g_pLabelFont->SetText(g_ResultRows[i].label);
+				g_pLabelFont->Draw();
+			}
+
+			// valueStr が空でなければ数値を描画（Update側で制御済み）
+			if (!g_ResultRows[i].valueStr.empty()) {
+				g_pValueFont->SetPos({ g_ResultRows[i].currentX + 260.0f, g_ResultRows[i].y + 5.0f });
+				g_pValueFont->SetText(g_ResultRows[i].valueStr);
+				g_pValueFont->Draw();
+			}
+		}
+	}
 }
 
 void Result_Finalize(void)
@@ -248,8 +244,16 @@ void Result_Finalize(void)
 	SAFE_DELETE(g_pResultBG);
 	SAFE_DELETE(g_pResultBackUI);
 	SAFE_DELETE(g_pChangeSceneText);
-	SAFE_DELETE(g_pDetailText);
-	SAFE_DELETE(g_pScoreText);
 	SAFE_DELETE(g_pMusicText);
-	SAFE_DELETE(g_pRunkText);
+	SAFE_DELETE(g_pRankTextre);
+	SAFE_DELETE(g_pLabelFont);
+	SAFE_DELETE(g_pValueFont);
+
 }
+
+void Result_DebugUIDraw(void)
+{
+	ImGui::Begin("Result Scene Editor");
+	ImGui::End();
+}
+

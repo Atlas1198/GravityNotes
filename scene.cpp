@@ -1,4 +1,4 @@
-﻿#include "scene.h"
+#include "scene.h"
 #include "game.h"
 #include "renderer.h"
 #include "keyboard.h"
@@ -8,9 +8,10 @@
 #include "result.h"
 #include "debugscene.h"
 #include "define.h"
+#include "debug_ui.h"
 using namespace DirectX;
 
-static SCENE scene = SCENE_TITLE;
+static SCENE scene = SCENE_RESULT;
 
 //SCENE_STAGESELECTからSCENE_GAMEへの読み込み指定　.jsonまで含まれている
 static std::string playjson;
@@ -86,6 +87,8 @@ void Draw( void )
 		default:
 		break;
 	}
+
+	DebugUI_Draw();
 }
 
 void Finalize( void )
