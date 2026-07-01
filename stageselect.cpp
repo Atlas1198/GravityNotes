@@ -1,4 +1,4 @@
-#include "stageselect.h"
+﻿#include "stageselect.h"
 #include "sprite2d.h"
 #include "texture.h"
 #include "keyboard.h"
@@ -13,6 +13,7 @@
 #include "scoresummaryloader.h"
 #include "scene.h"
 #include <cstdio>
+#include <cmath>
 #include <vector>
 #include <string>
 
@@ -57,6 +58,9 @@ static ClickFont* g_pStageButtons[MAX_STAGES] = { nullptr };  // 左側の各デ
 static float g_VinylRotation = 0.0f;              // ディスクの現在の回転角度（度）
 static float g_ToneArmAngle = 0.0f;               // トーンアームの角度（25度はディスク上、0度は外側）
 static float g_DiscSpeed = 0.5f;                  // 現在の回転速度（スムーズな減速用）
+
+static float g_ScrollOffset = 0.0f;      // Offset hiện tại (float để lerp mượt)
+static float g_ScrollTarget = 0.0f;      // Offset đích cần đến
 
 // JSONからの譜面データの管理とスコア表示（日本語コード部分より）
 static MultiLineFontRenderer* g_pScoreInfoText = nullptr;
@@ -296,6 +300,24 @@ void StageSelect_Initialize(void)
 // ==========================================
 void StageSelect_Update(void)
 {
+	// Di chuyển với TỐC ĐỘ KHÔNG ĐỔI (constant speed) thay vì lerp theo %.
+	// Lý do: lerp theo % (offset += (target-offset)*0.15f) càng gần đích càng chậm dần
+	// theo cấp số nhân => đĩa nằm ở rìa danh sách (offset gần chạm biên wrap 0 hoặc
+	// MAX_STAGES) sẽ "khựng/đứng hình" hàng chục frame gần biên rồi mới đột ngột nhảy
+	// (snap) khi cuối cùng cũng chạm ngưỡng. Dùng bước cố định giúp luôn chạm ĐÚNG target
+	// trong một số frame cố định, chuyển động đều tay, không còn hiện tượng khựng-rồi-nhảy.
+	const float SCROLL_STEP = 1.0f / 25.0f; // hoàn thành 1 bậc trong ~25 frame (đồng bộ với thời gian nhấc/hạ kim)
+	if (g_ScrollOffset < g_ScrollTarget) {
+		g_ScrollOffset += SCROLL_STEP;
+		if (g_ScrollOffset > g_ScrollTarget) g_ScrollOffset = g_ScrollTarget;
+	}
+	else if (g_ScrollOffset > g_ScrollTarget) {
+		g_ScrollOffset -= SCROLL_STEP;
+		if (g_ScrollOffset < g_ScrollTarget) g_ScrollOffset = g_ScrollTarget;
+	}
+
+	float anchorY = 70.0f;
+	float spacing = 130.0f;
 	// --- パート 1: キーボード/マウスの入力制御 ---
 	// ディスクが安定して回転している状態（STATE_PLAYING）でのみ曲変更コマンドを受け付ける
 	if (g_CurrentState == STATE_PLAYING)
@@ -308,12 +330,14 @@ void StageSelect_Update(void)
 			if (g_NextStage < 0) g_NextStage = MAX_STAGES - 1;
 			isInputPressed = true;
 			//ChangeSelectedScore(-1);
+			g_ScrollTarget -= 1.0f;  // Trượt xuống 1 bậc
 		}
 		else if (Keyboard_IsKeyDownTrigger(KK_DOWN)) {
 			g_NextStage = g_SelectedStage + 1;
 			if (g_NextStage >= MAX_STAGES) g_NextStage = 0;
 			isInputPressed = true;
 			//ChangeSelectedScore(1);
+			g_ScrollTarget += 1.0f;  // Trượt xuống 1 bậc
 		}
 
 		//// 左右矢印キーでJSONデータリスト内の楽曲を変更
@@ -426,8 +450,8 @@ void StageSelect_Update(void)
 		g_pToneArm->SetRot(g_ToneArmAngle);
 	}
 
-	// --- パート 4: 左側の小さなディスク列の処理とマウスクリック検出 ---
-	for (int i = 0; i < MAX_STAGES; i++)
+	// --- PHẦN 4: XỬ LÝ HÀNG ĐĨA NHỎ BÊN TRÁI & CLICK CHUỘT ---
+	/*for (int i = 0; i < MAX_STAGES; i++)
 	{
 		g_pStageButtons[i]->Update();
 
@@ -450,6 +474,38 @@ void StageSelect_Update(void)
 				g_pCurrentBgmData = nullptr;
 			}
 			g_LoadedBgmPath = "";
+		}
+		}*/
+	for (int i = 0; i < MAX_STAGES; i++)
+	{
+		// Dùng g_ScrollOffset thay vì g_SelectedStage để tính vị trí
+		float offset = (float)i - g_ScrollOffset;
+
+		// Wrap vòng tròn dạng float
+		while (offset < 0.0f)          offset += (float)MAX_STAGES;
+		while (offset >= (float)MAX_STAGES) offset -= (float)MAX_STAGES;
+
+		float posX = 90.0f;
+		float posY = anchorY + (offset * spacing);
+
+		g_pStageDisks[i]->SetPos({ posX, posY });
+		g_pStageButtons[i]->SetPos({ posX, posY });
+
+		// Đĩa đang chọn = đĩa gần offset 0 nhất
+		if (i == g_SelectedStage) {
+			g_pStageDisks[i]->SetRotation(g_VinylRotation * 2.0f);
+		}
+		else {
+			g_pStageDisks[i]->SetRotation(0.0f);
+		}
+
+		if (g_pStageButtons[i]->IsClick() && g_CurrentState == STATE_PLAYING && g_SelectedStage != i)
+		{
+			g_NextStage = i;
+			g_CurrentState = STATE_LIFTING_ARM;
+			if (g_pCurrentBgmData != nullptr) {
+				StopSound(g_pCurrentBgmData);
+			}
 		}
 	}
 

@@ -10,15 +10,15 @@
 
 struct ScoreSummary
 {
-    std::string jsonname;
-    std::string musicname;
-    std::string musicauthor;
-    std::string scoreauthor;
-    float difficulty = 0.0f;
-    float bpm = 0.0f;
-    std::string thumbnail;
-    std::string music;
-  	int vinylIndex = -1;
+	std::string jsonname;
+	std::string musicname;
+	std::string musicauthor;
+	std::string scoreauthor;
+	float difficulty = 0.0f;
+	float bpm = 0.0f;
+	std::string thumbnail;
+	std::string music;
+	int vinylIndex = -1;
 };
 
 inline ScoreSummary LoadSingleScoreSummary(const std::string& jsonName, const std::string& directoryPath = "asset\\score")
