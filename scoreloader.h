@@ -13,7 +13,8 @@ enum class ScoreType
 	Enemy,
 	Barrier,
 	Orb,
-	Hold
+	Hold,
+	RopeHold
 };
 
 enum class ScoreWall
@@ -37,6 +38,7 @@ inline ScoreType ParseScoreType(const std::string& value)
 	if (token == "barrier") return ScoreType::Barrier;
 	if (token == "orb") return ScoreType::Orb;
 	if (token == "hold") return ScoreType::Hold;
+	if (token == "rope") return ScoreType::RopeHold;
 
 	//throw std::runtime_error("Invalid score type: " + value);
 }
@@ -58,9 +60,10 @@ struct ScoreEvent
 	int   lane;
 	ScoreType type;
 	ScoreWall wall;
-	// Hold 専用フィールド（Hold 以外では beat・lane と同値）
-	float endBeat;
-	int   endLane;
+	// Hold / RopeHold 専用フィールド（それ以外では beat・lane・wall と同値）
+	float     endBeat;
+	int       endLane;
+	ScoreWall endWall;
 };
 
 // スコアデータの構造体
@@ -98,9 +101,11 @@ inline ScoreData LoadScore(const std::string& filePath)
 			scoreEvent.lane    = event["lane"].get<int>();
 			scoreEvent.type    = ParseScoreType(event["type"].get<std::string>());
 			scoreEvent.wall    = ParseScoreWall(event["wall"].get<std::string>());
-			// Hold 専用フィールド（なければ beat・lane と同値にフォールバック）
 			scoreEvent.endBeat = event.value("endBeat", scoreEvent.beat);
 			scoreEvent.endLane = event.value("endLane", scoreEvent.lane);
+			// endWall: RopeHold専用（なければ wall と同値）
+			std::string endWallStr = event.value("endWall", std::string(""));
+			scoreEvent.endWall = endWallStr.empty() ? scoreEvent.wall : ParseScoreWall(endWallStr);
 
 			scoreData.events.push_back(scoreEvent);
 		}

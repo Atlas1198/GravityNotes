@@ -160,16 +160,29 @@ void Player::Update()
 
 	if (isPressed)
 	{
-		// 押した瞬間：Tap・Hold 共通で最近ノーツを判定
+		// 押した瞬間：Enemy・Hold 判定 / RopeHold 活性化
 		JUDGE result = m_pNoteManager->Judge(m_LaneIndex, m_GravityFace);
-		m_pStatusManager->OnJudge(result);
+		if (result != JUDGE_NONE)
+			m_pStatusManager->OnJudge(result);
 	}
 	else if (isHolding)
 	{
-		// 長押し中：Hold 子ノートのみ継続判定
+		// 長押し中：HoldNote 継続判定 / RopeHoldNote は JUDGE_NONE を返す
 		JUDGE result = m_pNoteManager->JudgeHold(m_LaneIndex, m_GravityFace);
-		m_pStatusManager->OnJudgeHold(result);
+		if (result != JUDGE_NONE)
+			m_pStatusManager->OnJudgeHold(result);
 	}
+	else
+	{
+		// ボタンを離した瞬間：RopeHoldNote の途中離し判定
+		JUDGE result = m_pNoteManager->OnButtonRelease(m_LaneIndex, m_GravityFace);
+		if (result != JUDGE_NONE)
+			m_pStatusManager->OnJudge(result);
+	}
+
+	// RopeHoldNote 完了など、非同期で積まれた判定を処理
+	while (m_pNoteManager->HasPendingJudge())
+		m_pStatusManager->OnJudge(m_pNoteManager->PopPendingJudge());
 
 }
 

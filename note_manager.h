@@ -1,9 +1,11 @@
 #pragma once
 #include <vector>
+#include <queue>
 #include "note_base.h"
 #include "scoreloader.h"
 
 enum JUDGE {
+	JUDGE_NONE = -1,
 	JUDGE_PERFECT,
 	JUDGE_GOOD,
 	JUDGE_MISS
@@ -20,6 +22,8 @@ private:
 	float     m_ElapsedTime;
 	int       m_NextEventIndex;
 
+	std::queue<JUDGE> m_PendingJudges;
+
 	float BeatToSpawnTime(float beat) const;
 	int   WallToFace(ScoreWall wall)  const;
 
@@ -31,5 +35,9 @@ public:
 	float GetNoteSpeed() const { return m_NoteSpeed; }
 
 	JUDGE Judge(int lane, int face);
-	JUDGE JudgeHold(int lane, int face); // Hold 長押し中の継続判定
+	JUDGE JudgeHold(int lane, int face);
+	JUDGE OnButtonRelease(int lane, int face); // ボタン離し時のロープホールド処理
+
+	bool  HasPendingJudge()  const { return !m_PendingJudges.empty(); }
+	JUDGE PopPendingJudge()        { JUDGE j = m_PendingJudges.front(); m_PendingJudges.pop(); return j; }
 };
