@@ -71,8 +71,7 @@ void Result_Initialize(void)
 	g_Result.success += 100000;
 	g_Result.maxCombo += 100000;
 	g_Result.miss += 100000;
-	g_Result.accurary = 99.99f;
-	g_Result.rank = "SSS";
+	g_Result.rank = "A";
 
 	g_pResultBG = new Sprite2D(
 		{ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 },					//位置
@@ -113,10 +112,9 @@ void Result_Initialize(void)
 	float lineSpacing = 60.0f; // 行間隔
 
 	g_ResultRows[0] = { "SCORE :",    "", g_Result.score,                   startX,  startY };
-	g_ResultRows[1] = { "HIT数 :",    "", g_Result.success + g_Result.miss, startX ,  startY + lineSpacing };
-	g_ResultRows[2] = { "MAXCOMBO :", "", g_Result.maxCombo,                startX ,	 startY + lineSpacing * 2 };
-	g_ResultRows[3] = { "SUCCESS :",  "", g_Result.success,                 startX ,  startY + lineSpacing * 3 };
-	g_ResultRows[4] = { "MISS :",     "", g_Result.miss,                    startX ,	 startY + lineSpacing * 4 };
+	g_ResultRows[1] = { "HIT数 :",    "", g_Result.success , startX ,  startY + lineSpacing };
+	g_ResultRows[2] = { "COMBO :", "", g_Result.maxCombo,                startX ,	 startY + lineSpacing * 2 };
+	g_ResultRows[3] = { "MISS :",  "", g_Result.miss,                 startX ,  startY + lineSpacing * 3 };
 
 
 	// 難易度の小数点以下1桁まで表示するためのstringstreamを使用
@@ -133,13 +131,19 @@ void Result_Initialize(void)
 		TA_MIDDLE
 	);
 
+	// ランク文字列(std::string)をワイド文字列(std::wstring)に変換
+	std::wstring wRank(g_Result.rank.begin(), g_Result.rank.end());
+	
+	// テクスチャのファイルパスを動的に生成
+	std::wstring rankTexturePath = L"asset\\texture\\Result_Rank_" + wRank + L"_UI.png";
+
 	g_pRankTextre = new Sprite2D(
 		{ SCREEN_WIDTH / 2 + 350.0f , SCREEN_HEIGHT / 3 + 100.0f },			//位置
 		{ 500, 500 },												//サイズ
 		0.0f,														//回転（度）
 		{ 1.0f, 1.0f, 1.0f, 1.0f },									//RGBA
 		BLENDSTATE_ALFA,											//BlendState
-		L"asset\\texture\\Result_Rank_SS_UI.png"						//テクスチャパス
+		rankTexturePath.c_str()										//テクスチャパス
 	);
 
 	g_CountUpTimer = 0.0f;
@@ -248,6 +252,7 @@ void Result_Finalize(void)
 	SAFE_DELETE(g_pRankTextre);
 	SAFE_DELETE(g_pLabelFont);
 	SAFE_DELETE(g_pValueFont);
+	SAFE_DELETE(g_pRankTextre);
 
 }
 
