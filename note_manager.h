@@ -9,6 +9,8 @@ enum JUDGE {
 	JUDGE_MISS
 };
 
+struct SoundData;
+
 class NoteManager
 {
 private:
@@ -19,6 +21,7 @@ private:
 	ScoreData m_ScoreData;
 	float     m_ElapsedTime;
 	int       m_NextEventIndex;
+	SoundData* m_pBgmData = nullptr;
 
 	float BeatToSpawnTime(float beat) const;
 	int   WallToFace(ScoreWall wall)  const;
@@ -29,6 +32,8 @@ public:
 	void  Draw();
 	void  Finalize();
 	float GetNoteSpeed() const { return m_NoteSpeed; }
+	float GetBPM() const { return m_ScoreData.bpm; }
+	float GetElapsedTime() const { return m_ElapsedTime; }
 
 	JUDGE Judge(int lane, int face);
 	JUDGE JudgeHold(int lane, int face); // Hold 長押し中の継続判定

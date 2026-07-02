@@ -38,35 +38,6 @@ static StatusManager* g_pStatusManager = nullptr;
 
 void Game_Initialize(void)
 {
-	// ②各種初期化
-	//g_pGameSprite = new Sprite2D(
-	//	{ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 3 },					//位置
-	//	{ 300.0f, 300.0f },											//サイズ
-	//	0.0f,														//回転（度）
-	//	{ 1.0f, 1.0f, 1.0f, 1.0f },									//RGBA
-	//	BLENDSTATE_NONE,											//BlendState
-	//	L"asset\\texture\\tex.png"									//テクスチャパス
-	//);
-
-	//g_pChangeSceneText = new ClickFont(
-	//	{ SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 4.0f * 3 },			//位置
-	//	50.0f,														//文字サイズ
-	//	0.0f,														//回転（度）
-	//	{ 1.0f, 1.0f, 1.0f, 1.0f },									//通常色
-	//	{ 1.0f, 0.8f, 0.2f, 1.0f },									//ホバー色
-	//	"[game.cpp] リザルトへ"										//テキスト
-	//);
-
-	//前シーンで選択されたjsonの仮表示
-	/*const std::string selectedJson = GetPlayJson();
-	g_pSelectedJsonText = new FontRenderer(
-		{ SCREEN_WIDTH / 4.0f, SCREEN_HEIGHT / 2.0f },
-		28.0f,
-		0.0f,
-		{ 1.0f, 1.0f, 1.0f, 1.0f },
-		"Selected JSON: " + (selectedJson.empty() ? std::string("(none)") : selectedJson)
-	);*/
-
 	//int pad = Gamepad_FindConnectedPlayer();
 	//if (pad < 0)return;//デバック時必要なし
 
@@ -98,7 +69,7 @@ void Game_Update(void)
 		GameCamera::Update(g_pPlayer);
 		SetCameraPosition(GetCamera()->GetPos());
 
-		g_pField->Update(g_pNoteManager->GetNoteSpeed());
+		g_pField->Update(g_pNoteManager->GetNoteSpeed(), g_pNoteManager->GetBPM(), g_pNoteManager->GetElapsedTime());
 		g_pPlayer->Update();
 		g_pNoteManager->Update(g_pPlayer->GetLaneIndex(), g_pPlayer->GetGravityFace());
 
@@ -106,14 +77,7 @@ void Game_Update(void)
 
 	//2D描画
 	{
-		//③処理
-		//g_pChangeSceneText->Update();
 
-		//ClickFontがクリックされた
-		/*if (g_pChangeSceneText->IsClick())
-		{
-			SetSceneFade(SCENE_RESULT);
-		}*/
 	}
 
 	if (Keyboard_IsKeyDownTrigger(KK_D2))Mouse_SetVisible(true);
@@ -123,7 +87,7 @@ void Game_Update(void)
 		RESULT r;
 		r.score = 13232;
 		r.rank = "A";
-		r.accurary = 87.45;
+		r.accurary = 87.45f;
 		r.maxCombo = 175;
 		r.success = 312;
 		r.miss = 26;

@@ -7,11 +7,16 @@ class Field: public Sprite3D
 private:
 	static constexpr int NUM_FIELDS = 15;
 	float m_ScrollPos[NUM_FIELDS];
+	MODEL* m_FieldModels[NUM_FIELDS];
+
+	MODEL* m_ModelNormal = nullptr;
+	MODEL* m_ModelHasiranashi = nullptr;
+	bool m_bInitializedModels = false;
 
 public:
 	Field() : Sprite3D() {}
     void Init();
-    void Update(float speed);
+    void Update(float speed, float bpm, float elapsedTime);
     void Draw();
     void Finalize();
 };

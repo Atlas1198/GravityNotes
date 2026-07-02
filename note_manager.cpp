@@ -1,6 +1,7 @@
 #include "define.h"
 #include "game.h"
 #include "note_manager.h"
+#include "sound.h"
 #include "enemy_note.h"
 #include "orb_note.h"
 #include "barrier_note.h"
@@ -39,6 +40,12 @@ void NoteManager::Init(const std::string& scoreFilePath)
 	m_NextEventIndex = 0;
 
 	m_ScoreData = LoadScore(scoreFilePath);
+
+	std::string bgmPath = "asset\\sound\\bgm\\" + m_ScoreData.music;
+	m_pBgmData = LoadMP3(bgmPath);
+	if (m_pBgmData != nullptr) {
+		PlaySound(m_pBgmData, false);
+	}
 }
 
 void NoteManager::Update(int playerLane, int playerFace)
@@ -156,6 +163,12 @@ void NoteManager::Draw()
 
 void NoteManager::Finalize()
 {
+	if (m_pBgmData != nullptr) {
+		StopSound(m_pBgmData);
+		UnloadSound(m_pBgmData);
+		m_pBgmData = nullptr;
+	}
+
 	for (NoteBase* note : m_Notes)
 		delete note;
 	m_Notes.clear();
