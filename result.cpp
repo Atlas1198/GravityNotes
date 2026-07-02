@@ -26,8 +26,12 @@ static ClickFont* g_pChangeSceneText = nullptr;
 static ScoreSummary g_ResultScoreSummary;
 static RESULT g_Result;
 
-static MultiLineFontRenderer* g_pMusicText = nullptr;
+static FontRenderer* g_pMusicTexts[4] = { nullptr };
+static MultiLineFontRenderer* g_pAuthorFont= nullptr;
+static float g_MusicTextPos[4][2];
+static float g_MusicTextScale[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 static Sprite2D* g_pRankTextre = nullptr;
+static Sprite2D* g_pNextSceneTexture = nullptr;
 
 
 // アニメーション用の構造体
@@ -46,10 +50,10 @@ static FontRenderer* g_pValueFont = nullptr;
 	
 
 static float g_CountUpTimer = 0.0f;
-static const float COUNT_UP_MAX_TIME = 90.0f; // 90フレーム(1.5秒)でカウントアップ
+static const float COUNT_UP_MAX_TIME = 90.0f;		// 90フレーム(1.5秒)でカウントアップ
 static float g_ResultSceneTimer = 0.0f;
-static const float RANK_ANIM_START_TIME = 120.0f; // 120フレーム(2秒)
-static const float RANK_ANIM_DURATION = 30.0f; // 30フレーム(0.5秒)
+static const float RANK_ANIM_START_TIME = 120.0f;	// 120フレーム(2秒)
+static const float RANK_ANIM_DURATION = 30.0f;		// 30フレーム(0.5秒)
 
 static const float ROW_DELAY = 30.0f;               // 1行ごとの遅延フレーム
 static const float VALUE_START_DELAY = 30.0f;       // ラベルがすべて表示された後に数値を開始するまでの待機フレーム
@@ -70,8 +74,8 @@ void Result_Initialize(void)
 	g_Result.score += 100000; //デバッグ用にスコアを加算
 	g_Result.success += 100000;
 	g_Result.maxCombo += 100000;
-	g_Result.miss += 100000;
-	g_Result.accurary = 55.0f; 
+	g_Result.miss += 100;
+	g_Result.accurary = 55.0f;  //accuracy?
 	g_ResultScoreSummary.difficulty = 1.5f;
 
 	g_pResultBG = new Sprite2D(
@@ -84,51 +88,97 @@ void Result_Initialize(void)
 	);
 
 	g_pResultBackUI = new Sprite2D(
-		{ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 },					//位置
-		{ SCREEN_WIDTH, SCREEN_HEIGHT },							//サイズ
-		0.0f,														//回転（度）
-		{ 1.0f, 1.0f, 1.0f, 0.8f },									//RGBA
-		BLENDSTATE_ALFA,											//BlendState
-		L"asset\\texture\\Result_Back_UI.png"						//テクスチャパス
+		{ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 },				
+		{ SCREEN_WIDTH, SCREEN_HEIGHT },						
+		0.0f,													
+		{ 1.0f, 1.0f, 1.0f, 1.0f },								
+		BLENDSTATE_ALFA,										
+		L"asset\\texture\\Result_Back_UI.png"					
+	);
+
+	g_pNextSceneTexture = new Sprite2D(
+		{ SCREEN_WIDTH *4/5, 613.0f },
+		{ 85*4, 39*4 },											
+		0.0f,													
+		{ 1.0f, 1.0f, 1.0f, 1.0f },								
+		BLENDSTATE_ALFA,										
+		L"asset\\texture\\Result_Button_UI.png"					
 	);
 
 	g_pChangeSceneText = new ClickFont(
-		{ SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT * 5 / 6 },			//位置
+		{ SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT * 5 / 6 },				//位置
 		50.0f,														//文字サイズ
 		0.0f,														//回転（度）
 		{ 1.0f, 1.0f, 1.0f, 1.0f },									//通常色
 		{ 1.0f, 0.8f, 0.2f, 1.0f },									//ホバー色
-		"曲選択へ"									//テキスト
+		"曲選択へ"													//テキスト
 	);
 
 	// フォントの生成（空文字で初期化し、Draw時にセットする）
 	g_pLabelFont = new FontRenderer({ 0, 0 }, 43.0f, 0.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, "", TA_START);
-	g_pValueFont = new FontRenderer({ 0, 0 }, 43.0f, 0.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, "", TA_START);
+	g_pValueFont = new FontRenderer({ 0, 0 }, 43.0f, 0.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, "", TA_MIDDLE);
 
-	// 各行の初期状態と目標値をセット
+	// 各行の初期状態
 	float startX = 100.0f;    
-	float targetX = 180.0f;    // 所定のX座標へ
 	float startY = 294.0f;
 	float lineSpacing = 60.0f; // 行間隔
 
-	g_ResultRows[0] = { "SCORE :",    "", g_Result.score, startX,  startY };
-	g_ResultRows[1] = { "HIT数 :",    "", g_Result.success , startX ,  startY + lineSpacing };
-	g_ResultRows[2] = { "COMBO :", "", g_Result.maxCombo, startX ,	 startY + lineSpacing * 2 };
-	g_ResultRows[3] = { "MISS :",  "", g_Result.miss, startX ,  startY + lineSpacing * 3 };
-
+	g_ResultRows[0] = { "スコア  ",    "", g_Result.score * 100, startX,  startY };
+	g_ResultRows[1] = { "ヒット数  ",    "", g_Result.success , startX ,  startY + lineSpacing };
+	g_ResultRows[2] = { "コンボ数  ", "", g_Result.maxCombo, startX ,	 startY + lineSpacing * 2 };
+	g_ResultRows[3] = { "ミス数  ",  "", g_Result.miss, startX ,  startY + lineSpacing * 3 };
+	g_ResultRows[4] = { "達成率  ", "", static_cast<int>(g_Result.accurary), startX ,  startY + lineSpacing * 4 };
 
 	// 難易度の小数点以下1桁まで表示するためのstringstreamを使用
 	std::stringstream ss;
 	ss << std::fixed << std::setprecision(1) << g_ResultScoreSummary.difficulty;
 
-	g_pMusicText = new MultiLineFontRenderer(
-		{ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 12 },
-		30.0f,
+
+	// 楽曲情報のテキストを生成
+	// [0]: 曲名, [1]: 作曲者, [2]: 譜面制作者, [3]: 難易度
+	float initialPos[4][2] = {
+		{ 195.0f, 152.0f },
+		{ 415.0f, 220.0f },
+		{ 415.0f, 250.0f },
+		{ 138.0f, 613.0f }
+	};
+
+	float initialScale[4] = { 1.67f, 0.75f, 0.75f, 1.0f };
+
+	for (int i = 0; i < 4; ++i) {
+		g_MusicTextPos[i][0] = initialPos[i][0];
+		g_MusicTextPos[i][1] = initialPos[i][1];
+		g_MusicTextScale[i]  = initialScale[i];
+	}
+
+	std::string texts[4] = {
+		g_ResultScoreSummary.musicname,
+		g_ResultScoreSummary.musicauthor,
+		g_ResultScoreSummary.scoreauthor,
+		"難易度 : " + ss.str()
+	};
+
+	for (int i = 0; i < 4; ++i) {
+		g_pMusicTexts[i] = new FontRenderer(
+			{ g_MusicTextPos[i][0], g_MusicTextPos[i][1] },
+			30.0f,
+			0.0f,
+			{ 1.0f, 1.0f, 1.0f, 1.0f },
+			texts[i],
+			TA_START
+		);
+		g_pMusicTexts[i]->SetSize({ g_MusicTextScale[i], g_MusicTextScale[i] });
+	}
+
+	// 作曲者、譜面制作者
+	g_pAuthorFont = new MultiLineFontRenderer(
+		{ 195.0f, 220.0f },
+		18.0f,
 		0.0f,
-		{ 1.0f, 1.0f, 0.0f, 1.0f },
-		g_ResultScoreSummary.musicname + "\n" + g_ResultScoreSummary.musicauthor + "\n" + g_ResultScoreSummary.scoreauthor + "\n難易度 : " + ss.str(),
-		1.5f,												// 行間倍率
-		TA_MIDDLE
+		{ 1.0f, 1.0f, 1.0f, 1.0f },
+		"MusicAuthor\nScoreAuthor",
+		1.5f,
+		TA_START
 	);
 
 	// 達成率(accurary)によって表示するテクスチャを決定する
@@ -148,11 +198,11 @@ void Result_Initialize(void)
 
 	g_pRankTextre = new Sprite2D(
 		{ SCREEN_WIDTH / 2 + 350.0f , SCREEN_HEIGHT / 3 + 100.0f },			//位置
-		{ 500, 500 },												//サイズ
-		0.0f,														//回転（度）
-		{ 1.0f, 1.0f, 1.0f, 1.0f },									//RGBA
-		BLENDSTATE_ALFA,											//BlendState
-		rankTexturePath.c_str()										//テクスチャパス
+		{ 500, 500 },														//サイズ
+		0.0f,																//回転（度）
+		{ 1.0f, 1.0f, 1.0f, 1.0f },											//RGBA
+		BLENDSTATE_ALFA,													//BlendState
+		rankTexturePath.c_str()												//テクスチャパス
 	);
 
 	g_CountUpTimer = 0.0f;
@@ -202,6 +252,12 @@ void Result_Update(void)
 				int curVal = static_cast<int>(g_ResultRows[i].targetValue * easeProgress);
 				g_ResultRows[i].valueStr = std::to_string(curVal);
 			}
+
+			// ACCURACYの場合は末尾に%をつける
+			if (i == 4)
+			{
+				g_ResultRows[i].valueStr += "%";
+			}
 		}
 		else
 		{
@@ -223,13 +279,16 @@ void Result_Draw(void)
 	//④描画
 	g_pResultBG->Draw();
 	g_pResultBackUI->Draw();
-	g_pChangeSceneText->Draw();
-	g_pMusicText->Draw();
 	g_pRankTextre->Draw();
+	g_pNextSceneTexture->Draw();
+	g_pChangeSceneText->Draw();
+	for (int i = 0; i < 4; ++i) {
+		if (g_pMusicTexts[i]) g_pMusicTexts[i]->Draw();
+	}
 
 
 	if (g_pLabelFont && g_pValueFont)
-	{
+	{	
 		for (int i = 0; i < MAX_ROWS; ++i)
 		{
 			float labelStartTime = i * ROW_DELAY;
@@ -243,12 +302,14 @@ void Result_Draw(void)
 
 			// valueStr が空でなければ数値を描画（Update側で制御済み）
 			if (!g_ResultRows[i].valueStr.empty()) {
-				g_pValueFont->SetPos({ g_ResultRows[i].currentX + 260.0f + (i * 20.0f), g_ResultRows[i].y});
+				g_pValueFont->SetPos({ g_ResultRows[i].currentX + 350.0f + (i * 20.0f), g_ResultRows[i].y});
 				g_pValueFont->SetText(g_ResultRows[i].valueStr);
 				g_pValueFont->Draw();
 			}
 		}
 	}
+
+	g_pAuthorFont->Draw();
 }
 
 void Result_Finalize(void)
@@ -257,17 +318,34 @@ void Result_Finalize(void)
 	SAFE_DELETE(g_pResultBG);
 	SAFE_DELETE(g_pResultBackUI);
 	SAFE_DELETE(g_pChangeSceneText);
-	SAFE_DELETE(g_pMusicText);
+	for (int i = 0; i < 4; ++i) {
+		SAFE_DELETE(g_pMusicTexts[i]);
+	}
 	SAFE_DELETE(g_pRankTextre);
 	SAFE_DELETE(g_pLabelFont);
 	SAFE_DELETE(g_pValueFont);
+	SAFE_DELETE(g_pAuthorFont);
 	SAFE_DELETE(g_pRankTextre);
+	SAFE_DELETE(g_pNextSceneTexture);
 
 }
 
 void Result_DebugUIDraw(void)
 {
 	ImGui::Begin("Result Scene Editor");
+	if (ImGui::CollapsingHeader("Music Texts")) {
+		for (int i = 0; i < 4; ++i) {
+			ImGui::PushID(i);
+			ImGui::Text("Line %d", i);
+			if (ImGui::DragFloat2("Position", g_MusicTextPos[i], 1.0f)) {
+				if (g_pMusicTexts[i]) g_pMusicTexts[i]->SetPos({ g_MusicTextPos[i][0], g_MusicTextPos[i][1] });
+			}
+			if (ImGui::DragFloat("Scale", &g_MusicTextScale[i], 0.01f, 0.1f, 10.0f)) {
+				if (g_pMusicTexts[i]) g_pMusicTexts[i]->SetSize({ g_MusicTextScale[i], g_MusicTextScale[i] });
+			}
+			ImGui::PopID();
+		}
+	}
 	ImGui::End();
 }
 
