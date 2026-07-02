@@ -24,7 +24,7 @@ void Field::Init() {
 
 	for (int i = 0; i < NUM_FIELDS; ++i) {
 		m_ScrollPos[i] = (float)i * L;
-		if (i % 4 == 0) {
+		if (i % 2 == 0) {
 			m_FieldModels[i] = m_ModelNormal;
 		} else {
 			m_FieldModels[i] = m_ModelHasiranashi;
