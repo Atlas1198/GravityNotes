@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cctype>
 #include "framework/nlohmann/json.hpp"
+#include "debug_ostream.h"
 
 enum class ScoreType
 {
@@ -74,37 +75,50 @@ struct ScoreData
 // JSONファイルからスコアデータを読み込む
 inline ScoreData LoadScore(const std::string& filePath)
 {
-	std::ifstream file(filePath);
-	if (!file.is_open())
+	try
 	{
-		throw std::runtime_error("Failed to open file: " + filePath);
-	}
-
-	nlohmann::json jsonData;
-	file >> jsonData;
-	file.close();
-
-	ScoreData scoreData;
-	scoreData.bpm = jsonData["bpm"].get<float>();
-	scoreData.music = jsonData["music"].get<std::string>();
-
-	// イベント配列をパース
-	if (jsonData.contains("events"))
-	{
-		for (const auto& event : jsonData["events"])
+		std::ifstream file(filePath);
+		if (!file.is_open())
 		{
-			ScoreEvent scoreEvent;
-			scoreEvent.beat    = event["beat"].get<float>();
-			scoreEvent.lane    = event["lane"].get<int>();
-			scoreEvent.type    = ParseScoreType(event["type"].get<std::string>());
-			scoreEvent.wall    = ParseScoreWall(event["wall"].get<std::string>());
-			// Hold 専用フィールド（なければ beat・lane と同値にフォールバック）
-			scoreEvent.endBeat = event.value("endBeat", scoreEvent.beat);
-			scoreEvent.endLane = event.value("endLane", scoreEvent.lane);
-
-			scoreData.events.push_back(scoreEvent);
+			throw std::runtime_error("Failed to open file: " + filePath);
 		}
-	}
 
-	return scoreData;
+		nlohmann::json jsonData;
+		file >> jsonData;
+		file.close();
+
+		ScoreData scoreData;
+		scoreData.bpm = jsonData["bpm"].get<float>();
+		scoreData.music = jsonData["music"].get<std::string>();
+
+		// イベント配列をパース
+		if (jsonData.contains("events"))
+		{
+			for (const auto& event : jsonData["events"])
+			{
+				ScoreEvent scoreEvent;
+				scoreEvent.beat    = event["beat"].get<float>();
+				scoreEvent.lane    = event["lane"].get<int>();
+				scoreEvent.type    = ParseScoreType(event["type"].get<std::string>());
+				scoreEvent.wall    = ParseScoreWall(event["wall"].get<std::string>());
+				// Hold 専用フィールド（なければ beat・lane と同値にフォールバック）
+				scoreEvent.endBeat = event.value("endBeat", scoreEvent.beat);
+				scoreEvent.endLane = event.value("endLane", scoreEvent.lane);
+
+				scoreData.events.push_back(scoreEvent);
+			}
+		}
+
+		return scoreData;
+	}
+	catch (...)
+	{
+		std::string fallbackScore = "asset/score/shiningstar.json";
+		if (filePath != fallbackScore)
+		{
+			hal::dout << "[scoreloader.h] ファイルの取得に失敗したため、フォールバックとして" << fallbackScore << "を読み込みました" << std::endl;
+			return LoadScore(fallbackScore);
+		}
+		throw;
+	}
 }
