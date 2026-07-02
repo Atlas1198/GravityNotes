@@ -5,8 +5,12 @@
 class Field: public Sprite3D
 {
 private:
-	static constexpr int NUM_FIELDS = 15;
+	static constexpr int NUM_FIELDS = 16;
 	float m_ScrollPos[NUM_FIELDS];
+	MODEL* m_FieldModels[NUM_FIELDS];
+
+	MODEL* m_ModelNormal = nullptr;
+	MODEL* m_ModelHasiranashi = nullptr;
 
 public:
 	Field() : Sprite3D() {}

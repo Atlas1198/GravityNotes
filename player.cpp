@@ -1,4 +1,4 @@
-﻿#include "main.h"
+#include "main.h"
 #include "keyboard.h"
 #include "mouse.h"
 #include "gamepad.h"
@@ -69,7 +69,7 @@ void Player::Update()
 {
 	int pad = GetGamePad();
 	bool connected = Gamepad_IsConnected(pad);
-	if (connected < 0) {
+	if (connected) {
 		return;
 	}
 
@@ -225,10 +225,9 @@ void Player::ChangeGravity(int targetFace)
 
 	m_TargetFace = targetFace;
 
-	// 反対面ならレーンをそのまま、隣接面なら現在位置から最寄りレーンを計算
-	bool isOpposite = (m_GravityFace + 2) % 4 == targetFace;
-	m_LaneIndex = isOpposite ? m_LaneIndex : CalcNearestLane();
-	m_TargetLaneIndex = m_LaneIndex;
+	// 重力変更時の移動位置を固定で2番目のレーン（中央）にする
+	m_LaneIndex = LANE_CENTER;
+	m_TargetLaneIndex = LANE_CENTER;
 
 	m_GravityStartPos = m_Position;
 	m_GravityStartRot = m_Rotation;
