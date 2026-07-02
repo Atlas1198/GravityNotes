@@ -1,3 +1,4 @@
+#define NOMINMAX
 #include "rope_hold_note.h"
 #include "game.h"
 #include <algorithm>

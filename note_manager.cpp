@@ -1,4 +1,4 @@
-#include "define.h"
+﻿#include "define.h"
 #include "game.h"
 #include "note_manager.h"
 #include "enemy_note.h"
@@ -152,6 +152,7 @@ void NoteManager::Update(int playerLane, int playerFace)
 			         z < HIT_ZONE_Z - GOOD_WINDOW)
 			{
 				m_Notes[i]->OnMiss();
+				m_PendingJudges.push(JUDGE_MISS); // StatusManager に伝える
 			}
 		}
 
@@ -251,7 +252,7 @@ JUDGE NoteManager::JudgeHold(int lane, int face)
 		if (dist < PERFECT_WINDOW) { child->OnHit(); return JUDGE_PERFECT; }
 		if (dist < GOOD_WINDOW)    { child->OnHit(); return JUDGE_GOOD; }
 	}
-	return JUDGE_MISS;
+	return JUDGE_NONE; // HoldNote が存在しない／範囲外のときは何もしない
 }
 
 JUDGE NoteManager::OnButtonRelease(int lane, int face)
