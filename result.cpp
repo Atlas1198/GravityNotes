@@ -71,7 +71,8 @@ void Result_Initialize(void)
 	g_Result.success += 100000;
 	g_Result.maxCombo += 100000;
 	g_Result.miss += 100000;
-	g_Result.rank = "A";
+	g_Result.accurary = 55.0f; 
+	g_ResultScoreSummary.difficulty = 1.5f;
 
 	g_pResultBG = new Sprite2D(
 		{ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 },					//位置
@@ -100,7 +101,6 @@ void Result_Initialize(void)
 		"曲選択へ"									//テキスト
 	);
 
-
 	// フォントの生成（空文字で初期化し、Draw時にセットする）
 	g_pLabelFont = new FontRenderer({ 0, 0 }, 43.0f, 0.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, "", TA_START);
 	g_pValueFont = new FontRenderer({ 0, 0 }, 43.0f, 0.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, "", TA_START);
@@ -111,10 +111,10 @@ void Result_Initialize(void)
 	float startY = 294.0f;
 	float lineSpacing = 60.0f; // 行間隔
 
-	g_ResultRows[0] = { "SCORE :",    "", g_Result.score,                   startX,  startY };
+	g_ResultRows[0] = { "SCORE :",    "", g_Result.score, startX,  startY };
 	g_ResultRows[1] = { "HIT数 :",    "", g_Result.success , startX ,  startY + lineSpacing };
-	g_ResultRows[2] = { "COMBO :", "", g_Result.maxCombo,                startX ,	 startY + lineSpacing * 2 };
-	g_ResultRows[3] = { "MISS :",  "", g_Result.miss,                 startX ,  startY + lineSpacing * 3 };
+	g_ResultRows[2] = { "COMBO :", "", g_Result.maxCombo, startX ,	 startY + lineSpacing * 2 };
+	g_ResultRows[3] = { "MISS :",  "", g_Result.miss, startX ,  startY + lineSpacing * 3 };
 
 
 	// 難易度の小数点以下1桁まで表示するためのstringstreamを使用
@@ -131,9 +131,18 @@ void Result_Initialize(void)
 		TA_MIDDLE
 	);
 
-	// ランク文字列(std::string)をワイド文字列(std::wstring)に変換
-	std::wstring wRank(g_Result.rank.begin(), g_Result.rank.end());
-	
+	// 達成率(accurary)によって表示するテクスチャを決定する
+	std::wstring wRank = L"C"; // デフォルトはC
+	if (g_Result.accurary >= 95.0f) {
+		wRank = L"SS";
+	} else if (g_Result.accurary >= 90.0f) {
+		wRank = L"S";
+	} else if (g_Result.accurary >= 80.0f) {
+		wRank = L"A";
+	} else if (g_Result.accurary >= 50.0f) {
+		wRank = L"B";
+	}
+
 	// テクスチャのファイルパスを動的に生成
 	std::wstring rankTexturePath = L"asset\\texture\\Result_Rank_" + wRank + L"_UI.png";
 
