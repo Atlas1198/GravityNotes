@@ -11,12 +11,11 @@ private:
 
 	MODEL* m_ModelNormal = nullptr;
 	MODEL* m_ModelHasiranashi = nullptr;
-	bool m_bInitializedModels = false;
 
 public:
 	Field() : Sprite3D() {}
     void Init();
-    void Update(float speed, float bpm, float elapsedTime);
+    void Update(float speed);
     void Draw();
     void Finalize();
 };

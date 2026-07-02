@@ -35,6 +35,7 @@ inline ScoreType ParseScoreType(const std::string& value)
 {
 	const std::string token = NormalizeScoreToken(value);
 	if (token == "enemy") return ScoreType::Enemy;
+	if (token == "tap") return ScoreType::Enemy;		//最新の譜面エディタがtapだったのキモい
 	if (token == "barrier") return ScoreType::Barrier;
 	if (token == "orb") return ScoreType::Orb;
 	if (token == "hold") return ScoreType::Hold;

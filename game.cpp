@@ -1,4 +1,4 @@
-﻿#include "game.h"
+#include "game.h"
 #include "define.h"
 #include "sprite2d.h"
 #include "texture.h"
@@ -69,7 +69,7 @@ void Game_Update(void)
 		GameCamera::Update(g_pPlayer);
 		SetCameraPosition(GetCamera()->GetPos());
 
-		g_pField->Update(g_pNoteManager->GetNoteSpeed(), g_pNoteManager->GetBPM(), g_pNoteManager->GetElapsedTime());
+		g_pField->Update(g_pNoteManager->GetNoteSpeed());
 		g_pPlayer->Update();
 		g_pNoteManager->Update(g_pPlayer->GetLaneIndex(), g_pPlayer->GetGravityFace());
 

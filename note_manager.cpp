@@ -36,21 +36,41 @@ void NoteManager::Init(const std::string& scoreFilePath)
 {
 	m_NoteSpeed      = 10.0f;
 	m_SpawnZ         = 80.0f;
-	m_ElapsedTime    = 0.0f;
+	m_ElapsedTime    = -3.0f;
 	m_NextEventIndex = 0;
+	m_BgmStarted     = false;
 
 	m_ScoreData = LoadScore(scoreFilePath);
 
 	std::string bgmPath = "asset\\sound\\bgm\\" + m_ScoreData.music;
 	m_pBgmData = LoadMP3(bgmPath);
-	if (m_pBgmData != nullptr) {
-		PlaySound(m_pBgmData, false);
-	}
 }
 
 void NoteManager::Update(int playerLane, int playerFace)
 {
-	m_ElapsedTime += dt;
+	if (!m_BgmStarted)
+	{
+		m_ElapsedTime += dt;
+		if (m_ElapsedTime >= 0.0f)
+		{
+			if (m_pBgmData != nullptr)
+			{
+				PlaySound(m_pBgmData, false);
+			}
+			m_BgmStarted = true;
+		}
+	}
+	else
+	{
+		if (m_pBgmData != nullptr)
+		{
+			m_ElapsedTime = (float)GetPlaybackPositionSec(m_pBgmData);
+		}
+		else
+		{
+			m_ElapsedTime += dt;
+		}
+	}
 
 	// スポーン処理：時刻が来たイベントを順番に生成
 	while (m_NextEventIndex < (int)m_ScoreData.events.size())

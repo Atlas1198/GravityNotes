@@ -22,6 +22,7 @@ private:
 	float     m_ElapsedTime;
 	int       m_NextEventIndex;
 	SoundData* m_pBgmData = nullptr;
+	bool      m_BgmStarted = false;
 
 	float BeatToSpawnTime(float beat) const;
 	int   WallToFace(ScoreWall wall)  const;

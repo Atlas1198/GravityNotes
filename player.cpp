@@ -69,7 +69,7 @@ void Player::Update()
 {
 	int pad = GetGamePad();
 	bool connected = Gamepad_IsConnected(pad);
-	if (connected < 0) {
+	if (connected) {
 		return;
 	}
 

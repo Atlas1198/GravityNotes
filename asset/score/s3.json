@@ -1,0 +1,89 @@
+{
+  "musicname": "シャイニングスター3",
+  "musicauthor": "R.T",
+  "scoreauthor": "maoudamashii",
+  "difficulty": 0.0,
+  "thumbnail": "tex.png",
+  "bpm": 158.0,
+  "music": "maou_14_shining_star.mp3",
+  "events": [
+    {
+      "beat": 0.0,
+      "type": "Tap",
+      "wall": "Down",
+      "lane": 1
+    },
+    {
+      "beat": 1.0,
+      "type": "Tap",
+      "wall": "Left",
+      "lane": 1
+    },
+    {
+      "beat": 2.0,
+      "type": "Tap",
+      "wall": "Up",
+      "lane": 1
+    },
+    {
+      "beat": 3.0,
+      "type": "Tap",
+      "wall": "Left",
+      "lane": 1
+    },
+    {
+      "beat": 4.0,
+      "type": "Tap",
+      "wall": "Down",
+      "lane": 1
+    },
+    {
+      "beat": 5.0,
+      "type": "Tap",
+      "wall": "Right",
+      "lane": 1
+    },
+    {
+      "beat": 6.0,
+      "type": "Tap",
+      "wall": "Down",
+      "lane": 1
+    },
+    {
+      "beat": 7.0,
+      "type": "Tap",
+      "wall": "Left",
+      "lane": 1
+    },
+    {
+      "beat": 8.0,
+      "type": "Tap",
+      "wall": "Up",
+      "lane": 1
+    },
+    {
+      "beat": 9.0,
+      "type": "Tap",
+      "wall": "Left",
+      "lane": 1
+    },
+    {
+      "beat": 10.0,
+      "type": "Tap",
+      "wall": "Down",
+      "lane": 1
+    },
+    {
+      "beat": 11.0,
+      "type": "Tap",
+      "wall": "Right",
+      "lane": 1
+    },
+    {
+      "beat": 12.0,
+      "type": "Tap",
+      "wall": "Down",
+      "lane": 1
+    }
+  ]
+}
