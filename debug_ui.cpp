@@ -6,6 +6,7 @@
 #include "../framework/keyboard.h"
 #include "../framework/camera.h"
 #include "gamepad.h"
+#include "game_ui.h"
 
 static bool s_IsOpen = false;
 
@@ -19,13 +20,12 @@ void DebugUI_Draw()
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
-	ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
-	ImGui::Begin("Trigger",&s_IsOpen);
+	/*ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
+	ImGui::Begin("UI",&s_IsOpen);
 	{
-		ImGui::Text("Left  : %.1f",Gamepad_GetLeftTrigger(0));
-		ImGui::Text("Right: %.1f", Gamepad_GetRightTrigger(0));
+		
 	}
-	ImGui::End();
+	ImGui::End();*/
 
     /*ImGui::Begin("LD Parameters", &s_IsOpen);
 

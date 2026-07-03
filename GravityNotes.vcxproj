@@ -201,6 +201,7 @@
     <ClCompile Include="framework\sprite2d.cpp" />
     <ClCompile Include="framework\texture.cpp" />
     <ClCompile Include="gamecamera.cpp" />
+    <ClCompile Include="game_ui.cpp" />
     <ClCompile Include="hold_note.cpp" />
     <ClCompile Include="light_game.cpp" />
     <ClCompile Include="framework\mouse.cpp" />
@@ -210,6 +211,7 @@
     <ClCompile Include="orb_note.cpp" />
     <ClCompile Include="player.cpp" />
     <ClCompile Include="result.cpp" />
+    <ClCompile Include="rope_hold_note.cpp" />
     <ClCompile Include="scene.cpp" />
     <ClCompile Include="stageselect.cpp" />
     <ClCompile Include="shader\renderer.cpp" />
@@ -274,6 +276,7 @@
     <ClInclude Include="framework\stb_truetype.h" />
     <ClInclude Include="framework\texture.h" />
     <ClInclude Include="gamecamera.h" />
+    <ClInclude Include="game_ui.h" />
     <ClInclude Include="hold_note.h" />
     <ClInclude Include="light_game.h" />
     <ClInclude Include="mathhelper.h" />
@@ -283,6 +286,7 @@
     <ClInclude Include="note_manager.h" />
     <ClInclude Include="orb_note.h" />
     <ClInclude Include="player.h" />
+    <ClInclude Include="rope_hold_note.h" />
     <ClInclude Include="scene.h" />
     <ClInclude Include="result.h" />
     <ClInclude Include="scoreloader.h" />

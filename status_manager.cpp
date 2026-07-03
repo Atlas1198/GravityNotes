@@ -18,9 +18,11 @@ void StatusManager::Finalize()
 
 void StatusManager::OnJudge(JUDGE result)
 {
+	m_LastJudge   = result;
+	m_HasNewJudge = true;
 	if (result == JUDGE_MISS)
 	{
-		m_HP--;
+		m_HP-=30;
 		m_Combo = 0;
 		m_MissCount++;
 		return;

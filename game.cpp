@@ -23,6 +23,7 @@
 #include "note_manager.h"
 #include "light_game.h"
 #include "status_manager.h"
+#include "game_ui.h"
 
 using namespace DirectX;
 
@@ -35,6 +36,7 @@ static Field*         g_pField         = nullptr;
 static Player*        g_pPlayer        = nullptr;
 static NoteManager*   g_pNoteManager   = nullptr;
 static StatusManager* g_pStatusManager = nullptr;
+static GameUI*        g_pGameUI        = nullptr;
 
 void Game_Initialize(void)
 {
@@ -59,6 +61,9 @@ void Game_Initialize(void)
 	g_pPlayer = new Player();
 	g_pPlayer->Init(g_pNoteManager, g_pStatusManager);
 
+	g_pGameUI = new GameUI();
+	g_pGameUI->Init();
+
 	//UnLockMouse();//マウスアンロック
 }
 
@@ -77,7 +82,17 @@ void Game_Update(void)
 
 	//2D描画
 	{
+		//③処理
+		g_pGameUI->Update(g_pStatusManager);
+		if (g_pStatusManager->HasNewJudge())
+			g_pGameUI->NotifyJudge(g_pStatusManager->ConsumeJudge());
+		//g_pChangeSceneText->Update();
 
+		//ClickFontがクリックされた
+		/*if (g_pChangeSceneText->IsClick())
+		{
+			SetSceneFade(SCENE_RESULT);
+		}*/
 	}
 
 	if (Keyboard_IsKeyDownTrigger(KK_D2))Mouse_SetVisible(true);
@@ -113,6 +128,7 @@ void Game_Draw(void)
 
 	//2D
 	{
+		g_pGameUI->Draw();
 		//g_pGameSprite->Draw();
 		//g_pChangeSceneText->Draw();
 		//g_pSelectedJsonText->Draw();
@@ -132,6 +148,7 @@ void Game_Finalize(void)
 	SAFE_DELETE(g_pPlayer);
 	if (g_pNoteManager)   { g_pNoteManager->Finalize();   SAFE_DELETE(g_pNoteManager); }
 	if (g_pStatusManager) { g_pStatusManager->Finalize(); SAFE_DELETE(g_pStatusManager); }
+	if (g_pGameUI)        { g_pGameUI->Finalize();        SAFE_DELETE(g_pGameUI); }
 	GameLight::Finalize();
 	GameCamera::Finalize();
 }
