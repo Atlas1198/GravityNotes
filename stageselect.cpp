@@ -128,10 +128,10 @@ static void UpdateBgmFromSelection()
 	// 選択された曲が現在再生中の曲と同じ場合はそのまま
 	if (g_LoadedBgmPath == soundPath) return;
 
-	// RAMのオーバーフローを防ぐため、古い曲を停止して解放
+	// RAMのオーバーフローを防ぐため、古い曲を停止する（解放はシーン遷移時のキャッシュ一括クリアに任せる）
 	if (g_pCurrentBgmData != nullptr) {
 		StopSound(g_pCurrentBgmData);
-		UnloadSound(g_pCurrentBgmData);
+		// UnloadSound(g_pCurrentBgmData);
 		g_pCurrentBgmData = nullptr;
 	}
 
@@ -276,6 +276,14 @@ void StageSelect_Initialize(void)
 		<< " Count=" << g_ScoreSummaries.size()
 		<< std::endl;
 
+	// BGMのプリロードを行う（選曲切り替え時のフリーズを防止するため、キャッシュシステムに事前に登録しておく）
+	for (const auto& summary : g_ScoreSummaries) {
+		if (!summary.music.empty()) {
+			std::string soundPath = "asset\\sound\\bgm\\" + summary.music;
+			LoadMP3(soundPath);
+		}
+	}
+
 	g_SelectedStage = 0;
 
 	// ディスク0の最初のBGMを自動的に検索して再生
@@ -348,7 +356,7 @@ void StageSelect_Update(void)
 			g_CurrentState = STATE_LIFTING_ARM;
 			if (g_pCurrentBgmData != nullptr) {
 				StopSound(g_pCurrentBgmData);
-				UnloadSound(g_pCurrentBgmData);
+				// UnloadSound(g_pCurrentBgmData);
 				g_pCurrentBgmData = nullptr;
 			}
 			g_LoadedBgmPath = "";
@@ -511,7 +519,7 @@ void StageSelect_Update(void)
 			// 本番のステージに遷移する前に、待機中のBGMを解放する
 			if (g_pCurrentBgmData != nullptr) {
 				StopSound(g_pCurrentBgmData);
-				UnloadSound(g_pCurrentBgmData);
+				// UnloadSound(g_pCurrentBgmData);
 				g_pCurrentBgmData = nullptr;
 			}
 			g_LoadedBgmPath = "";
