@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <vector>
 #include "note_base.h"
 #include "scoreloader.h"

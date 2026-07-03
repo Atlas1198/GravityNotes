@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "renderer.h"
 #include "sprite3d.h"
 
