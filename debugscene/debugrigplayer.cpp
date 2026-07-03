@@ -16,6 +16,9 @@
 #include "camera.h"
 #include "movie.h"
 #include "debugcamera.h"
+#include "../framework/imgui/imgui.h"
+#include "../framework/imgui/imgui_impl_dx11.h"
+#include "../framework/imgui/imgui_impl_win32.h"
 #include <string>
 #include <cmath>
 
@@ -28,6 +31,11 @@ static PointLight* g_pMainLight = nullptr;
 static AmbientLight g_AmbientLight(XMFLOAT4(0.4f, 0.4f, 0.4f, 1.0f));
 static FontRenderer* g_pGuideFont = nullptr;
 static FontRenderer* g_pAnimInfoFont = nullptr;
+static bool g_IsMouseCursorVisible = false;
+static XMFLOAT4 g_LightPosition = { 0.0f, 3.0f, 0.0f, 1.0f };
+static float g_LightRange = 100.0f;
+static float g_LightIntensity = 1.0f;
+static XMFLOAT4 g_AmbientColor = { 0.4f, 0.4f, 0.4f, 1.0f };
 
 static int GetTriggeredAnimationSlot()
 {
@@ -62,7 +70,7 @@ void DebugRigPlayer_Initialize(void)
 		{ 0.01f, 0.01f, 0.01f },
 		{ 0.0f, 0.0f, 0.0f },
 		"asset\\model\\knight_02.fbx",
-		S_LAMBERT
+		S_PBR
 	);
 
 	g_pFieldNormal = new Sprite3D(
@@ -73,13 +81,13 @@ void DebugRigPlayer_Initialize(void)
 		S_PHONG
 	);
 
-	g_pBox1x1x1 = new Sprite3D(
-		{ 1.0f, 0.0f, 0.0f },
-		{ 1.0f, 1.0f, 1.0f },
-		{ 0.0f, 0.0f, 0.0f },
-		"asset\\model\\cube.fbx",
-		S_LAMBERT
-	);
+	//g_pBox1x1x1 = new Sprite3D(
+	//	{ 1.0f, 0.0f, 0.0f },
+	//	{ 1.0f, 1.0f, 1.0f },
+	//	{ 0.0f, 0.0f, 0.0f },
+	//	"asset\\model\\cube.fbx",
+	//	S_LAMBERT
+	//);
 
 	if (g_pRigPlayer)
 	{
@@ -104,10 +112,10 @@ void DebugRigPlayer_Initialize(void)
 
 	g_pMainLight = new PointLight(
 		TRUE,
-		{ 0.0f, 3.0f, 0.0f, 1.0f },
+		g_LightPosition,
 		{ 1.0f, 1.0f, 1.0f, 1.0f },
-		100.0f,
-		1.0f
+		g_LightRange,
+		g_LightIntensity
 	);
 	g_pMainLight->Apply(g_AmbientLight);
 
@@ -141,6 +149,21 @@ void DebugRigPlayer_Initialize(void)
 void DebugRigPlayer_Update(void)
 {
 	DebugCamera_Update();
+
+	if (Keyboard_IsKeyDownTrigger(KK_U))
+	{
+		g_IsMouseCursorVisible = !g_IsMouseCursorVisible;
+		if (g_IsMouseCursorVisible)
+		{
+			UnLockMouse();
+		}
+		else
+		{
+			LockMouse();
+		}
+	}
+
+
 	if (GetCamera())
 	{
 		GetCamera()->SetTargetPos({ 0.0f, -3.0f, 5.0f });
@@ -149,6 +172,10 @@ void DebugRigPlayer_Update(void)
 
 	if (g_pMainLight)
 	{
+		g_pMainLight->SetPosition(g_LightPosition);
+		g_pMainLight->SetRange(g_LightRange);
+		g_pMainLight->SetIntensity(g_LightIntensity);
+		g_AmbientLight.SetColor(g_AmbientColor);
 		g_pMainLight->Apply(g_AmbientLight);
 	}
 
@@ -229,6 +256,25 @@ void DebugRigPlayer_Draw(void)
 	}
 	DebugCamera_Draw();
 	Sprite_EndDraw2D();
+
+#ifdef _DEBUG
+	if (ImGui::GetCurrentContext())
+	{
+		ImGui_ImplDX11_NewFrame();
+		ImGui_ImplWin32_NewFrame();
+		ImGui::NewFrame();
+
+		ImGui::Begin("Rig PBR");
+		ImGui::DragFloat3("Light Pos", &g_LightPosition.x, 0.1f, -20.0f, 20.0f);
+		ImGui::SliderFloat("Light Range", &g_LightRange, 1.0f, 200.0f);
+		ImGui::SliderFloat("Light Intensity", &g_LightIntensity, 0.0f, 5.0f);
+		ImGui::ColorEdit3("Ambient", &g_AmbientColor.x);
+		ImGui::End();
+
+		ImGui::Render();
+		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+	}
+#endif
 }
 
 void DebugRigPlayer_Finalize(void)

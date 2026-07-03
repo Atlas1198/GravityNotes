@@ -1,4 +1,4 @@
-#include "field.h"
+﻿#include "field.h"
 #include "shadermanager.h"
 #include "define.h"
 #include "game.h"
@@ -9,7 +9,7 @@ using namespace DirectX;
 void Field::Init() {
 	m_Scale = { 5.0f,5.0f,5.0f };
 	m_Model = ModelLoad("asset/model/field_allnormal.fbx");
-	m_ShaderType = S_LAMBERT;
+	m_ShaderType = S_PHONG;
 
 	// Sprite3Dのメンバ変数を初期化
 	m_ModelSize = ModelGetSize(m_Model);
