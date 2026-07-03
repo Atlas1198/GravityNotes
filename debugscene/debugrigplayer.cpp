@@ -75,7 +75,7 @@ void DebugRigPlayer_Initialize(void)
 
 	g_pFieldNormal = new Sprite3D(
 		{ 0.0f, 2.0f, 0.0f },
-		{ 4.0f, 4.0f, 4.0f },
+		{ 4.0f, 4.0f, 4.0f },	
 		{ 0.0f, 0.0f, 0.0f },
 		"asset\\model\\field_allnormal.fbx",
 		S_PHONG

@@ -6,6 +6,7 @@
 #include "../framework/keyboard.h"
 #include "../framework/camera.h"
 #include "gamepad.h"
+#include "light_game.h"
 
 static bool s_IsOpen = false;
 
@@ -26,6 +27,8 @@ void DebugUI_Draw()
 		ImGui::Text("Right: %.1f", Gamepad_GetRightTrigger(0));
 	}
 	ImGui::End();
+
+	GameLight::Draw();
 
     /*ImGui::Begin("LD Parameters", &s_IsOpen);
 

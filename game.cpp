@@ -35,6 +35,7 @@ static Field*         g_pField         = nullptr;
 static Player*        g_pPlayer        = nullptr;
 static NoteManager*   g_pNoteManager   = nullptr;
 static StatusManager* g_pStatusManager = nullptr;
+static bool           g_IsMouseCursorVisible = false;
 
 void Game_Initialize(void)
 {
@@ -116,8 +117,20 @@ void Game_Update(void)
 		}*/
 	}
 
-	if (Keyboard_IsKeyDownTrigger(KK_D2))Mouse_SetVisible(true);
-	if (Keyboard_IsKeyDownTrigger(KK_D3))Mouse_SetVisible(false);
+	//マウスカーソルを表示/非表示切り替え(デバッグ用)
+	/*if (Keyboard_IsKeyDownTrigger(KK_U))
+	{
+		g_IsMouseCursorVisible = !g_IsMouseCursorVisible;
+		Mouse_SetVisible(g_IsMouseCursorVisible);
+		if (g_IsMouseCursorVisible)
+		{
+			UnLockMouse();
+		}
+		else
+		{
+			LockMouse();
+		}
+	}*/
 
 	if (Keyboard_IsKeyDownTrigger(KK_ENTER)) {
 		RESULT r;
