@@ -103,7 +103,7 @@
     <ClCompile Include="scene.cpp">
       <Filter>フレームワーク\etc</Filter>
     </ClCompile>
-    <ClCompile Include="mouse.cpp">
+    <ClCompile Include="framework\mouse.cpp">
       <Filter>フレームワーク\input</Filter>
     </ClCompile>
     <ClCompile Include="framework\input_manager.cpp">
@@ -288,7 +288,7 @@
     <ClInclude Include="scene.h">
       <Filter>フレームワーク\etc</Filter>
     </ClInclude>
-    <ClInclude Include="mouse.h">
+    <ClInclude Include="framework\mouse.h">
       <Filter>フレームワーク\input</Filter>
     </ClInclude>
     <ClInclude Include="framework\input_monitor_console.h">

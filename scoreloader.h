@@ -40,7 +40,7 @@ inline ScoreType ParseScoreType(const std::string& value)
 	if (token == "orb") return ScoreType::Orb;
 	if (token == "hold") return ScoreType::Hold;
 
-	//throw std::runtime_error("Invalid score type: " + value);
+	throw std::runtime_error("Invalid score type: " + value);
 }
 
 inline ScoreWall ParseScoreWall(const std::string& value)

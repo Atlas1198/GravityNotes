@@ -203,7 +203,7 @@
     <ClCompile Include="gamecamera.cpp" />
     <ClCompile Include="hold_note.cpp" />
     <ClCompile Include="light_game.cpp" />
-    <ClCompile Include="mouse.cpp" />
+    <ClCompile Include="framework\mouse.cpp" />
     <ClCompile Include="game.cpp" />
     <ClCompile Include="note_base.cpp" />
     <ClCompile Include="note_manager.cpp" />
@@ -277,7 +277,7 @@
     <ClInclude Include="hold_note.h" />
     <ClInclude Include="light_game.h" />
     <ClInclude Include="mathhelper.h" />
-    <ClInclude Include="mouse.h" />
+    <ClInclude Include="framework\mouse.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="note_base.h" />
     <ClInclude Include="note_manager.h" />
