@@ -294,6 +294,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 				auto startUpdate = std::chrono::high_resolution_clock::now();
 				Fade_Update();
 				UpdateTextureCache();
+				UpdateSoundCache();
 				Update();
 				auto endUpdate = std::chrono::high_resolution_clock::now();
 				g_UpdateTime = std::chrono::duration_cast<std::chrono::microseconds>(endUpdate - startUpdate).count();
@@ -346,6 +347,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 
 	Finalize();
 	ReleaseAllTextures();
+	ReleaseAllSounds();
 	Gamepad_Finalize();
 	Input_Finalize();
 	InputMonitorConsole_Finalize();
