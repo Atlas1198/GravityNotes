@@ -52,11 +52,12 @@ static FontRenderer* g_pValueFont = nullptr;
 static float g_CountUpTimer = 0.0f;
 static const float COUNT_UP_MAX_TIME = 90.0f;		// 90フレーム(1.5秒)でカウントアップ
 static float g_ResultSceneTimer = 0.0f;
-static const float RANK_ANIM_START_TIME = 120.0f;	// 120フレーム(2秒)
-static const float RANK_ANIM_DURATION = 30.0f;		// 30フレーム(0.5秒)
-
 static const float ROW_DELAY = 30.0f;               // 1行ごとの遅延フレーム
 static const float VALUE_START_DELAY = 30.0f;       // ラベルがすべて表示された後に数値を開始するまでの待機フレーム
+
+// 全てのアニメーションが終了する時間
+static const float RANK_ANIM_START_TIME = (MAX_ROWS * ROW_DELAY) + VALUE_START_DELAY + ((MAX_ROWS - 1) * ROW_DELAY) + COUNT_UP_MAX_TIME;
+static const float RANK_ANIM_DURATION = 30.0f;		// 30フレーム(0.5秒)
 
 void Result_Initialize(void)
 {
@@ -125,7 +126,7 @@ void Result_Initialize(void)
 
 	g_ResultRows[0] = { "スコア  ",    "", g_Result.score * 100, startX,  startY };
 	g_ResultRows[1] = { "ヒット数  ",    "", g_Result.success , startX ,  startY + lineSpacing };
-	g_ResultRows[2] = { "コンボ数  ", "", g_Result.maxCombo, startX ,	 startY + lineSpacing * 2 };
+	g_ResultRows[2] = { "最大コンボ数  ", "", g_Result.maxCombo, startX ,	 startY + lineSpacing * 2 };
 	g_ResultRows[3] = { "ミス数  ",  "", g_Result.miss, startX ,  startY + lineSpacing * 3 };
 	g_ResultRows[4] = { "達成率  ", "", static_cast<int>(g_Result.accurary), startX ,  startY + lineSpacing * 4 };
 
@@ -137,9 +138,9 @@ void Result_Initialize(void)
 	// 楽曲情報のテキストを生成
 	// [0]: 曲名, [1]: 作曲者, [2]: 譜面制作者, [3]: 難易度
 	float initialPos[4][2] = {
-		{ 195.0f, 152.0f },
-		{ 415.0f, 220.0f },
-		{ 415.0f, 250.0f },
+		{ 300.0f, 152.0f },
+		{ 550.0f, 220.0f },
+		{ 550.0f, 250.0f },
 		{ 138.0f, 613.0f }
 	};
 
@@ -172,7 +173,7 @@ void Result_Initialize(void)
 
 	// 作曲者、譜面制作者
 	g_pAuthorFont = new MultiLineFontRenderer(
-		{ 195.0f, 220.0f },
+		{ 300.0f, 220.0f },
 		18.0f,
 		0.0f,
 		{ 1.0f, 1.0f, 1.0f, 1.0f },
@@ -200,7 +201,7 @@ void Result_Initialize(void)
 		{ SCREEN_WIDTH / 2 + 350.0f , SCREEN_HEIGHT / 3 + 100.0f },			//位置
 		{ 500, 500 },														//サイズ
 		0.0f,																//回転（度）
-		{ 1.0f, 1.0f, 1.0f, 1.0f },											//RGBA
+		{ 1.0f, 1.0f, 1.0f, 0.0f },											//RGBA (初期状態は透明)
 		BLENDSTATE_ALFA,													//BlendState
 		rankTexturePath.c_str()												//テクスチャパス
 	);
@@ -264,6 +265,25 @@ void Result_Update(void)
 			// まだ開始時間になっていない場合は空にしておく
 			g_ResultRows[i].valueStr = "";
 		}
+	}
+
+	// ランクテクスチャのフェードイン＆スケールアニメーション
+	if (g_ResultSceneTimer >= RANK_ANIM_START_TIME)
+	{
+		float progress = (g_ResultSceneTimer - RANK_ANIM_START_TIME) / RANK_ANIM_DURATION;
+		if (progress > 1.0f) progress = 1.0f;
+		g_pRankTextre->SetColor({ 1.0f, 1.0f, 1.0f, progress });
+
+		// イーズイン（徐々に加速して落ちてくるスタンプ演出）
+		float easeIn = progress * progress * progress;
+		// 3倍(1500)から等倍(500)へ縮小
+		float currentSize = 1500.0f + (500.0f - 1500.0f) * easeIn;
+		g_pRankTextre->SetSize({ currentSize, currentSize });
+	}
+	else
+	{
+		g_pRankTextre->SetColor({ 1.0f, 1.0f, 1.0f, 0.0f });
+		g_pRankTextre->SetSize({ 1500.0f, 1500.0f }); // 初期サイズは大きめ
 	}
 
 	//ClickFontがクリックされた
