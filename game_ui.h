@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "sprite2d.h"
 #include "font.h"
 #include "status_manager.h"

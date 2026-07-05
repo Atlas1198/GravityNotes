@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "note_base.h"
 
 class RopeHoldNote : public NoteBase

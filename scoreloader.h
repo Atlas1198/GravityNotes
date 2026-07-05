@@ -97,16 +97,18 @@ inline ScoreData LoadScore(const std::string& filePath)
 		// イベント配列をパース
 		if (jsonData.contains("events"))
 		{
-			ScoreEvent scoreEvent;
-			scoreEvent.beat    = event["beat"].get<float>();
-			scoreEvent.lane    = event["lane"].get<int>();
-			scoreEvent.type    = ParseScoreType(event["type"].get<std::string>());
-			scoreEvent.wall    = ParseScoreWall(event["wall"].get<std::string>());
-			scoreEvent.endBeat = event.value("endBeat", scoreEvent.beat);
-			scoreEvent.endLane = event.value("endLane", scoreEvent.lane);
-			// endWall: RopeHold専用（なければ wall と同値）
-			std::string endWallStr = event.value("endWall", std::string(""));
-			scoreEvent.endWall = endWallStr.empty() ? scoreEvent.wall : ParseScoreWall(endWallStr);
+			for (const auto& event : jsonData["events"])
+			{
+				ScoreEvent scoreEvent;
+				scoreEvent.beat    = event["beat"].get<float>();
+				scoreEvent.lane    = event["lane"].get<int>();
+				scoreEvent.type    = ParseScoreType(event["type"].get<std::string>());
+				scoreEvent.wall    = ParseScoreWall(event["wall"].get<std::string>());
+				scoreEvent.endBeat = event.value("endBeat", scoreEvent.beat);
+				scoreEvent.endLane = event.value("endLane", scoreEvent.lane);
+				// endWall: RopeHold専用（なければ wall と同値）
+				std::string endWallStr = event.value("endWall", std::string(""));
+				scoreEvent.endWall = endWallStr.empty() ? scoreEvent.wall : ParseScoreWall(endWallStr);
 
 				scoreData.events.push_back(scoreEvent);
 			}
