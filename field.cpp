@@ -11,7 +11,7 @@ void Field::Init() {
 	m_ModelNormal = ModelLoad("asset/model/field_allnormal.fbx");
 	m_ModelHasiranashi = ModelLoad("asset/model/field_hasiranashi.fbx");
 	m_Model = m_ModelHasiranashi;
-	m_ShaderType = S_LAMBERT;
+	m_ShaderType = S_PHONG;
 
 	// Sprite3Dのメンバ変数を初期化
 	m_ModelSize = ModelGetSize(m_ModelNormal);

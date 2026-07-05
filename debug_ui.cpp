@@ -6,6 +6,7 @@
 #include "../framework/keyboard.h"
 #include "../framework/camera.h"
 #include "gamepad.h"
+#include "light_game.h"
 #include "game_ui.h"
 
 static bool s_IsOpen = false;
@@ -26,6 +27,8 @@ void DebugUI_Draw()
 		
 	}
 	ImGui::End();*/
+
+	GameLight::Draw();
 
     /*ImGui::Begin("LD Parameters", &s_IsOpen);
 
