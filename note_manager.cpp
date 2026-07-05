@@ -241,7 +241,7 @@ JUDGE NoteManager::Judge(int lane, int face)
 	{
 		if (bestDist < PERFECT_WINDOW) { bestNote->OnHit(); return JUDGE_PERFECT; }
 		if (bestDist < GOOD_WINDOW)    { bestNote->OnHit(); return JUDGE_GOOD; }
-		return JUDGE_MISS;
+		return JUDGE_NONE;
 	}
 
 	// RopeHoldNote: IDLE状態で判定窓内なら活性化（スコアは完了時に加算）
@@ -259,7 +259,7 @@ JUDGE NoteManager::Judge(int lane, int face)
 		}
 	}
 
-	return JUDGE_MISS;
+	return JUDGE_NONE;
 }
 
 JUDGE NoteManager::JudgeHold(int lane, int face)
