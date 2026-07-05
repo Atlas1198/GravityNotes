@@ -23,6 +23,7 @@
 #include "note_manager.h"
 #include "light_game.h"
 #include "status_manager.h"
+#include "game_ui.h"
 
 using namespace DirectX;
 
@@ -36,38 +37,10 @@ static Player*        g_pPlayer        = nullptr;
 static NoteManager*   g_pNoteManager   = nullptr;
 static StatusManager* g_pStatusManager = nullptr;
 static bool           g_IsMouseCursorVisible = false;
+static GameUI*        g_pGameUI        = nullptr;
 
 void Game_Initialize(void)
 {
-	// ②各種初期化
-	//g_pGameSprite = new Sprite2D(
-	//	{ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 3 },					//位置
-	//	{ 300.0f, 300.0f },											//サイズ
-	//	0.0f,														//回転（度）
-	//	{ 1.0f, 1.0f, 1.0f, 1.0f },									//RGBA
-	//	BLENDSTATE_NONE,											//BlendState
-	//	L"asset\\texture\\tex.png"									//テクスチャパス
-	//);
-
-	//g_pChangeSceneText = new ClickFont(
-	//	{ SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 4.0f * 3 },			//位置
-	//	50.0f,														//文字サイズ
-	//	0.0f,														//回転（度）
-	//	{ 1.0f, 1.0f, 1.0f, 1.0f },									//通常色
-	//	{ 1.0f, 0.8f, 0.2f, 1.0f },									//ホバー色
-	//	"[game.cpp] リザルトへ"										//テキスト
-	//);
-
-	//前シーンで選択されたjsonの仮表示
-	/*const std::string selectedJson = GetPlayJson();
-	g_pSelectedJsonText = new FontRenderer(
-		{ SCREEN_WIDTH / 4.0f, SCREEN_HEIGHT / 2.0f },
-		28.0f,
-		0.0f,
-		{ 1.0f, 1.0f, 1.0f, 1.0f },
-		"Selected JSON: " + (selectedJson.empty() ? std::string("(none)") : selectedJson)
-	);*/
-
 	//int pad = Gamepad_FindConnectedPlayer();
 	//if (pad < 0)return;//デバック時必要なし
 
@@ -89,6 +62,9 @@ void Game_Initialize(void)
 	g_pPlayer = new Player();
 	g_pPlayer->Init(g_pNoteManager, g_pStatusManager);
 
+	g_pGameUI = new GameUI();
+	g_pGameUI->Init();
+
 	//UnLockMouse();//マウスアンロック
 }
 
@@ -108,6 +84,9 @@ void Game_Update(void)
 	//2D描画
 	{
 		//③処理
+		g_pGameUI->Update(g_pStatusManager);
+		if (g_pStatusManager->HasNewJudge())
+			g_pGameUI->NotifyJudge(g_pStatusManager->ConsumeJudge());
 		//g_pChangeSceneText->Update();
 
 		//ClickFontがクリックされた
@@ -136,7 +115,7 @@ void Game_Update(void)
 		RESULT r;
 		r.score = 13232;
 		r.rank = "A";
-		r.accurary = 87.45;
+		r.accurary = 87.45f;
 		r.maxCombo = 175;
 		r.success = 312;
 		r.miss = 26;
@@ -162,6 +141,7 @@ void Game_Draw(void)
 
 	//2D
 	{
+		g_pGameUI->Draw();
 		//g_pGameSprite->Draw();
 		//g_pChangeSceneText->Draw();
 		//g_pSelectedJsonText->Draw();
@@ -181,6 +161,7 @@ void Game_Finalize(void)
 	SAFE_DELETE(g_pPlayer);
 	if (g_pNoteManager)   { g_pNoteManager->Finalize();   SAFE_DELETE(g_pNoteManager); }
 	if (g_pStatusManager) { g_pStatusManager->Finalize(); SAFE_DELETE(g_pStatusManager); }
+	if (g_pGameUI)        { g_pGameUI->Finalize();        SAFE_DELETE(g_pGameUI); }
 	GameLight::Finalize();
 	GameCamera::Finalize();
 }

@@ -69,7 +69,7 @@ void Player::Update()
 {
 	int pad = GetGamePad();
 	bool connected = Gamepad_IsConnected(pad);
-	if (connected < 0) {
+	if (connected) {
 		return;
 	}
 
@@ -160,16 +160,29 @@ void Player::Update()
 
 	if (isPressed)
 	{
-		// 押した瞬間：Tap・Hold 共通で最近ノーツを判定
+		// 押した瞬間：Enemy・Hold 判定 / RopeHold 活性化
 		JUDGE result = m_pNoteManager->Judge(m_LaneIndex, m_GravityFace);
-		m_pStatusManager->OnJudge(result);
+		if (result != JUDGE_NONE)
+			m_pStatusManager->OnJudge(result);
 	}
 	else if (isHolding)
 	{
-		// 長押し中：Hold 子ノートのみ継続判定
+		// 長押し中：HoldNote 継続判定 / RopeHoldNote は JUDGE_NONE を返す
 		JUDGE result = m_pNoteManager->JudgeHold(m_LaneIndex, m_GravityFace);
-		m_pStatusManager->OnJudgeHold(result);
+		if (result != JUDGE_NONE)
+			m_pStatusManager->OnJudgeHold(result);
 	}
+	else
+	{
+		// ボタンを離した瞬間：RopeHoldNote の途中離し判定
+		JUDGE result = m_pNoteManager->OnButtonRelease(m_LaneIndex, m_GravityFace);
+		if (result != JUDGE_NONE)
+			m_pStatusManager->OnJudge(result);
+	}
+
+	// RopeHoldNote 完了など、非同期で積まれた判定を処理
+	while (m_pNoteManager->HasPendingJudge())
+		m_pStatusManager->OnJudge(m_pNoteManager->PopPendingJudge());
 
 }
 
@@ -212,10 +225,9 @@ void Player::ChangeGravity(int targetFace)
 
 	m_TargetFace = targetFace;
 
-	// 反対面ならレーンをそのまま、隣接面なら現在位置から最寄りレーンを計算
-	bool isOpposite = (m_GravityFace + 2) % 4 == targetFace;
-	m_LaneIndex = isOpposite ? m_LaneIndex : CalcNearestLane();
-	m_TargetLaneIndex = m_LaneIndex;
+	// 重力変更時の移動位置を固定で2番目のレーン（中央）にする
+	m_LaneIndex = LANE_CENTER;
+	m_TargetLaneIndex = LANE_CENTER;
 
 	m_GravityStartPos = m_Position;
 	m_GravityStartRot = m_Rotation;

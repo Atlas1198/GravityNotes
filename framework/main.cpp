@@ -21,6 +21,7 @@
 #include "font.h"
 #include "sprite2d.h"
 #include "fade.h"
+#include "texture.h"
 #include "sound.h"
 #include "input_manager.h"
 #include "input_monitor_console.h"
@@ -292,6 +293,8 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 				// 更新時間の計測
 				auto startUpdate = std::chrono::high_resolution_clock::now();
 				Fade_Update();
+				UpdateTextureCache();
+				UpdateSoundCache();
 				Update();
 				auto endUpdate = std::chrono::high_resolution_clock::now();
 				g_UpdateTime = std::chrono::duration_cast<std::chrono::microseconds>(endUpdate - startUpdate).count();
@@ -343,6 +346,8 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	ImGui::DestroyContext();
 
 	Finalize();
+	ReleaseAllTextures();
+	ReleaseAllSounds();
 	Gamepad_Finalize();
 	Input_Finalize();
 	InputMonitorConsole_Finalize();

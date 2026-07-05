@@ -1354,7 +1354,7 @@ void ModelRelease(MODEL* model)
 	}
 
 	if (model->WhiteTexture)
-		model->WhiteTexture->Release();
+		model->WhiteTexture = nullptr;
 	if (model->FlatNormalTexture)
 		model->FlatNormalTexture->Release();
 	if (model->BlackTexture)

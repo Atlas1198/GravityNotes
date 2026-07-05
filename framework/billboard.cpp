@@ -48,8 +48,8 @@ Billboard::Billboard(XMFLOAT3 pos, XMFLOAT2 size, XMFLOAT3 rot, const char* text
 Billboard::~Billboard()
 {
 	SAFE_RELEASE(m_VertexBuffer);
-	SAFE_RELEASE(m_Texture);
-	SAFE_RELEASE(m_NormalTexture);
+	m_Texture = nullptr;
+	m_NormalTexture = nullptr;
 }
 
 // 初期化
@@ -69,7 +69,7 @@ void Billboard::Initialize(XMFLOAT3 pos, XMFLOAT2 size, XMFLOAT3 rot, const char
 	m_IsBillboardMode = true;
 	m_WallFadeEnabled = true;
 	m_ReceiveShadow = false;
-	SAFE_RELEASE(m_NormalTexture);
+	m_NormalTexture = nullptr;
 	m_NormalTexturePath.clear();
 
 	// バッファ作成
@@ -84,7 +84,7 @@ void Billboard::SetTexture(const char* texturePath)
 		std::string strPath(texturePath);
 		// 同じパスが既にロード済みなら再ロードしない
 		if (m_Texture && m_TexturePath == strPath) return;
-		SAFE_RELEASE(m_Texture);
+		m_Texture = nullptr;
 		m_TexturePath = strPath;
 		std::wstring wstrPath(strPath.begin(), strPath.end());
 		m_Texture = LoadTexture(wstrPath.c_str());
@@ -92,7 +92,7 @@ void Billboard::SetTexture(const char* texturePath)
 	else
 	{
 		m_TexturePath.clear();
-		SAFE_RELEASE(m_Texture);
+		m_Texture = nullptr;
 	}
 }
 
@@ -103,7 +103,7 @@ void Billboard::SetNormalMap(const char* texturePath)
 		std::string strPath(texturePath);
 		// 同じNormalMapを設定済みなら読み直さない。
 		if (m_NormalTexture && m_NormalTexturePath == strPath) return;
-		SAFE_RELEASE(m_NormalTexture);
+		m_NormalTexture = nullptr;
 		m_NormalTexturePath = strPath;
 		std::wstring wstrPath(strPath.begin(), strPath.end());
 
@@ -113,7 +113,7 @@ void Billboard::SetNormalMap(const char* texturePath)
 	else
 	{
 		m_NormalTexturePath.clear();
-		SAFE_RELEASE(m_NormalTexture);
+		m_NormalTexture = nullptr;
 	}
 }
 
