@@ -6,13 +6,6 @@
 #include "Camera.h"
 #include <vector>
 
-struct BILLBOARD_VERTEX
-{
-	XMFLOAT3 pos;
-	XMFLOAT3 normal;
-	XMFLOAT4 color;
-	XMFLOAT2 tex;
-};
 
 Billboard::Billboard()
 	: m_Pos(0, 0, 0), m_Size(1, 1), m_Rot(0, 0, 0), m_IsDoubleSided(false),

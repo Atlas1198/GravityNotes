@@ -21,6 +21,7 @@
 #include "../framework/imgui/imgui_impl_win32.h"
 #include <string>
 #include <cmath>
+#include "split_bilboard.h"
 
 using namespace DirectX;
 
@@ -31,7 +32,10 @@ static PointLight* g_pMainLight = nullptr;
 static AmbientLight g_AmbientLight(XMFLOAT4(0.4f, 0.4f, 0.4f, 1.0f));
 static FontRenderer* g_pGuideFont = nullptr;
 static FontRenderer* g_pAnimInfoFont = nullptr;
+static SplitBilBoard* g_pEffectSlash = nullptr;
+static bool g_IsEffectSlashActive = false;
 static bool g_IsMouseCursorVisible = false;
+static bool g_IsOverridePlaying = false;
 static XMFLOAT4 g_LightPosition = { 0.0f, 3.0f, 0.0f, 1.0f };
 static float g_LightRange = 100.0f;
 static float g_LightIntensity = 1.0f;
@@ -144,6 +148,22 @@ void DebugRigPlayer_Initialize(void)
 			"Animation: run (Override: attack @ BJnt_R_shoulder & BJnt_sword)" : "Animation: none"
 	);
 	g_pAnimInfoFont->PreCacheGlyphs();
+
+	g_pEffectSlash = new SplitBilBoard(
+		4, 4,
+		{ 0.0f, 0.5f, 0.0f },
+		{ 2.0f, 2.0f },
+		{ 90.0f, 0.0f, 0.0f },
+		"asset\\texture\\effect_slash_ver01.png",
+		true
+	);
+	if (g_pEffectSlash)
+	{
+		g_pEffectSlash->SetLoop(false);
+		g_pEffectSlash->SetFPS(30.0f);
+		g_pEffectSlash->SetAnimationEnabled(false);
+		g_pEffectSlash->SetBillboardMode(false);
+	}
 }
 
 void DebugRigPlayer_Update(void)
@@ -191,11 +211,18 @@ void DebugRigPlayer_Update(void)
 				if (g_pRigPlayer->PlayAnimationByName("run", true))
 				{
 					std::vector<std::string> overrideBones = { "BJnt_R_shoulder", "BJnt_sword" };
-					g_pRigPlayer->PlayOverrideAnimation("attack", overrideBones, true);
+					g_pRigPlayer->PlayOverrideAnimation("attack", overrideBones, false);
+					g_IsOverridePlaying = true;
 					if (g_pAnimInfoFont)
 					{
 						g_pAnimInfoFont->SetText("Animation: run (Override: attack @ BJnt_R_shoulder & BJnt_sword)");
 						g_pAnimInfoFont->PreCacheGlyphs();
+					}
+					if (g_pEffectSlash)
+					{
+						g_pEffectSlash->SetTextureIndex(0);
+						g_pEffectSlash->SetAnimationEnabled(true);
+						g_IsEffectSlashActive = true;
 					}
 				}
 			}
@@ -203,6 +230,7 @@ void DebugRigPlayer_Update(void)
 			{
 				// 通常のアニメーション切り替え時はオーバーライドを停止
 				g_pRigPlayer->StopOverrideAnimation();
+				g_IsOverridePlaying = false;
 				if (g_pRigPlayer->PlayAnimationByIndex((unsigned int)animSlot, true))
 				{
 					g_pRigPlayer->UpdateAnimation(0.0f);
@@ -224,6 +252,27 @@ void DebugRigPlayer_Update(void)
 		}
 
 		g_pRigPlayer->UpdateAnimation(1.0f / 60.0f);
+
+		if (g_IsOverridePlaying && !g_pRigPlayer->IsOverrideAnimationActive())
+		{
+			g_pRigPlayer->StopOverrideAnimation();
+			g_IsOverridePlaying = false;
+			if (g_pAnimInfoFont)
+			{
+				g_pAnimInfoFont->SetText("Animation: run");
+				g_pAnimInfoFont->PreCacheGlyphs();
+			}
+		}
+	}
+
+
+	if (g_pEffectSlash && g_IsEffectSlashActive)
+	{
+		g_pEffectSlash->Update();
+		if (!g_pEffectSlash->IsAnimationEnabled())
+		{
+			g_IsEffectSlashActive = false;
+		}
 	}
 }
 
@@ -242,6 +291,11 @@ void DebugRigPlayer_Draw(void)
 	if (g_pBox1x1x1)
 	{
 		g_pBox1x1x1->Draw();
+	}
+
+	if (g_pEffectSlash && g_IsEffectSlashActive)
+	{
+		g_pEffectSlash->Draw();
 	}
 
 	SetDepthEnable(false);
@@ -285,5 +339,6 @@ void DebugRigPlayer_Finalize(void)
 	SAFE_DELETE(g_pGuideFont);
 	SAFE_DELETE(g_pAnimInfoFont);
 	SAFE_DELETE(g_pBox1x1x1);
+	SAFE_DELETE(g_pEffectSlash);
 	DebugCamera_Finalize();
 }

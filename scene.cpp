@@ -10,7 +10,7 @@
 #include "define.h"
 using namespace DirectX;
 
-static SCENE scene = SCENE_STAGESELECT;
+static SCENE scene = SCENE_DEBUG;
 
 //SCENE_STAGESELECTからSCENE_GAMEへの読み込み指定　.jsonまで含まれている
 static std::string playjson;

@@ -10,6 +10,9 @@
     <ClCompile Include="framework\billboard.cpp">
       <Filter>フレームワーク\3D</Filter>
     </ClCompile>
+    <ClCompile Include="framework\split_bilboard.cpp">
+      <Filter>フレームワーク\3D</Filter>
+    </ClCompile>
     <ClCompile Include="framework\ClickFont.cpp">
       <Filter>フレームワーク\2D</Filter>
     </ClCompile>
@@ -169,6 +172,9 @@
       <Filter>フレームワーク\3D</Filter>
     </ClInclude>
     <ClInclude Include="framework\billboard.h">
+      <Filter>フレームワーク\3D</Filter>
+    </ClInclude>
+    <ClInclude Include="framework\split_bilboard.h">
       <Filter>フレームワーク\3D</Filter>
     </ClInclude>
     <ClInclude Include="framework\ClickFont.h">
