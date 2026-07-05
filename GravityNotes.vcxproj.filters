@@ -121,7 +121,6 @@
     <ClCompile Include="debugscene\debugscene.cpp">
       <Filter>デバッグ</Filter>
     </ClCompile>
-    <ClCompile Include="debug_ui.cpp" />
     <ClCompile Include="gamecamera.cpp">
       <Filter>SCENE_GAME\cpp</Filter>
     </ClCompile>
@@ -140,7 +139,6 @@
     <ClCompile Include="orb_note.cpp">
       <Filter>SCENE_GAME\cpp</Filter>
     </ClCompile>
-    <ClCompile Include="debugscene\debugrigplayer.cpp" />
     <ClCompile Include="light_game.cpp">
       <Filter>SCENE_GAME\cpp</Filter>
     </ClCompile>
@@ -155,6 +153,12 @@
     </ClCompile>
     <ClCompile Include="rope_hold_note.cpp">
       <Filter>SCENE_GAME\cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="debug_ui.cpp">
+      <Filter>SCENE_GAME</Filter>
+    </ClCompile>
+    <ClCompile Include="debugscene\debugrigplayer.cpp">
+      <Filter>デバッグ</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -311,12 +315,9 @@
     <ClInclude Include="scoresummaryloader.h">
       <Filter>譜面読み込み</Filter>
     </ClInclude>
-    <ClInclude Include="debug_params.h" />
-    <ClInclude Include="debug_ui.h" />
     <ClInclude Include="gamecamera.h">
       <Filter>SCENE_GAME\h</Filter>
     </ClInclude>
-    <ClInclude Include="mathhelper.h" />
     <ClInclude Include="note_base.h">
       <Filter>SCENE_GAME\h</Filter>
     </ClInclude>
@@ -332,7 +333,6 @@
     <ClInclude Include="orb_note.h">
       <Filter>SCENE_GAME\h</Filter>
     </ClInclude>
-    <ClInclude Include="debugscene\debugrigplayer.h" />
     <ClInclude Include="light_game.h">
       <Filter>SCENE_GAME\h</Filter>
     </ClInclude>
@@ -347,6 +347,18 @@
     </ClInclude>
     <ClInclude Include="rope_hold_note.h">
       <Filter>SCENE_GAME\h</Filter>
+    </ClInclude>
+    <ClInclude Include="debug_params.h">
+      <Filter>SCENE_GAME</Filter>
+    </ClInclude>
+    <ClInclude Include="debug_ui.h">
+      <Filter>SCENE_GAME</Filter>
+    </ClInclude>
+    <ClInclude Include="mathhelper.h">
+      <Filter>SCENE_GAME</Filter>
+    </ClInclude>
+    <ClInclude Include="debugscene\debugrigplayer.h">
+      <Filter>デバッグ</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -463,6 +475,12 @@
     <FxCompile Include="shader\shader_vertex_skinning.hlsl">
       <Filter>フレームワーク\3D</Filter>
     </FxCompile>
+    <FxCompile Include="shader\PBRShaderVS.hlsl">
+      <Filter>フレームワーク\シェーダー</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\PBRShaderPS.hlsl">
+      <Filter>フレームワーク\シェーダー</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="framework\DirectXTex.inl">
@@ -477,6 +495,8 @@
     <None Include="markdown\shader_vertex_skinning_spec.md">
       <Filter>マークダウン</Filter>
     </None>
-    <None Include="markdown\anim_sprite3d_usage.md" />
+    <None Include="markdown\anim_sprite3d_usage.md">
+      <Filter>マークダウン</Filter>
+    </None>
   </ItemGroup>
 </Project>
