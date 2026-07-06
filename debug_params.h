@@ -1,4 +1,4 @@
-// LD（レベルデザイン）変数管理
+﻿// LD（レベルデザイン）変数管理
 // デバッグ中に ImGui で値を変更できる。
 // 使い方: D_PARAMS.noteSpeed など
 #pragma once

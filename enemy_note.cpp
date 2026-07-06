@@ -8,14 +8,3 @@ void EnemyNote::Init(int lane, int face, float spawnZ, float speed)
 	m_ShaderType = S_LAMBERT;
 }
 
-void EnemyNote::OnHit()
-{
-	NoteBase::OnHit();
-	// TODO: スコア加算・コンボ継続
-}
-
-void EnemyNote::OnMiss()
-{
-	NoteBase::OnMiss();
-	// TODO: HP減少・コンボリセット
-}

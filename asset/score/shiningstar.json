@@ -21,15 +21,15 @@
     },
     {
       "beat": 3.0,
-      "type": "Barrier",
+      "type": "Tap",
       "wall": "Down",
-      "lane": 1
+      "lane": 0
     },
     {
       "beat": 4.0,
-      "type": "Orb",
+      "type": "Tap",
       "wall": "Right",
-      "lane": 2
+      "lane": 0
     },
     {
       "beat": 8.0,

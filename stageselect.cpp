@@ -1,4 +1,4 @@
-#include "stageselect.h"
+﻿#include "stageselect.h"
 #include "sprite2d.h"
 #include "texture.h"
 #include "keyboard.h"
@@ -13,6 +13,7 @@
 #include "scoresummaryloader.h"
 #include "scene.h"
 #include <cstdio>
+#include <cmath>
 #include <vector>
 #include <string>
 
@@ -57,6 +58,9 @@ static ClickFont* g_pStageButtons[MAX_STAGES] = { nullptr };  // 左側の各デ
 static float g_VinylRotation = 0.0f;              // ディスクの現在の回転角度（度）
 static float g_ToneArmAngle = 0.0f;               // トーンアームの角度（25度はディスク上、0度は外側）
 static float g_DiscSpeed = 0.5f;                  // 現在の回転速度（スムーズな減速用）
+
+static float g_ScrollOffset = 0.0f;      // 現在のオフセット（滑らかに補間するためのfloat）
+static float g_ScrollTarget = 0.0f;      // 目標のオフセット
 
 // JSONからの譜面データの管理とスコア表示（日本語コード部分より）
 static MultiLineFontRenderer* g_pScoreInfoText = nullptr;
@@ -124,10 +128,10 @@ static void UpdateBgmFromSelection()
 	// 選択された曲が現在再生中の曲と同じ場合はそのまま
 	if (g_LoadedBgmPath == soundPath) return;
 
-	// RAMのオーバーフローを防ぐため、古い曲を停止して解放
+	// RAMのオーバーフローを防ぐため、古い曲を停止する（解放はシーン遷移時のキャッシュ一括クリアに任せる）
 	if (g_pCurrentBgmData != nullptr) {
 		StopSound(g_pCurrentBgmData);
-		UnloadSound(g_pCurrentBgmData);
+		// UnloadSound(g_pCurrentBgmData);
 		g_pCurrentBgmData = nullptr;
 	}
 
@@ -272,15 +276,18 @@ void StageSelect_Initialize(void)
 		<< " Count=" << g_ScoreSummaries.size()
 		<< std::endl;
 
+	// BGMのプリロードを行う（選曲切り替え時のフリーズを防止するため、キャッシュシステムに事前に登録しておく）
+	for (const auto& summary : g_ScoreSummaries) {
+		if (!summary.music.empty()) {
+			std::string soundPath = "asset\\sound\\bgm\\" + summary.music;
+			LoadMP3(soundPath);
+		}
+	}
 
-
-	// システムにすべてのJSONファイルリストをロード
-	g_ScoreSummaries = LoadScoreSummaries();
 	g_SelectedStage = 0;
 
 	// ディスク0の最初のBGMを自動的に検索して再生
 	RefreshSelectedScoreText();
-
 	UpdateBgmFromSelection();
 
 	// メカニカルな動作の初期状態パラメータを再設定
@@ -296,6 +303,24 @@ void StageSelect_Initialize(void)
 // ==========================================
 void StageSelect_Update(void)
 {
+	// パーセンテージによる線形補間（lerp）の代わりに一定速度で移動する。
+	// 理由：%によるlerp（offset += (target-offset)*0.15f）は目標に近づくほど指数関数的に遅くなる。
+	// そのため、リストの端にあるディスク（オフセットが境界である0またはMAX_STAGESに近づくとき）は、
+	// 境界付近で数十フレームの間「カクつく/静止する」状態になり、最終的に閾値に達したときに突然ジャンプ（スナップ）してしまう。
+	// 固定の移動ステップを使用することで、一定のフレーム数で常に正確に目標値（target）に到達し、
+	// 均等な動きになり、カクつきの後にジャンプする現象が発生しなくなる。
+	const float SCROLL_STEP = 1.0f / 25.0f; // 約25フレームで1段階完了（トーンアームの昇降時間と同期）
+	if (g_ScrollOffset < g_ScrollTarget) {
+		g_ScrollOffset += SCROLL_STEP;
+		if (g_ScrollOffset > g_ScrollTarget) g_ScrollOffset = g_ScrollTarget;
+	}
+	else if (g_ScrollOffset > g_ScrollTarget) {
+		g_ScrollOffset -= SCROLL_STEP;
+		if (g_ScrollOffset < g_ScrollTarget) g_ScrollOffset = g_ScrollTarget;
+	}
+
+	float anchorY = 70.0f;
+	float spacing = 130.0f;
 	// --- パート 1: キーボード/マウスの入力制御 ---
 	// ディスクが安定して回転している状態（STATE_PLAYING）でのみ曲変更コマンドを受け付ける
 	if (g_CurrentState == STATE_PLAYING)
@@ -308,12 +333,14 @@ void StageSelect_Update(void)
 			if (g_NextStage < 0) g_NextStage = MAX_STAGES - 1;
 			isInputPressed = true;
 			//ChangeSelectedScore(-1);
+			g_ScrollTarget -= 1.0f;  // 1段階上へスライド
 		}
 		else if (Keyboard_IsKeyDownTrigger(KK_DOWN)) {
 			g_NextStage = g_SelectedStage + 1;
 			if (g_NextStage >= MAX_STAGES) g_NextStage = 0;
 			isInputPressed = true;
 			//ChangeSelectedScore(1);
+			g_ScrollTarget += 1.0f;  // 1段階下へスライド
 		}
 
 		//// 左右矢印キーでJSONデータリスト内の楽曲を変更
@@ -329,7 +356,7 @@ void StageSelect_Update(void)
 			g_CurrentState = STATE_LIFTING_ARM;
 			if (g_pCurrentBgmData != nullptr) {
 				StopSound(g_pCurrentBgmData);
-				UnloadSound(g_pCurrentBgmData);
+				// UnloadSound(g_pCurrentBgmData);
 				g_pCurrentBgmData = nullptr;
 			}
 			g_LoadedBgmPath = "";
@@ -426,8 +453,8 @@ void StageSelect_Update(void)
 		g_pToneArm->SetRot(g_ToneArmAngle);
 	}
 
-	// --- パート 4: 左側の小さなディスク列の処理とマウスクリック検出 ---
-	for (int i = 0; i < MAX_STAGES; i++)
+	// --- パート 4: 左側の小さなディスク列の処理 ＆ マウスクリック ---
+	/*for (int i = 0; i < MAX_STAGES; i++)
 	{
 		g_pStageButtons[i]->Update();
 
@@ -451,6 +478,38 @@ void StageSelect_Update(void)
 			}
 			g_LoadedBgmPath = "";
 		}
+		}*/
+	for (int i = 0; i < MAX_STAGES; i++)
+	{
+		// 位置を計算するために、g_SelectedStageの代わりにg_ScrollOffsetを使用する
+		float offset = (float)i - g_ScrollOffset;
+
+		// float形式での円状のラッピング処理
+		while (offset < 0.0f)          offset += (float)MAX_STAGES;
+		while (offset >= (float)MAX_STAGES) offset -= (float)MAX_STAGES;
+
+		float posX = 90.0f;
+		float posY = anchorY + (offset * spacing);
+
+		g_pStageDisks[i]->SetPos({ posX, posY });
+		g_pStageButtons[i]->SetPos({ posX, posY });
+
+		// 選択中のディスク ＝ オフセットが0に最も近いディスク
+		if (i == g_SelectedStage) {
+			g_pStageDisks[i]->SetRotation(g_VinylRotation * 2.0f);
+		}
+		else {
+			g_pStageDisks[i]->SetRotation(0.0f);
+		}
+
+		if (g_pStageButtons[i]->IsClick() && g_CurrentState == STATE_PLAYING && g_SelectedStage != i)
+		{
+			g_NextStage = i;
+			g_CurrentState = STATE_LIFTING_ARM;
+			if (g_pCurrentBgmData != nullptr) {
+				StopSound(g_pCurrentBgmData);
+			}
+		}
 	}
 
 	// --- パート 5: ゲーム開始の決定 (ENTER / SPACE) ---
@@ -460,7 +519,7 @@ void StageSelect_Update(void)
 			// 本番のステージに遷移する前に、待機中のBGMを解放する
 			if (g_pCurrentBgmData != nullptr) {
 				StopSound(g_pCurrentBgmData);
-				UnloadSound(g_pCurrentBgmData);
+				// UnloadSound(g_pCurrentBgmData);
 				g_pCurrentBgmData = nullptr;
 			}
 			g_LoadedBgmPath = "";

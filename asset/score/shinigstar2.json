@@ -3,10 +3,9 @@
 	"musicauthor": "森田交一",
 	"scoreauthor": "S.S",
 	"difficulty": 3.0,
-	"bpm": 110.0,
+	"bpm": 158.0,
 	"thumbnail": "shiningstar.png",
 	"music": "maou_14_shining_star.mp3",
-	"vinylIndex": 1,
 	"events": [
 		{
 			"beat": 0.0,
