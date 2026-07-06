@@ -1,4 +1,4 @@
-﻿#include "debug_ui.h"
+#include "debug_ui.h"
 #include "debug_params.h"
 #include "../framework/imgui/imgui.h"
 #include "../framework/imgui/imgui_impl_dx11.h"
@@ -6,6 +6,8 @@
 #include "../framework/keyboard.h"
 #include "../framework/camera.h"
 #include "gamepad.h"
+#include "scene.h"
+#include "result.h"
 #include "light_game.h"
 #include "game_ui.h"
 
@@ -29,6 +31,11 @@ void DebugUI_Draw()
 	ImGui::End();*/
 
 	GameLight::Draw();
+
+	if (GetScene() == SCENE_RESULT)
+	{
+		Result_DebugUIDraw();
+	}
 
     /*ImGui::Begin("LD Parameters", &s_IsOpen);
 
