@@ -23,18 +23,18 @@ static Movie* g_pTitleMovie;
 void Title_Initialize(void)
 {
 	g_pTitleMovie = new Movie(
-		{ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 3 },					//位置
+		{ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 },					//位置
 		{ SCREEN_WIDTH },											//サイズ
 		0.0f,														//回転（度）
 		{ 1.0f,1.0f,1.0f, 1.0f },
 		BLENDSTATE_NONE,
-		L"asset\\movie\\nullmovie.mp4"
+		L"asset\\movie\\titlemovie_roop.mp4"
 	);
 
 	// 仮の画像
 	g_pTitleSprite = new Sprite2D(
 		{ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 },					//位置
-		{ SCREEN_WIDTH, SCREEN_HEIGHT },											//サイズ
+		{ SCREEN_WIDTH, SCREEN_HEIGHT },									//サイズ
 		0.0f,														//回転（度）
 		{ 1.0f, 1.0f, 1.0f, 1.0f },									//RGBA
 		BLENDSTATE_NONE,											//BlendState
@@ -69,8 +69,7 @@ void Title_Initialize(void)
 void Title_Update(void)
 {
 	//③処理
-	//g_pTitleMovie->Update();
-
+	g_pTitleMovie->Update();
 	g_pChangeSceneText->Update();
 	g_pDebugSceneText->Update();
 
@@ -89,8 +88,8 @@ void Title_Update(void)
 void Title_Draw(void)
 {
 	//④描画
-	//g_pTitleMovie->Draw();
-	g_pTitleSprite->Draw();	//仮のタイトルスプライト
+	g_pTitleMovie->Draw();
+	//g_pTitleSprite->Draw();	//仮のタイトルスプライト
 	g_pChangeSceneText->Draw();
 	g_pDebugSceneText->Draw();
 
@@ -99,9 +98,7 @@ void Title_Draw(void)
 void Title_Finalize(void)
 {
 	//⑤解放
-	delete g_pTitleMovie;
-	g_pTitleMovie = nullptr;
-
+	SAFE_DELETE(g_pTitleMovie);
 	SAFE_DELETE(g_pTitleSprite);
 	SAFE_DELETE(g_pChangeSceneText);
 	SAFE_DELETE(g_pDebugSceneText);
