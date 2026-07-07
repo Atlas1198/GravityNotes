@@ -96,6 +96,9 @@ void UninitSound() {
     CoUninitialize();
 }
 
+// プロトタイプ宣言
+static void DestroySoundData(SoundData* data);
+
 // MP3読み込み
 SoundData* LoadMP3(const wchar_t* filename) {
 	std::wstring path = filename;
@@ -140,23 +143,45 @@ SoundData* LoadMP3(const wchar_t* filename) {
 	}
 
 	// オーディオストリームのみ選択
-	data->pReader->SetStreamSelection((DWORD)MF_SOURCE_READER_ALL_STREAMS, FALSE);
-	data->pReader->SetStreamSelection((DWORD)MF_SOURCE_READER_FIRST_AUDIO_STREAM, TRUE);
+	hr = data->pReader->SetStreamSelection((DWORD)MF_SOURCE_READER_ALL_STREAMS, FALSE);
+	if (SUCCEEDED(hr)) {
+		hr = data->pReader->SetStreamSelection((DWORD)MF_SOURCE_READER_FIRST_AUDIO_STREAM, TRUE);
+	}
+	if (FAILED(hr)) {
+		DestroySoundData(data);
+		return nullptr;
+	}
 
 	// PCM形式に設定
 	IMFMediaType* pPartialType = nullptr;
-	MFCreateMediaType(&pPartialType);
+	hr = MFCreateMediaType(&pPartialType);
+	if (FAILED(hr)) {
+		DestroySoundData(data);
+		return nullptr;
+	}
 	pPartialType->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio);
 	pPartialType->SetGUID(MF_MT_SUBTYPE, MFAudioFormat_PCM);
-	data->pReader->SetCurrentMediaType((DWORD)MF_SOURCE_READER_FIRST_AUDIO_STREAM, NULL, pPartialType);
+	hr = data->pReader->SetCurrentMediaType((DWORD)MF_SOURCE_READER_FIRST_AUDIO_STREAM, NULL, pPartialType);
 	SafeRelease(&pPartialType);
+	if (FAILED(hr)) {
+		DestroySoundData(data);
+		return nullptr;
+	}
 
 	// WAVEFORMAT取得
 	IMFMediaType* pType = nullptr;
-	data->pReader->GetCurrentMediaType((DWORD)MF_SOURCE_READER_FIRST_AUDIO_STREAM, &pType);
+	hr = data->pReader->GetCurrentMediaType((DWORD)MF_SOURCE_READER_FIRST_AUDIO_STREAM, &pType);
+	if (FAILED(hr) || !pType) {
+		DestroySoundData(data);
+		return nullptr;
+	}
 	UINT32 wfxSize = 0;
-	MFCreateWaveFormatExFromMFMediaType(pType, &data->pWfx, &wfxSize);
+	hr = MFCreateWaveFormatExFromMFMediaType(pType, &data->pWfx, &wfxSize);
 	SafeRelease(&pType);
+	if (FAILED(hr) || !data->pWfx) {
+		DestroySoundData(data);
+		return nullptr;
+	}
 
 	// 全サンプル読み込み
 	std::vector<BYTE> audioData;
@@ -174,15 +199,17 @@ SoundData* LoadMP3(const wchar_t* filename) {
 
 		if (pSample) {
 			IMFMediaBuffer* pBuffer = nullptr;
-			pSample->ConvertToContiguousBuffer(&pBuffer);
-
-			BYTE* pAudioData = nullptr;
-			DWORD cbBuffer = 0;
-			pBuffer->Lock(&pAudioData, NULL, &cbBuffer);
-			audioData.insert(audioData.end(), pAudioData, pAudioData + cbBuffer);
-			pBuffer->Unlock();
-
-			SafeRelease(&pBuffer);
+			hr = pSample->ConvertToContiguousBuffer(&pBuffer);
+			if (SUCCEEDED(hr) && pBuffer) {
+				BYTE* pAudioData = nullptr;
+				DWORD cbBuffer = 0;
+				hr = pBuffer->Lock(&pAudioData, NULL, &cbBuffer);
+				if (SUCCEEDED(hr) && pAudioData) {
+					audioData.insert(audioData.end(), pAudioData, pAudioData + cbBuffer);
+					pBuffer->Unlock();
+				}
+				SafeRelease(&pBuffer);
+			}
 			pSample->Release();
 		}
 	}
@@ -193,7 +220,11 @@ SoundData* LoadMP3(const wchar_t* filename) {
 	memcpy(data->pBuffer, audioData.data(), data->bufferSize);
 
 	// SourceVoice作成
-	g_pXAudio2->CreateSourceVoice(&data->pSourceVoice, data->pWfx);
+	hr = g_pXAudio2->CreateSourceVoice(&data->pSourceVoice, data->pWfx);
+	if (FAILED(hr)) {
+		DestroySoundData(data);
+		return nullptr;
+	}
 
 	if (isBGM)
 	{
