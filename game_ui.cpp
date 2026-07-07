@@ -7,16 +7,16 @@
 static constexpr float DIGIT_W        = 60.0f;   // 1桁の幅
 static constexpr float DIGIT_H        = 80.0f;   // 1桁の高さ
 static constexpr float DIGIT_SPACING  = 55.0f;   // 桁間隔
-static constexpr float DIGIT_ANCHOR_X = SCREEN_WIDTH  * 0.1f;   // 1桁目（一の位）の固定X座標
-static constexpr float COMBO_CENTER_Y = SCREEN_HEIGHT * 0.05f;  // 数字のY座標
+static constexpr float DIGIT_ANCHOR_X = 100.0f;   // 1桁目（一の位）の固定X座標
+static constexpr float COMBO_CENTER_Y = 50.0f;  // 数字のY座標
 static constexpr float LABEL_X        = DIGIT_ANCHOR_X + DIGIT_W * 0.5f + 8.0f;
 static constexpr float LABEL_Y        = COMBO_CENTER_Y + DIGIT_H * 0.5f;
 
 // Hit / Miss 表示
 static constexpr float JUDGE_X           = SCREEN_WIDTH  * 0.5f;   // 表示中心X
 static constexpr float JUDGE_Y           = SCREEN_HEIGHT * 0.4f;   // 表示中心Y
-static constexpr float JUDGE_W           = 256.0f;                 // スプライト幅
-static constexpr float JUDGE_H           = 128.0f;                 // スプライト高さ
+static constexpr float JUDGE_W           = 150.0f;                 // スプライト幅
+static constexpr float JUDGE_H           = 150.0f;                 // スプライト高さ
 static constexpr float JUDGE_DISPLAY_SEC = 0.6f;                   // 表示秒数
 
 // HP バー
