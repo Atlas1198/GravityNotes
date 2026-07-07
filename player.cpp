@@ -33,6 +33,24 @@ void Player::Init(NoteManager* nm, StatusManager* sm)
 	m_GravityStartPos = m_Position;
 	m_GravityStartRot = m_Rotation;
 
+	m_IsEffectSlashActive = false;
+	m_IsOverridePlaying = false;
+	m_pEffectSlash = new SplitBilBoard(
+		4, 4,
+		{ 0.0f, 0.5f, 0.0f },
+		{ 3.0f, 3.0f },
+		{ 90.0f, 0.0f, 0.0f },
+		"asset\\texture\\effect_slash_ver01.png",
+		true
+	);
+	if (m_pEffectSlash)
+	{
+		m_pEffectSlash->SetLoop(false);
+		m_pEffectSlash->SetFPS(30.0f);
+		m_pEffectSlash->SetAnimationEnabled(false);
+		m_pEffectSlash->SetBillboardMode(false);
+	}
+
 	SetAnimationBlendDuration(0.2);
 	if (GetAnimationCount() > 0)
 	{
@@ -150,16 +168,74 @@ void Player::Update()
 
 	UpdateAnimation(dt);
 
+	if (m_IsOverridePlaying && !IsOverrideAnimationActive())
+	{
+		StopOverrideAnimation();
+		m_IsOverridePlaying = false;
+	}
+
+	if (m_pEffectSlash && m_IsEffectSlashActive)
+	{
+		m_pEffectSlash->Update();
+		if (!m_pEffectSlash->IsAnimationEnabled())
+		{
+			m_IsEffectSlashActive = false;
+		}
+	}
+
 	//ノーツヒット入力
-	bool isPressed  = Keyboard_IsKeyDownTrigger(KK_SPACE) ||
+	bool isPressed  = !m_IsGravityMoving && (Keyboard_IsKeyDownTrigger(KK_SPACE) ||
 					  Gamepad_GetLeftTrigger(pad) > 0.5f   ||
-					  Gamepad_GetRightTrigger(pad) > 0.5f;
-	bool isHolding  = Keyboard_IsKeyDown(KK_SPACE) ||
+					  Gamepad_GetRightTrigger(pad) > 0.5f);
+	bool isHolding  = !m_IsGravityMoving && (Keyboard_IsKeyDown(KK_SPACE) ||
 					  Gamepad_GetLeftTrigger(pad) > 0.5f   ||
-					  Gamepad_GetRightTrigger(pad) > 0.5f;
+					  Gamepad_GetRightTrigger(pad) > 0.5f);
 
 	if (isPressed)
 	{
+		if (PlayAnimationByName("run", true))
+		{
+			std::vector<std::string> overrideBones = { "BJnt_R_shoulder", "BJnt_sword" };
+			PlayOverrideAnimation("attack", overrideBones, false);
+			m_IsOverridePlaying = true;
+		}
+
+		if (m_pEffectSlash)
+		{
+			m_pEffectSlash->SetTextureIndex(0);
+			m_pEffectSlash->SetAnimationEnabled(true);
+			m_IsEffectSlashActive = true;
+
+			float upX = 0.0f;
+			float upY = 0.0f;
+			switch (m_GravityFace)
+			{
+			case FACE_FLOOR:      upX =  0.0f; upY =  1.0f; break; // 床では上方向
+			case FACE_CEILING:    upX =  0.0f; upY = -1.0f; break; // 天井では下方向
+			case FACE_LEFT_WALL:  upX =  1.0f; upY =  0.0f; break; // 左壁では右方向(内側)
+			case FACE_RIGHT_WALL: upX = -1.0f; upY =  0.0f; break; // 右壁では左方向(内側)
+			}
+			m_pEffectSlash->SetPos({ m_Position.x + 1.0f * upX, m_Position.y + 1.0f * upY, m_Position.z });
+
+			XMFLOAT3 rot = { 90.0f, 180.0f, 0.0f };
+			switch (m_GravityFace)
+			{
+			case FACE_FLOOR:
+				rot = { 90.0f, 180.0f, 0.0f };
+				break;
+			case FACE_CEILING:
+				rot = { -90.0f, 180.0f, 180.0f };
+				break;
+			case FACE_LEFT_WALL:
+				rot = { 0.0f, 270.0f, 90.0f }; // 左壁に沿わせるためのオイラー角
+				break;
+			case FACE_RIGHT_WALL:
+				rot = { 0.0f, 90.0f, -90.0f }; // 右壁に沿わせるためのオイラー角
+				break;
+			}
+			m_pEffectSlash->SetRotation(rot);
+		}
+
 		// 押した瞬間：Enemy・Hold 判定 / RopeHold 活性化
 		JUDGE result = m_pNoteManager->Judge(m_LaneIndex, m_GravityFace);
 		if (result != JUDGE_NONE)
@@ -190,10 +266,17 @@ void Player::Draw()
 {
 	UpdateBoneMatrices();
 	AnimSprite3D::Draw();
+
+	if (m_pEffectSlash && m_IsEffectSlashActive)
+	{
+		m_pEffectSlash->Draw();
+	}
 }
 
 void Player::Finalize()
-{}
+{
+	SAFE_DELETE(m_pEffectSlash);
+}
 
 void Player::MoveLeft()
 {

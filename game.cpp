@@ -132,7 +132,7 @@ void Game_Draw(void)
 	{
 		SetDepthEnable(true);
 
-		g_pField->Draw();
+		//g_pField->Draw();
 		g_pNoteManager->Draw();
 		g_pPlayer->Draw();
 
