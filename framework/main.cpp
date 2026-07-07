@@ -308,22 +308,25 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 			}
 			updateCount += steps; // 今回のループで実行した論理ステップ数を加算
 
-			// 描画時間の計測
-			auto startDraw = std::chrono::high_resolution_clock::now();
-			Clear();//バッファのクリア
+			if (steps > 0)
+			{
+				// 描画時間の計測
+				auto startDraw = std::chrono::high_resolution_clock::now();
+				Clear();//バッファのクリア
 
-			SetWorldViewProjection2D(); // 2D専用シーン向けにデフォルトで2D行列を設定
-			Draw();
+				SetWorldViewProjection2D(); // 2D専用シーン向けにデフォルトで2D行列を設定
+				Draw();
 
-			SetDepthEnable(false);
-			Fade_Draw();
+				SetDepthEnable(false);
+				Fade_Draw();
 
 
-			Present();//バッファの表示
-			auto endDraw = std::chrono::high_resolution_clock::now();
-			g_DrawTime = std::chrono::duration_cast<std::chrono::microseconds>(endDraw - startDraw).count();
+				Present();//バッファの表示
+				auto endDraw = std::chrono::high_resolution_clock::now();
+				g_DrawTime = std::chrono::duration_cast<std::chrono::microseconds>(endDraw - startDraw).count();
 
-			frameCount++; // Present() 1回 = 描画1フレーム
+				frameCount++; // Present() 1回 = 描画1フレーム
+			}
 
 #if defined(_DEBUG)
 			//ウィンドウキャプションへ情報を表示（0.2秒に1回更新）

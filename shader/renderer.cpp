@@ -670,7 +670,7 @@ void Clear(void)
 //=============================================================================
 void Present(void)
 {
-	g_SwapChain->Present( 0, 0 );
+	g_SwapChain->Present( 1, 0 );
 }
 
 
