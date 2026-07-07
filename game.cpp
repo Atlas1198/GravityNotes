@@ -65,7 +65,7 @@ void Game_Initialize(void)
 	g_pGameUI = new GameUI();
 	g_pGameUI->Init();
 
-	//UnLockMouse();//マウスアンロック
+	UnLockMouse();//マウスアンロック
 }
 
 void Game_Update(void)
@@ -132,7 +132,7 @@ void Game_Draw(void)
 	{
 		SetDepthEnable(true);
 
-		//g_pField->Draw();
+		g_pField->Draw();
 		g_pNoteManager->Draw();
 		g_pPlayer->Draw();
 

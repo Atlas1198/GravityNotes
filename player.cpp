@@ -20,7 +20,7 @@ void Player::Init(NoteManager* nm, StatusManager* sm)
 	m_TargetLaneIndex = LANE_CENTER;
 	m_IsMoving = false;
 	m_MoveTimer = 0.0f;
-	m_MoveDuration = 0.12f;
+	m_MoveDuration = 0.15f;
 
 	m_IsGravityMoving = false;
 	m_GravityTimer = 0.0f;
@@ -168,6 +168,16 @@ void Player::Update()
 
 	UpdateAnimation(dt);
 
+	if (!IsAnimationPlaying())
+	{
+		if (m_AnimState.currentAnimName.find("jump_left") != std::string::npos ||
+			m_AnimState.currentAnimName.find("jump_right") != std::string::npos)
+		{
+			StopAnimation();
+			PlayAnimationByName("run", true);
+		}
+	}
+
 	if (m_IsOverridePlaying && !IsOverrideAnimationActive())
 	{
 		StopOverrideAnimation();
@@ -193,12 +203,16 @@ void Player::Update()
 
 	if (isPressed)
 	{
-		if (PlayAnimationByName("run", true))
+		bool isJumping = (m_AnimState.currentAnimName.find("jump_left") != std::string::npos ||
+						  m_AnimState.currentAnimName.find("jump_right") != std::string::npos);
+		if (!isJumping)
 		{
-			std::vector<std::string> overrideBones = { "BJnt_R_shoulder", "BJnt_sword" };
-			PlayOverrideAnimation("attack", overrideBones, false);
-			m_IsOverridePlaying = true;
+			PlayAnimationByName("run", true);
 		}
+
+		std::vector<std::string> overrideBones = { "BJnt_R_shoulder", "BJnt_sword" };
+		PlayOverrideAnimation("attack", overrideBones, false);
+		m_IsOverridePlaying = true;
 
 		if (m_pEffectSlash)
 		{
@@ -288,6 +302,8 @@ void Player::MoveLeft()
 	m_TargetPos = CalcLaneTargetPos(m_TargetLaneIndex);
 	m_MoveTimer = 0.0f;
 	m_IsMoving = true;
+	StopAnimation();
+	PlayAnimationByName("jump_left", false);
 }
 
 void Player::MoveRight()
@@ -300,6 +316,8 @@ void Player::MoveRight()
 	m_TargetPos = CalcLaneTargetPos(m_TargetLaneIndex);
 	m_MoveTimer = 0.0f;
 	m_IsMoving = true;
+	StopAnimation();
+	PlayAnimationByName("jump_right", false);
 }
 
 void Player::ChangeGravity(int targetFace)
