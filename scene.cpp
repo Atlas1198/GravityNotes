@@ -8,6 +8,7 @@
 #include "result.h"
 #include "debugscene.h"
 #include "define.h"
+#include "debug_ui.h"
 using namespace DirectX;
 
 static SCENE scene = SCENE_DEBUG;
@@ -86,6 +87,8 @@ void Draw( void )
 		default:
 		break;
 	}
+
+	DebugUI_Draw();
 }
 
 void Finalize( void )
