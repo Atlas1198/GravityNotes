@@ -16,6 +16,7 @@
 #include <cmath>
 #include <vector>
 #include <string>
+#include <fstream>
 
 using namespace DirectX;
 
@@ -33,26 +34,45 @@ enum VinylState {
 
 static VinylState g_CurrentState = STATE_PLAYING; // 初期状態
 
-// 左側の5つのレコードアルバムに対応するステージ数/曲数を管理
-const int MAX_STAGES = 5;
+// 左側のレコードアルバムに対応するステージ数/曲数を管理
+static int g_MaxStages = 0;
 static int g_SelectedStage = 0;                  // 現在再生中のステージ
 static int g_NextStage = 0;                      // 次のステージ（遷移完了待ち）
-
-// 各ステージのレコード盤テクスチャのパス配列
-static const wchar_t* g_StageTextures[MAX_STAGES] = {
-	L"asset\\texture\\vinmain.png",  // ステージ 1
-	L"asset\\texture\\vinmain1.png", // ステージ 2
-	L"asset\\texture\\vinmain2.png", // ステージ 3
-	L"asset\\texture\\vinmain3.png", // ステージ 4
-	L"asset\\texture\\vinmain4.png"  // ステージ 5
-};
 
 // グラフィックオブジェクト（スプライト＆フォントポインタ）
 static Sprite2D* g_pBackground = nullptr;         // レコードプレーヤーの背景画像
 static Sprite2D* g_pMainVinyl = nullptr;          // 中央のメイン回転ディスク
 static Sprite2D* g_pToneArm = nullptr;            // トーンアーム（レコードの針）
-static Sprite2D* g_pStageDisks[MAX_STAGES] = { nullptr };     // 左側の小さなディスクの列
-static ClickFont* g_pStageButtons[MAX_STAGES] = { nullptr };  // 左側の各ディスクの「PLAY」または「ステージ」テキスト/ボタン
+static std::vector<Sprite2D*> g_pStageDisks;      // 左側の小さなディスクの列
+static std::vector<ClickFont*> g_pStageButtons;   // 左側の各ディスクの「PLAY」または「ステージ」テキスト/ボタン
+
+// UTF-8からワイド文字列への変換
+static std::wstring Utf8ToWide(const std::string& utf8Str)
+{
+	if (utf8Str.empty()) return L"";
+	int size_needed = MultiByteToWideChar(CP_UTF8, 0, utf8Str.c_str(), -1, nullptr, 0);
+	if (size_needed <= 0) return L"";
+	std::wstring wstr(size_needed - 1, 0);
+	MultiByteToWideChar(CP_UTF8, 0, utf8Str.c_str(), -1, &wstr[0], size_needed);
+	return wstr;
+}
+
+// ファイル存在確認ヘルパー
+static bool FileExists(const std::string& path)
+{
+	std::ifstream f(path.c_str());
+	return f.good();
+}
+
+// サムネイル画像のパス解決（存在しない場合はデフォルト）
+static std::wstring GetThumbnailPath(const std::string& thumbnail)
+{
+	std::string path = "asset\\score\\" + thumbnail;
+	if (thumbnail.empty() || !FileExists(path)) {
+		path = "asset\\texture\\notfound_thumbnail.png";
+	}
+	return Utf8ToWide(path);
+}
 
 // アニメーション制御変数
 static float g_VinylRotation = 0.0f;              // ディスクの現在の回転角度（度）
@@ -199,6 +219,30 @@ static void ChangeSelectedScore(int delta)
 // ==========================================
 void StageSelect_Initialize(void)
 {
+	// BGMデータ管理用変数の初期化
+	g_pCurrentBgmData = nullptr;
+	g_LoadedBgmPath = "";
+
+	// JSONシステムから楽曲リストをロード
+	g_ScoreSummaries = LoadScoreSummaries();
+	g_MaxStages = static_cast<int>(g_ScoreSummaries.size());
+
+	const bool loaded = !g_ScoreSummaries.empty();
+	hal::dout << "[StageSelect] Score summary reload: "
+		<< (loaded ? "SUCCESS" : "FAILED")
+		<< " Count=" << g_ScoreSummaries.size()
+		<< std::endl;
+
+	// BGMのプリロードを行う（選曲切り替え時のフリーズを防止するため、キャッシュシステムに事前に登録しておく）
+	for (const auto& summary : g_ScoreSummaries) {
+		if (!summary.music.empty()) {
+			std::string soundPath = "asset\\sound\\bgm\\" + summary.music;
+			LoadMP3(soundPath);
+		}
+	}
+
+	g_SelectedStage = 0;
+
 	// 1. 背景画像の初期化（テクスチャサイズに合わせて調整）
 	g_pBackground = new Sprite2D(
 		{ SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f },
@@ -210,9 +254,13 @@ void StageSelect_Initialize(void)
 	);
 
 	// 2. 左隅に縦に並ぶ小さなディスクの列を初期化
-	for (int i = 0; i < MAX_STAGES; i++) {
+	g_pStageDisks.resize(g_MaxStages, nullptr);
+	g_pStageButtons.resize(g_MaxStages, nullptr);
+	for (int i = 0; i < g_MaxStages; i++) {
 		float posX = 90.0f;
 		float posY = 70.0f + (i * 130.0f); // 各ディスクを縦方向に等間隔で配置
+
+		std::wstring thumbPath = GetThumbnailPath(g_ScoreSummaries[i].thumbnail);
 
 		g_pStageDisks[i] = new Sprite2D(
 			{ posX, posY },
@@ -220,7 +268,7 @@ void StageSelect_Initialize(void)
 			0.0f,
 			{ 1.0f, 1.0f, 1.0f, 1.0f },
 			BLENDSTATE_ALFA,
-			g_StageTextures[i] // リストから各ステージに対応するテクスチャを取得
+			thumbPath.c_str()
 		);
 
 		// クリック判定用に小さなディスクの上に表示するテキストを初期化
@@ -235,13 +283,19 @@ void StageSelect_Initialize(void)
 	}
 
 	// 3. 背景のターンテーブルにぴったり収まるメインディスクを初期化
+	std::wstring mainThumbPath = L"";
+	if (g_MaxStages > 0) {
+		mainThumbPath = GetThumbnailPath(g_ScoreSummaries[g_SelectedStage].thumbnail);
+	} else {
+		mainThumbPath = L"asset\\texture\\notfound_thumbnail.png";
+	}
 	g_pMainVinyl = new Sprite2D(
 		{ (SCREEN_WIDTH / 2.0f) - 62.0f, (SCREEN_HEIGHT / 2.0f) + 2.0f },
 		{ 800.0f, 800.0f },
 		0.0f,
 		{ 1.0f, 1.0f, 1.0f, 1.0f },
 		BLENDSTATE_ALFA,
-		g_StageTextures[g_SelectedStage]
+		mainThumbPath.c_str()
 	);
 
 	// 4. トーンアーム（レコードの針）を初期化（メインディスクの右上へ重ねて配置）
@@ -263,28 +317,6 @@ void StageSelect_Initialize(void)
 		"Loading...",
 		1.35f
 	);
-
-	// BGMデータ管理用変数の初期化
-	g_pCurrentBgmData = nullptr;
-	g_LoadedBgmPath = "";
-
-	// JSONシステムから楽曲リストをロード
-	g_ScoreSummaries = LoadScoreSummaries();
-	const bool loaded = !g_ScoreSummaries.empty();
-	hal::dout << "[StageSelect] Score summary reload: "
-		<< (loaded ? "SUCCESS" : "FAILED")
-		<< " Count=" << g_ScoreSummaries.size()
-		<< std::endl;
-
-	// BGMのプリロードを行う（選曲切り替え時のフリーズを防止するため、キャッシュシステムに事前に登録しておく）
-	for (const auto& summary : g_ScoreSummaries) {
-		if (!summary.music.empty()) {
-			std::string soundPath = "asset\\sound\\bgm\\" + summary.music;
-			LoadMP3(soundPath);
-		}
-	}
-
-	g_SelectedStage = 0;
 
 	// ディスク0の最初のBGMを自動的に検索して再生
 	RefreshSelectedScoreText();
@@ -330,14 +362,14 @@ void StageSelect_Update(void)
 		// 上下矢印キーでレコードのステージを変更
 		if (Keyboard_IsKeyDownTrigger(KK_UP)) {
 			g_NextStage = g_SelectedStage - 1;
-			if (g_NextStage < 0) g_NextStage = MAX_STAGES - 1;
+			if (g_NextStage < 0) g_NextStage = g_MaxStages - 1;
 			isInputPressed = true;
 			//ChangeSelectedScore(-1);
 			g_ScrollTarget -= 1.0f;  // 1段階上へスライド
 		}
 		else if (Keyboard_IsKeyDownTrigger(KK_DOWN)) {
 			g_NextStage = g_SelectedStage + 1;
-			if (g_NextStage >= MAX_STAGES) g_NextStage = 0;
+			if (g_NextStage >= g_MaxStages) g_NextStage = 0;
 			isInputPressed = true;
 			//ChangeSelectedScore(1);
 			g_ScrollTarget += 1.0f;  // 1段階下へスライド
@@ -399,14 +431,22 @@ void StageSelect_Update(void)
 		}
 
 		// 選択されたステージの新しいディスクをメインのターンテーブルにロード
-		g_pMainVinyl = new Sprite2D(
-			{ (SCREEN_WIDTH / 2.0f) - 62.0f, (SCREEN_HEIGHT / 2.0f) + 2.0f },
-			{ 800.0f, 800.0f },
-			g_VinylRotation, // テクスチャの回転がカクつかないように現在の回転角度を維持
-			{ 1.0f, 1.0f, 1.0f, 1.0f },
-			BLENDSTATE_ALFA,
-			g_StageTextures[g_SelectedStage]
-		);
+		{
+			std::wstring mainThumbPath = L"";
+			if (g_MaxStages > 0) {
+				mainThumbPath = GetThumbnailPath(g_ScoreSummaries[g_SelectedStage].thumbnail);
+			} else {
+				mainThumbPath = L"asset\\texture\\notfound_thumbnail.png";
+			}
+			g_pMainVinyl = new Sprite2D(
+				{ (SCREEN_WIDTH / 2.0f) - 62.0f, (SCREEN_HEIGHT / 2.0f) + 2.0f },
+				{ 800.0f, 800.0f },
+				g_VinylRotation, // テクスチャの回転がカクつかないように現在の回転角度を維持
+				{ 1.0f, 1.0f, 1.0f, 1.0f },
+				BLENDSTATE_ALFA,
+				mainThumbPath.c_str()
+			);
+		}
 
 		// ディスク交換直後、トーンアームを新しいディスクに降下させる状態に移行
 		g_CurrentState = STATE_DROPPING_ARM;
@@ -454,39 +494,14 @@ void StageSelect_Update(void)
 	}
 
 	// --- パート 4: 左側の小さなディスク列の処理 ＆ マウスクリック ---
-	/*for (int i = 0; i < MAX_STAGES; i++)
-	{
-		g_pStageButtons[i]->Update();
-
-		if (i == g_SelectedStage) {
-			g_pStageDisks[i]->SetRotation(g_VinylRotation * 2.0f);
-		}
-		else {
-			g_pStageDisks[i]->SetRotation(0.0f);
-		}
-
-		if (g_pStageButtons[i]->IsClick() && g_CurrentState == STATE_PLAYING && g_SelectedStage != i)
-		{
-			g_NextStage = i;
-			g_SelectedScoreIndex = i;
-			RefreshSelectedScoreText();
-			g_CurrentState = STATE_LIFTING_ARM;
-			if (g_pCurrentBgmData != nullptr) {
-				StopSound(g_pCurrentBgmData);
-				UnloadSound(g_pCurrentBgmData);
-				g_pCurrentBgmData = nullptr;
-			}
-			g_LoadedBgmPath = "";
-		}
-		}*/
-	for (int i = 0; i < MAX_STAGES; i++)
+	for (int i = 0; i < g_MaxStages; i++)
 	{
 		// 位置を計算するために、g_SelectedStageの代わりにg_ScrollOffsetを使用する
 		float offset = (float)i - g_ScrollOffset;
 
 		// float形式での円状のラッピング処理
-		while (offset < 0.0f)          offset += (float)MAX_STAGES;
-		while (offset >= (float)MAX_STAGES) offset -= (float)MAX_STAGES;
+		while (offset < 0.0f)          offset += (float)g_MaxStages;
+		while (offset >= (float)g_MaxStages) offset -= (float)g_MaxStages;
 
 		float posX = 90.0f;
 		float posY = anchorY + (offset * spacing);
@@ -540,9 +555,9 @@ void StageSelect_Draw(void)
 	g_pMainVinyl->Draw(); // 3. 画面中央のメインディスクを描画
 	g_pToneArm->Draw();   // 4. メインディスクの上に重なるようにトーンアームを描画
 	// 2. 左側のすべての小さなディスクと対応するテキストボタンを描画
-	for (int i = 0; i < MAX_STAGES; i++) {
-		g_pStageDisks[i]->Draw();
-		g_pStageButtons[i]->Draw();
+	for (int i = 0; i < g_MaxStages; i++) {
+		if (g_pStageDisks[i] != nullptr) g_pStageDisks[i]->Draw();
+		if (g_pStageButtons[i] != nullptr) g_pStageButtons[i]->Draw();
 	}
 
 
@@ -569,10 +584,12 @@ void StageSelect_Finalize(void)
 	SAFE_DELETE(g_pToneArm);
 	SAFE_DELETE(g_pScoreInfoText);
 
-	for (int i = 0; i < MAX_STAGES; i++) {
+	for (int i = 0; i < g_MaxStages; i++) {
 		SAFE_DELETE(g_pStageDisks[i]);
 		SAFE_DELETE(g_pStageButtons[i]);
 	}
+	g_pStageDisks.clear();
+	g_pStageButtons.clear();
 
 	g_ScoreSummaries.clear();
 }
