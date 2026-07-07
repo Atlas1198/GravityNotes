@@ -45,7 +45,7 @@ public:
 	// デフォルトコンストラクタを追加し、基底 Sprite3D のコンストラクタを呼ぶ
 	Player()
 		: AnimSprite3D(XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f),
-			"asset/model/knight_run.fbx", S_PBR)
+			"asset/model/knight_02.fbx", S_PBR)
 	{}
 	void Init(NoteManager* nm, StatusManager* sm);
 	void Update();
