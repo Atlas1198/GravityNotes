@@ -6,10 +6,10 @@
 struct RESULT {
 	int score;				//スコア
 	std::string rank;		//ランク
-	float accurary;		//達成率
-	int maxCombo;		//最大コンボ数
+	float accurary;			//達成率
+	int maxCombo;			//最大コンボ数
 
-	int success;				//成功数
+	int success;			//成功数
 	int miss;				//失敗数
 };
 

@@ -20,7 +20,7 @@ void Player::Init(NoteManager* nm, StatusManager* sm)
 	m_TargetLaneIndex = LANE_CENTER;
 	m_IsMoving = false;
 	m_MoveTimer = 0.0f;
-	m_MoveDuration = 0.12f;
+	m_MoveDuration = 0.15f;
 
 	m_IsGravityMoving = false;
 	m_GravityTimer = 0.0f;
@@ -32,6 +32,24 @@ void Player::Init(NoteManager* nm, StatusManager* sm)
 	m_Rotation = { 0.0f,180.0f,0.0f };
 	m_GravityStartPos = m_Position;
 	m_GravityStartRot = m_Rotation;
+
+	m_IsEffectSlashActive = false;
+	m_IsOverridePlaying = false;
+	m_pEffectSlash = new SplitBilBoard(
+		4, 4,
+		{ 0.0f, 0.5f, 0.0f },
+		{ 3.0f, 3.0f },
+		{ 90.0f, 0.0f, 0.0f },
+		"asset\\texture\\effect_slash_ver01.png",
+		true
+	);
+	if (m_pEffectSlash)
+	{
+		m_pEffectSlash->SetLoop(false);
+		m_pEffectSlash->SetFPS(30.0f);
+		m_pEffectSlash->SetAnimationEnabled(false);
+		m_pEffectSlash->SetBillboardMode(false);
+	}
 
 	SetAnimationBlendDuration(0.2);
 	if (GetAnimationCount() > 0)
@@ -69,7 +87,7 @@ void Player::Update()
 {
 	int pad = GetGamePad();
 	bool connected = Gamepad_IsConnected(pad);
-	if (connected < 0) {
+	if (connected) {
 		return;
 	}
 
@@ -150,16 +168,88 @@ void Player::Update()
 
 	UpdateAnimation(dt);
 
+	if (!IsAnimationPlaying())
+	{
+		if (m_AnimState.currentAnimName.find("jump_left") != std::string::npos ||
+			m_AnimState.currentAnimName.find("jump_right") != std::string::npos)
+		{
+			StopAnimation();
+			PlayAnimationByName("run", true);
+		}
+	}
+
+	if (m_IsOverridePlaying && !IsOverrideAnimationActive())
+	{
+		StopOverrideAnimation();
+		m_IsOverridePlaying = false;
+	}
+
+	if (m_pEffectSlash && m_IsEffectSlashActive)
+	{
+		m_pEffectSlash->Update();
+		if (!m_pEffectSlash->IsAnimationEnabled())
+		{
+			m_IsEffectSlashActive = false;
+		}
+	}
+
 	//ノーツヒット入力
-	bool isPressed  = Keyboard_IsKeyDownTrigger(KK_SPACE) ||
+	bool isPressed  = !m_IsGravityMoving && (Keyboard_IsKeyDownTrigger(KK_SPACE) ||
 					  Gamepad_GetLeftTrigger(pad) > 0.5f   ||
-					  Gamepad_GetRightTrigger(pad) > 0.5f;
-	bool isHolding  = Keyboard_IsKeyDown(KK_SPACE) ||
+					  Gamepad_GetRightTrigger(pad) > 0.5f);
+	bool isHolding  = !m_IsGravityMoving && (Keyboard_IsKeyDown(KK_SPACE) ||
 					  Gamepad_GetLeftTrigger(pad) > 0.5f   ||
-					  Gamepad_GetRightTrigger(pad) > 0.5f;
+					  Gamepad_GetRightTrigger(pad) > 0.5f);
 
 	if (isPressed)
 	{
+		bool isJumping = (m_AnimState.currentAnimName.find("jump_left") != std::string::npos ||
+						  m_AnimState.currentAnimName.find("jump_right") != std::string::npos);
+		if (!isJumping)
+		{
+			PlayAnimationByName("run", true);
+		}
+
+		std::vector<std::string> overrideBones = { "BJnt_R_shoulder", "BJnt_sword" };
+		PlayOverrideAnimation("attack", overrideBones, false);
+		m_IsOverridePlaying = true;
+
+		if (m_pEffectSlash)
+		{
+			m_pEffectSlash->SetTextureIndex(0);
+			m_pEffectSlash->SetAnimationEnabled(true);
+			m_IsEffectSlashActive = true;
+
+			float upX = 0.0f;
+			float upY = 0.0f;
+			switch (m_GravityFace)
+			{
+			case FACE_FLOOR:      upX =  0.0f; upY =  1.0f; break; // 床では上方向
+			case FACE_CEILING:    upX =  0.0f; upY = -1.0f; break; // 天井では下方向
+			case FACE_LEFT_WALL:  upX =  1.0f; upY =  0.0f; break; // 左壁では右方向(内側)
+			case FACE_RIGHT_WALL: upX = -1.0f; upY =  0.0f; break; // 右壁では左方向(内側)
+			}
+			m_pEffectSlash->SetPos({ m_Position.x + 1.0f * upX, m_Position.y + 1.0f * upY, m_Position.z });
+
+			XMFLOAT3 rot = { 90.0f, 180.0f, 0.0f };
+			switch (m_GravityFace)
+			{
+			case FACE_FLOOR:
+				rot = { 90.0f, 180.0f, 0.0f };
+				break;
+			case FACE_CEILING:
+				rot = { -90.0f, 180.0f, 180.0f };
+				break;
+			case FACE_LEFT_WALL:
+				rot = { 0.0f, 270.0f, 90.0f }; // 左壁に沿わせるためのオイラー角
+				break;
+			case FACE_RIGHT_WALL:
+				rot = { 0.0f, 90.0f, -90.0f }; // 右壁に沿わせるためのオイラー角
+				break;
+			}
+			m_pEffectSlash->SetRotation(rot);
+		}
+
 		// 押した瞬間：Enemy・Hold 判定 / RopeHold 活性化
 		JUDGE result = m_pNoteManager->Judge(m_LaneIndex, m_GravityFace);
 		if (result != JUDGE_NONE)
@@ -190,10 +280,17 @@ void Player::Draw()
 {
 	UpdateBoneMatrices();
 	AnimSprite3D::Draw();
+
+	if (m_pEffectSlash && m_IsEffectSlashActive)
+	{
+		m_pEffectSlash->Draw();
+	}
 }
 
 void Player::Finalize()
-{}
+{
+	SAFE_DELETE(m_pEffectSlash);
+}
 
 void Player::MoveLeft()
 {
@@ -205,6 +302,8 @@ void Player::MoveLeft()
 	m_TargetPos = CalcLaneTargetPos(m_TargetLaneIndex);
 	m_MoveTimer = 0.0f;
 	m_IsMoving = true;
+	StopAnimation();
+	PlayAnimationByName("jump_left", false);
 }
 
 void Player::MoveRight()
@@ -217,6 +316,8 @@ void Player::MoveRight()
 	m_TargetPos = CalcLaneTargetPos(m_TargetLaneIndex);
 	m_MoveTimer = 0.0f;
 	m_IsMoving = true;
+	StopAnimation();
+	PlayAnimationByName("jump_right", false);
 }
 
 void Player::ChangeGravity(int targetFace)
@@ -225,10 +326,9 @@ void Player::ChangeGravity(int targetFace)
 
 	m_TargetFace = targetFace;
 
-	// 反対面ならレーンをそのまま、隣接面なら現在位置から最寄りレーンを計算
-	bool isOpposite = (m_GravityFace + 2) % 4 == targetFace;
-	m_LaneIndex = isOpposite ? m_LaneIndex : CalcNearestLane();
-	m_TargetLaneIndex = m_LaneIndex;
+	// 重力変更時の移動位置を固定で2番目のレーン（中央）にする
+	m_LaneIndex = LANE_CENTER;
+	m_TargetLaneIndex = LANE_CENTER;
 
 	m_GravityStartPos = m_Position;
 	m_GravityStartRot = m_Rotation;

@@ -1,6 +1,7 @@
 ﻿#include "define.h"
 #include "game.h"
 #include "note_manager.h"
+#include "sound.h"
 #include "enemy_note.h"
 #include "orb_note.h"
 #include "barrier_note.h"
@@ -36,15 +37,41 @@ void NoteManager::Init(const std::string& scoreFilePath)
 {
 	m_NoteSpeed      = 10.0f;
 	m_SpawnZ         = 80.0f;
-	m_ElapsedTime    = 0.0f;
+	m_ElapsedTime    = -3.0f;
 	m_NextEventIndex = 0;
+	m_BgmStarted     = false;
 
 	m_ScoreData = LoadScore(scoreFilePath);
+
+	std::string bgmPath = "asset\\sound\\bgm\\" + m_ScoreData.music;
+	m_pBgmData = LoadMP3(bgmPath);
 }
 
 void NoteManager::Update(int playerLane, int playerFace)
 {
-	m_ElapsedTime += dt;
+	if (!m_BgmStarted)
+	{
+		m_ElapsedTime += dt;
+		if (m_ElapsedTime >= 0.0f)
+		{
+			if (m_pBgmData != nullptr)
+			{
+				PlaySound(m_pBgmData, false);
+			}
+			m_BgmStarted = true;
+		}
+	}
+	else
+	{
+		if (m_pBgmData != nullptr)
+		{
+			m_ElapsedTime = (float)GetPlaybackPositionSec(m_pBgmData);
+		}
+		else
+		{
+			m_ElapsedTime += dt;
+		}
+	}
 
 	// スポーン処理：時刻が来たイベントを順番に生成
 	while (m_NextEventIndex < (int)m_ScoreData.events.size())
@@ -152,6 +179,7 @@ void NoteManager::Update(int playerLane, int playerFace)
 			         z < HIT_ZONE_Z - GOOD_WINDOW)
 			{
 				m_Notes[i]->OnMiss();
+				m_PendingJudges.push(JUDGE_MISS); // StatusManager に伝える
 			}
 		}
 
@@ -177,6 +205,12 @@ void NoteManager::Draw()
 
 void NoteManager::Finalize()
 {
+	if (m_pBgmData != nullptr) {
+		StopSound(m_pBgmData);
+		UnloadSound(m_pBgmData);
+		m_pBgmData = nullptr;
+	}
+
 	for (NoteBase* note : m_Notes)
 		delete note;
 	m_Notes.clear();
@@ -207,7 +241,7 @@ JUDGE NoteManager::Judge(int lane, int face)
 	{
 		if (bestDist < PERFECT_WINDOW) { bestNote->OnHit(); return JUDGE_PERFECT; }
 		if (bestDist < GOOD_WINDOW)    { bestNote->OnHit(); return JUDGE_GOOD; }
-		return JUDGE_MISS;
+		return JUDGE_NONE;
 	}
 
 	// RopeHoldNote: IDLE状態で判定窓内なら活性化（スコアは完了時に加算）
@@ -225,7 +259,7 @@ JUDGE NoteManager::Judge(int lane, int face)
 		}
 	}
 
-	return JUDGE_MISS;
+	return JUDGE_NONE;
 }
 
 JUDGE NoteManager::JudgeHold(int lane, int face)
@@ -251,7 +285,7 @@ JUDGE NoteManager::JudgeHold(int lane, int face)
 		if (dist < PERFECT_WINDOW) { child->OnHit(); return JUDGE_PERFECT; }
 		if (dist < GOOD_WINDOW)    { child->OnHit(); return JUDGE_GOOD; }
 	}
-	return JUDGE_MISS;
+	return JUDGE_NONE; // HoldNote が存在しない／範囲外のときは何もしない
 }
 
 JUDGE NoteManager::OnButtonRelease(int lane, int face)
