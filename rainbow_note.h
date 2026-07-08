@@ -1,5 +1,6 @@
 #pragma once
 #include "note_base.h"
+#include <d3d11.h>
 
 class RopeHoldNote : public NoteBase
 {
@@ -9,14 +10,21 @@ public:
 private:
 	int   m_EndFace;
 	int   m_EndLane;
-	float m_RopeLength;    // Z方向のロープ長（= endZ - startZ）
-	float m_HoldProgress;  // 0.0（未開始）〜 1.0（完走）
+	float m_RopeLength;
+	float m_HoldProgress;
 	State m_State;
+
+	ID3D11ShaderResourceView* m_Texture;
+	float m_LoopTime;      // 30タイル1ループにかかる秒数
+	float m_InitialSpawnZ; // タイルインデックス計算の基準Z
 
 public:
 	RopeHoldNote()
 		: NoteBase(), m_EndFace(0), m_EndLane(0),
-		  m_RopeLength(0.0f), m_HoldProgress(0.0f), m_State(State::IDLE) {}
+		  m_RopeLength(0.0f), m_HoldProgress(0.0f), m_State(State::IDLE),
+		  m_Texture(nullptr), m_LoopTime(2.0f), m_InitialSpawnZ(0.0f) {}
+
+	void SetLoopTime(float t) { m_LoopTime = t; }
 
 	void Init(int startLane, int endLane, int startFace, int endFace,
 	          float startZ, float endZ, float speed);

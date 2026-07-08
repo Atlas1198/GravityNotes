@@ -1,11 +1,11 @@
-#include "define.h"
+﻿#include "define.h"
 #include "game.h"
 #include "note_manager.h"
 #include "enemy_note.h"
 #include "orb_note.h"
 #include "barrier_note.h"
 #include "hold_note.h"
-#include "rope_hold_note.h"
+#include "rainbow_note.h"
 
 static const float HIT_ZONE_Z     = 3.0f;
 static const float PASSIVE_ZONE_Z = 0.5f; // Orb・Barrier の自動判定Z

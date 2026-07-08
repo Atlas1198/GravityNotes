@@ -154,6 +154,9 @@
     <ClCompile Include="hold_note.cpp">
       <Filter>SCENE_GAME\cpp</Filter>
     </ClCompile>
+    <ClCompile Include="rainbow_note.cpp">
+      <Filter>SCENE_GAME\cpp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework\camera.h">
@@ -346,6 +349,9 @@
       <Filter>SCENE_GAME</Filter>
     </ClInclude>
     <ClInclude Include="hold_note.h">
+      <Filter>SCENE_GAME\h</Filter>
+    </ClInclude>
+    <ClInclude Include="rainbow_note.h">
       <Filter>SCENE_GAME\h</Filter>
     </ClInclude>
   </ItemGroup>
