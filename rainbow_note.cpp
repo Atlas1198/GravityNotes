@@ -8,6 +8,7 @@ static const float ROPE_HIT_ZONE_Z   = 3.0f;
 static const float ROPE_ACTIVE_RANGE = 2.5f;
 static const float TUNNEL_HALF       = 2.5f;
 static const float RIBBON_HALF_WIDTH = 0.75f;
+static const float RIBBON_INSET      = 0.05f;  // z-fighting防止：壁から内側にずらす量
 static const float RIBBON_NEAR_Z     = -3.0f;
 static const int   TILE_COLS         = 6;
 static const int   TILE_ROWS         = 5;
@@ -154,11 +155,13 @@ void RopeHoldNote::Update()
 		return;
 	}
 
+	// IDLE: 判定窓を過ぎたら FAILED（ゲームプレイ終了）、ただし描画は継続
 	if (m_State == State::IDLE && GetPosZ() < ROPE_HIT_ZONE_Z - ROPE_ACTIVE_RANGE)
-	{
-		m_State    = State::FAILED;
+		m_State = State::FAILED;
+
+	// ロープ終端がデスポーンZを過ぎてから非アクティブ化
+	if (m_State == State::FAILED && GetPosZ() + m_RopeLength < RIBBON_NEAR_Z)
 		m_IsActive = false;
-	}
 }
 
 void RopeHoldNote::Draw()
@@ -169,44 +172,51 @@ void RopeHoldNote::Draw()
 	const float distTraveled = m_InitialSpawnZ - m_Position.z;
 	const int   baseTile     = (int)(distTraveled / tileZWidth);
 
-	XMFLOAT2 p0 = FaceToXY(m_Face,    m_LaneIndex);
-	XMFLOAT2 p2 = FaceToXY(m_EndFace, m_EndLane);
-	// 同一面なら直線、異なる面なら角を制御点とするベジェ
-	XMFLOAT2 p1 = (m_Face == m_EndFace)
-		? Lerp2(p0, p2, 0.5f)
-		: CornerXY(m_Face, m_EndFace);
+	const bool isStraight = (m_Face == m_EndFace);
+
+	// 直線帯：面の中央・全幅。曲線帯：レーン指定・通常幅
+	XMFLOAT2 p0 = isStraight ? FaceToXY(m_Face, 0) : FaceToXY(m_Face,    m_LaneIndex);
+	XMFLOAT2 p2 = isStraight ? p0                   : FaceToXY(m_EndFace, m_EndLane);
+	XMFLOAT2 p1 = isStraight ? p0                   : CornerXY(m_Face, m_EndFace);
+	float halfWidth = isStraight ? TUNNEL_HALF : RIBBON_HALF_WIDTH;
 
 	XMFLOAT2 n0 = FaceNormal(m_Face);
 	XMFLOAT2 n2 = FaceNormal(m_EndFace);
 
-	const float ropeEnd = m_Position.z + m_RopeLength;
-	const float farZ    = ropeEnd + tileZWidth;
+	// トリガー点が遠い間はロープ範囲のみ描画し、プレイヤーを過ぎたら後方へ延長
+	const float drawNear = std::max(RIBBON_NEAR_Z, m_Position.z);
+	const float drawFar  = m_Position.z + m_RopeLength;
+	const float totalLen = (drawFar - drawNear > 0.001f) ? drawFar - drawNear : 0.001f;
 
-	for (float z = RIBBON_NEAR_Z; z < farZ; z += tileZWidth)
+	for (float z = drawNear; z < drawFar + tileZWidth; z += tileZWidth)
 	{
 		float z1 = z + tileZWidth;
 
-		float safeLen = (m_RopeLength > 0.001f) ? m_RopeLength : 0.001f;
-		float t0 = std::max(0.0f, std::min((z  - m_Position.z) / safeLen, 1.0f));
-		float t1 = std::max(0.0f, std::min((z1 - m_Position.z) / safeLen, 1.0f));
+		float t0 = std::max(0.0f, std::min((z  - drawNear) / totalLen, 1.0f));
+		float t1 = std::max(0.0f, std::min((z1 - drawNear) / totalLen, 1.0f));
 
 		XMFLOAT2 xy0 = QuadBezier(p0, p1, p2, t0);
 		XMFLOAT2 xy1 = QuadBezier(p0, p1, p2, t1);
 
-		// リボン幅方向 = 法線を XY 平面で 90° 回転（面の接線方向）
+		// 法線補間（リボン幅方向の計算 + z-fighting オフセット用）
 		XMFLOAT2 nrm0 = Norm2(Lerp2(n0, n2, t0));
 		XMFLOAT2 nrm1 = Norm2(Lerp2(n0, n2, t1));
-		XMFLOAT2 ac0  = { -nrm0.y, nrm0.x };
-		XMFLOAT2 ac1  = { -nrm1.y, nrm1.x };
+
+		// 壁の内側にわずかにずらして z-fighting を防ぐ
+		xy0.x += nrm0.x * RIBBON_INSET;  xy0.y += nrm0.y * RIBBON_INSET;
+		xy1.x += nrm1.x * RIBBON_INSET;  xy1.y += nrm1.y * RIBBON_INSET;
+
+		// リボン幅方向 = 法線を XY 平面で 90° 回転（面の接線方向）
+		XMFLOAT2 ac0 = { -nrm0.y, nrm0.x };
+		XMFLOAT2 ac1 = { -nrm1.y, nrm1.x };
 
 		XMFLOAT3 corners[4] = {
-			{ xy0.x - ac0.x * RIBBON_HALF_WIDTH, xy0.y - ac0.y * RIBBON_HALF_WIDTH, z  },
-			{ xy0.x + ac0.x * RIBBON_HALF_WIDTH, xy0.y + ac0.y * RIBBON_HALF_WIDTH, z  },
-			{ xy1.x - ac1.x * RIBBON_HALF_WIDTH, xy1.y - ac1.y * RIBBON_HALF_WIDTH, z1 },
-			{ xy1.x + ac1.x * RIBBON_HALF_WIDTH, xy1.y + ac1.y * RIBBON_HALF_WIDTH, z1 },
+			{ xy0.x - ac0.x * halfWidth, xy0.y - ac0.y * halfWidth, z  },
+			{ xy0.x + ac0.x * halfWidth, xy0.y + ac0.y * halfWidth, z  },
+			{ xy1.x - ac1.x * halfWidth, xy1.y - ac1.y * halfWidth, z1 },
+			{ xy1.x + ac1.x * halfWidth, xy1.y + ac1.y * halfWidth, z1 },
 		};
 
-		// タイルインデックス：ヒットゾーンからの距離ベースでノーツごとに0スタート
 		int slotFromHit = (int)((ROPE_HIT_ZONE_Z - z) / tileZWidth);
 		int tileIndex   = ((baseTile + slotFromHit) % TILE_COUNT + TILE_COUNT) % TILE_COUNT;
 
