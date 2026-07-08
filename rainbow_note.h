@@ -40,4 +40,6 @@ public:
 	int   GetEndFace()      const { return m_EndFace; }
 	int   GetEndLane()      const { return m_EndLane; }
 	float GetHoldProgress() const { return m_HoldProgress; }
+
+	XMFLOAT2 GetCurveXY(float t) const;
 };

@@ -7,12 +7,12 @@
 static const float ROPE_HIT_ZONE_Z   = 3.0f;
 static const float ROPE_ACTIVE_RANGE = 2.5f;
 static const float TUNNEL_HALF       = 2.5f;
-static const float RIBBON_HALF_WIDTH = 0.75f;
 static const float RIBBON_INSET      = 0.05f;  // z-fighting防止：壁から内側にずらす量
 static const float RIBBON_NEAR_Z     = -3.0f;
 static const int   TILE_COLS         = 6;
 static const int   TILE_ROWS         = 5;
 static const int   TILE_COUNT        = TILE_COLS * TILE_ROWS; // 30
+static const int   RIBBON_SUBDIV     = 4; // 1タイルあたりの細分数（大きいほど滑らか）
 
 // ---------- 3D quad vertex buffer ----------
 static ID3D11Buffer* g_RibbonVB = nullptr;
@@ -85,7 +85,8 @@ static XMFLOAT2 Norm2(XMFLOAT2 v)
 }
 
 // ---------- 3D quad draw ----------
-static void DrawRibbonQuad(XMFLOAT3 corners[4], int tileIndex,
+static void DrawRibbonQuad(XMFLOAT3 corners[4],
+                            float u0, float u1, float vFar, float vNear,
                             ID3D11ShaderResourceView* tex)
 {
 	EnsureRibbonVB();
@@ -102,21 +103,16 @@ static void DrawRibbonQuad(XMFLOAT3 corners[4], int tileIndex,
 	ctx->PSSetShaderResources(0, 1, &tex);
 	SetBlendState(BLENDSTATE_ALFA);
 
-	int col = tileIndex % TILE_COLS;
-	int row = tileIndex / TILE_COLS;
-	float u0 = col / (float)TILE_COLS, u1 = (col + 1) / (float)TILE_COLS;
-	float v0 = row / (float)TILE_ROWS, v1 = (row + 1) / (float)TILE_ROWS;
-
 	D3D11_MAPPED_SUBRESOURCE msr;
 	ctx->Map(g_RibbonVB, 0, D3D11_MAP_WRITE_DISCARD, 0, &msr);
 	Vertex3D* v = (Vertex3D*)msr.pData;
 	XMFLOAT3 n = { 0.0f, 0.0f, 1.0f };
 	XMFLOAT4 c = { 1.0f, 1.0f, 1.0f, 1.0f };
 	// TRIANGLESTRIP: 0-1-2, 1-3-2
-	v[0] = { corners[0], n, c, { u0, v1 } }; // near-left
-	v[1] = { corners[1], n, c, { u1, v1 } }; // near-right
-	v[2] = { corners[2], n, c, { u0, v0 } }; // far-left
-	v[3] = { corners[3], n, c, { u1, v0 } }; // far-right
+	v[0] = { corners[0], n, c, { u0, vNear } }; // near-left
+	v[1] = { corners[1], n, c, { u1, vNear } }; // near-right
+	v[2] = { corners[2], n, c, { u0, vFar  } }; // far-left
+	v[3] = { corners[3], n, c, { u1, vFar  } }; // far-right
 	ctx->Unmap(g_RibbonVB, 0);
 
 	UINT stride = sizeof(Vertex3D), offset = 0;
@@ -174,54 +170,80 @@ void RopeHoldNote::Draw()
 
 	const bool isStraight = (m_Face == m_EndFace);
 
-	// 直線帯：面の中央・全幅。曲線帯：レーン指定・通常幅
-	XMFLOAT2 p0 = isStraight ? FaceToXY(m_Face, 0) : FaceToXY(m_Face,    m_LaneIndex);
-	XMFLOAT2 p2 = isStraight ? p0                   : FaceToXY(m_EndFace, m_EndLane);
-	XMFLOAT2 p1 = isStraight ? p0                   : CornerXY(m_Face, m_EndFace);
-	float halfWidth = isStraight ? TUNNEL_HALF : RIBBON_HALF_WIDTH;
+	XMFLOAT2 p0 = FaceToXY(m_Face, 0);
+	XMFLOAT2 p2 = isStraight ? p0 : FaceToXY(m_EndFace, 0);
+	XMFLOAT2 p1 = isStraight ? p0 : CornerXY(m_Face, m_EndFace);
+	float halfWidth = TUNNEL_HALF;
 
 	XMFLOAT2 n0 = FaceNormal(m_Face);
 	XMFLOAT2 n2 = FaceNormal(m_EndFace);
 
-	// トリガー点が遠い間はロープ範囲のみ描画し、プレイヤーを過ぎたら後方へ延長
-	const float drawNear = std::max(RIBBON_NEAR_Z, m_Position.z);
+	const float drawNear = (m_State == State::HOLDING)
+		? ROPE_HIT_ZONE_Z
+		: std::max(0.0f, m_Position.z);
 	const float drawFar  = m_Position.z + m_RopeLength;
 	const float totalLen = (drawFar - drawNear > 0.001f) ? drawFar - drawNear : 0.001f;
 
+	const float geoStep = tileZWidth / RIBBON_SUBDIV;
+
 	for (float z = drawNear; z < drawFar + tileZWidth; z += tileZWidth)
 	{
-		float z1 = z + tileZWidth;
+		// タイルインデックスと UV 範囲をタイル単位で決定
+		int slotFromHit  = (int)((ROPE_HIT_ZONE_Z - z) / tileZWidth);
+		int tileIndex    = ((baseTile + slotFromHit) % TILE_COUNT + TILE_COUNT) % TILE_COUNT;
 
-		float t0 = std::max(0.0f, std::min((z  - drawNear) / totalLen, 1.0f));
-		float t1 = std::max(0.0f, std::min((z1 - drawNear) / totalLen, 1.0f));
+		int   col      = tileIndex % TILE_COLS;
+		int   row      = tileIndex / TILE_COLS;
+		float u0       = col       / (float)TILE_COLS;
+		float u1       = (col + 1) / (float)TILE_COLS;
+		float vNearFull = (row + 1) / (float)TILE_ROWS; // プレイヤー側（z 小）
+		float vFarFull  =  row      / (float)TILE_ROWS; // 奥側（z 大）
 
-		XMFLOAT2 xy0 = QuadBezier(p0, p1, p2, t0);
-		XMFLOAT2 xy1 = QuadBezier(p0, p1, p2, t1);
+		for (int s = 0; s < RIBBON_SUBDIV; s++)
+		{
+			float z0s = z + s       * geoStep;
+			float z1s = z + (s + 1) * geoStep;
 
-		// 法線補間（リボン幅方向の計算 + z-fighting オフセット用）
-		XMFLOAT2 nrm0 = Norm2(Lerp2(n0, n2, t0));
-		XMFLOAT2 nrm1 = Norm2(Lerp2(n0, n2, t1));
+			float t0 = std::max(0.0f, std::min((z0s - drawNear) / totalLen, 1.0f));
+			float t1 = std::max(0.0f, std::min((z1s - drawNear) / totalLen, 1.0f));
 
-		// 壁の内側にわずかにずらして z-fighting を防ぐ
-		xy0.x += nrm0.x * RIBBON_INSET;  xy0.y += nrm0.y * RIBBON_INSET;
-		xy1.x += nrm1.x * RIBBON_INSET;  xy1.y += nrm1.y * RIBBON_INSET;
+			XMFLOAT2 xy0 = QuadBezier(p0, p1, p2, t0);
+			XMFLOAT2 xy1 = QuadBezier(p0, p1, p2, t1);
 
-		// リボン幅方向 = 法線を XY 平面で 90° 回転（面の接線方向）
-		XMFLOAT2 ac0 = { -nrm0.y, nrm0.x };
-		XMFLOAT2 ac1 = { -nrm1.y, nrm1.x };
+			XMFLOAT2 nrm0 = Norm2(Lerp2(n0, n2, t0));
+			XMFLOAT2 nrm1 = Norm2(Lerp2(n0, n2, t1));
 
-		XMFLOAT3 corners[4] = {
-			{ xy0.x - ac0.x * halfWidth, xy0.y - ac0.y * halfWidth, z  },
-			{ xy0.x + ac0.x * halfWidth, xy0.y + ac0.y * halfWidth, z  },
-			{ xy1.x - ac1.x * halfWidth, xy1.y - ac1.y * halfWidth, z1 },
-			{ xy1.x + ac1.x * halfWidth, xy1.y + ac1.y * halfWidth, z1 },
-		};
+			xy0.x += nrm0.x * RIBBON_INSET; xy0.y += nrm0.y * RIBBON_INSET;
+			xy1.x += nrm1.x * RIBBON_INSET; xy1.y += nrm1.y * RIBBON_INSET;
 
-		int slotFromHit = (int)((ROPE_HIT_ZONE_Z - z) / tileZWidth);
-		int tileIndex   = ((baseTile + slotFromHit) % TILE_COUNT + TILE_COUNT) % TILE_COUNT;
+			XMFLOAT2 ac0 = { -nrm0.y, nrm0.x };
+			XMFLOAT2 ac1 = { -nrm1.y, nrm1.x };
 
-		DrawRibbonQuad(corners, tileIndex, m_Texture);
+			XMFLOAT3 corners[4] = {
+				{ xy0.x - ac0.x * halfWidth, xy0.y - ac0.y * halfWidth, z0s },
+				{ xy0.x + ac0.x * halfWidth, xy0.y + ac0.y * halfWidth, z0s },
+				{ xy1.x - ac1.x * halfWidth, xy1.y - ac1.y * halfWidth, z1s },
+				{ xy1.x + ac1.x * halfWidth, xy1.y + ac1.y * halfWidth, z1s },
+			};
+
+			// タイル内のどの割合に当たるかで UV を補間
+			float localT0 = (float)s       / RIBBON_SUBDIV;
+			float localT1 = (float)(s + 1) / RIBBON_SUBDIV;
+			float vNear = vNearFull + localT0 * (vFarFull - vNearFull);
+			float vFar  = vNearFull + localT1 * (vFarFull - vNearFull);
+
+			DrawRibbonQuad(corners, u0, u1, vFar, vNear, m_Texture);
+		}
 	}
+}
+
+XMFLOAT2 RopeHoldNote::GetCurveXY(float t) const
+{
+	XMFLOAT2 p0 = FaceToXY(m_Face, 0);
+	bool isStraight = (m_Face == m_EndFace);
+	XMFLOAT2 p2 = isStraight ? p0 : FaceToXY(m_EndFace, 0);
+	XMFLOAT2 p1 = isStraight ? p0 : CornerXY(m_Face, m_EndFace);
+	return QuadBezier(p0, p1, p2, t);
 }
 
 void RopeHoldNote::OnHit()

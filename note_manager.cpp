@@ -288,6 +288,17 @@ JUDGE NoteManager::JudgeHold(int lane, int face)
 	return JUDGE_NONE; // HoldNote が存在しない／範囲外のときは何もしない
 }
 
+RopeHoldNote* NoteManager::GetHoldingRope()
+{
+	for (NoteBase* note : m_Notes)
+	{
+		RopeHoldNote* rope = dynamic_cast<RopeHoldNote*>(note);
+		if (rope && rope->GetState() == RopeHoldNote::State::HOLDING)
+			return rope;
+	}
+	return nullptr;
+}
+
 JUDGE NoteManager::OnButtonRelease(int lane, int face)
 {
 	for (NoteBase* note : m_Notes)
