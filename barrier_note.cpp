@@ -3,8 +3,9 @@
 
 void BarrierNote::Init(int lane, int face, float spawnZ, float speed)
 {
-	NoteBase::Init(lane, face, spawnZ, speed, "asset/model/cube.fbx");
+	NoteBase::Init(lane, face, spawnZ, speed, "asset/model/barrier.fbx");
+	SetSize(XMFLOAT3(1.3f, 1.3f, 1.3f));
 	m_ShaderType = S_LAMBERT;
-	SetColor(0.0f, 1.0f, 0.0f);
+	SetColor(1.0f, 1.0f, 1.0f);
 }
 

@@ -10,19 +10,19 @@
 		{
 			"beat": 0.0,
 			"lane": 1,
-			"type": "Enemy",
+			"type": "Barrier",
 			"wall": "Down"
 		},
 		{
 			"beat": 1.0,
 			"lane": 1,
-			"type": "Enemy",
+			"type": "Barrier",
 			"wall": "Down"
 		},
 		{
 			"beat": 2.0,
 			"lane": 1,
-			"type": "Enemy",
+			"type": "Barrier",
 			"wall": "Down"
 		},
 		{
