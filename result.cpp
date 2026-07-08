@@ -107,7 +107,7 @@ void Result_Initialize(void)
 	);
 
 	g_pChangeSceneText = new ClickFont(
-		{ SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT * 5 / 6 },				//位置
+		{ 1009, 612},				//位置
 		50.0f,														//文字サイズ
 		0.0f,														//回転（度）
 		{ 1.0f, 1.0f, 1.0f, 1.0f },									//通常色
@@ -354,16 +354,14 @@ void Result_DebugUIDraw(void)
 {
 	ImGui::Begin("Result Scene Editor");
 	if (ImGui::CollapsingHeader("Music Texts")) {
-		for (int i = 0; i < 4; ++i) {
-			ImGui::PushID(i);
-			ImGui::Text("Line %d", i);
-			if (ImGui::DragFloat2("Position", g_MusicTextPos[i], 1.0f)) {
-				if (g_pMusicTexts[i]) g_pMusicTexts[i]->SetPos({ g_MusicTextPos[i][0], g_MusicTextPos[i][1] });
+		
+	}
+	if (ImGui::CollapsingHeader("Change Scene Text")) {
+		if (g_pChangeSceneText) {
+			float pos[2] = { g_pChangeSceneText->GetPosX(), g_pChangeSceneText->GetPosY() };
+			if (ImGui::DragFloat2("Position##ChangeSceneText", pos, 1.0f)) {
+				g_pChangeSceneText->SetPos({ pos[0], pos[1] });
 			}
-			if (ImGui::DragFloat("Scale", &g_MusicTextScale[i], 0.01f, 0.1f, 10.0f)) {
-				if (g_pMusicTexts[i]) g_pMusicTexts[i]->SetSize({ g_MusicTextScale[i], g_MusicTextScale[i] });
-			}
-			ImGui::PopID();
 		}
 	}
 	ImGui::End();
