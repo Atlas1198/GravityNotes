@@ -45,6 +45,7 @@ void Player::Init(NoteManager* nm, StatusManager* sm)
 	);
 	if (m_pEffectSlash)
 	{
+		m_pEffectSlash->SetWallFadeEnabled(false);
 		m_pEffectSlash->SetLoop(false);
 		m_pEffectSlash->SetFPS(30.0f);
 		m_pEffectSlash->SetAnimationEnabled(false);
