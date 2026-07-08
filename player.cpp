@@ -86,10 +86,6 @@ static int GetTriggeredAnimationSlot()
 void Player::Update()
 {
 	int pad = GetGamePad();
-	bool connected = Gamepad_IsConnected(pad);
-	if (connected) {
-		return;
-	}
 
 	//lane移動入力
 	Gamepad_ThumbStick ls = Gamepad_GetLeftStick(pad);
