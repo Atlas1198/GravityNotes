@@ -1,27 +1,95 @@
 {
-  "musicname": "森田交一",
-  "musicauthor": "another",
-  "scoreauthor": "H./K",
-  "difficulty": 3.0,
-  "thumbnail": "shiningstar.png",
-  "bpm": 158.0,
-  "music": "",
-  "events": [
-    {
-      "beat": 16.0,
-      "type": "Rainbow",
-      "wall": "Down",
-      "lane": 1,
-      "endBeat": 24.0,
-      "endWall": "Left"
-    },
-    {
-      "beat": 40.0,
-      "type": "Rainbow",
-      "wall": "Up",
-      "lane": 1,
-      "endBeat": 52.0,
-      "endWall": "Right"
-    }
-  ]
+	"musicname": "シャイニングスター",
+	"musicauthor": "森田交一",
+	"scoreauthor": "R.T",
+	"difficulty": 5.0,
+	"bpm": 158.0,
+	"thumbnail": "shiningstar.png",
+	"music": "maou_14_shining_star.mp3",
+	"events": [
+		{
+			"beat": 0.0,
+			"lane": 1,
+			"type": "Barrier",
+			"wall": "Down"
+		},
+		{
+			"beat": 1.0,
+			"lane": 1,
+			"type": "Barrier",
+			"wall": "Down"
+		},
+		{
+			"beat": 2.0,
+			"lane": 1,
+			"type": "Barrier",
+			"wall": "Down"
+		},
+		{
+			"beat": 3.0,
+			"lane": 1,
+			"type": "Enemy",
+			"wall": "Down"
+		},
+		{
+			"beat": 4.0,
+			"lane": 1,
+			"type": "Enemy",
+			"wall": "Down"
+		},
+		{
+			"beat": 5.0,
+			"lane": 1,
+			"type": "Enemy",
+			"wall": "Down"
+		},
+		{
+			"beat": 6.0,
+			"lane": 1,
+			"type": "Enemy",
+			"wall": "Down"
+		},
+		{
+			"beat": 7.0,
+			"lane": 1,
+			"type": "Enemy",
+			"wall": "Down"
+		},
+		{
+			"beat": 8.0,
+			"lane": 1,
+			"type": "Enemy",
+			"wall": "Down"
+		},
+		{
+			"beat": 9.0,
+			"lane": 1,
+			"type": "Enemy",
+			"wall": "Down"
+		},
+		{
+			"beat": 10.0,
+			"lane": 1,
+			"type": "Enemy",
+			"wall": "Down"
+		},
+		{
+			"beat": 11.0,
+			"lane": 1,
+			"type": "Enemy",
+			"wall": "Down"
+		},
+		{
+			"beat": 12.0,
+			"lane": 1,
+			"type": "Enemy",
+			"wall": "Down"
+		},
+		{
+			"beat": 13.0,
+			"lane": 1,
+			"type": "Enemy",
+			"wall": "Down"
+		}
+	]
 }
