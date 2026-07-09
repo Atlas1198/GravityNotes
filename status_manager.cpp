@@ -42,17 +42,14 @@ void StatusManager::OnJudgeHold(JUDGE result)
 	OnJudge(result);
 }
 
-RESULT StatusManager::GetResult() const
+SendResult StatusManager::GetResult() const
 {
 	int   total    = m_HitCount + m_MissCount;
 	float accuracy = total > 0 ? static_cast<float>(m_HitCount) / total * 100.0f : 0.0f;
 
-	RESULT r;
-	r.score    = m_Score;
-	r.rank     = "";   // TODO: ランク計算
-	r.accurary = accuracy;
+	SendResult r;
 	r.maxCombo = m_MaxCombo;
-	r.success  = m_HitCount;
-	r.miss     = m_MissCount;
+	r.hits  = m_HitCount;
+	r.misses     = m_MissCount;
 	return r;
 }
