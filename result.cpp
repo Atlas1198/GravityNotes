@@ -85,17 +85,17 @@ void Result_Initialize(void)
 	g_ScoreSummary = LoadSingleScoreSummary(GetPlayJson());
 
 	////リザルトデータを実体化させてコピー　上書き禁止
-	//g_ShowResult.maxCombo = GetResult()->maxCombo;
-	//g_ShowResult.hits = GetResult()->hits;
-	//g_ShowResult.misses = GetResult()->misses;
-	//g_ShowResult.orbgets = GetResult()->orbgets;
-	//g_ShowResult.orblosses = GetResult()->orblosses;
+	g_ShowResult.maxCombo = GetResult()->maxCombo;
+	g_ShowResult.hits = GetResult()->hits;
+	g_ShowResult.misses = GetResult()->misses;
+	g_ShowResult.orbgets = GetResult()->orbgets;
+	g_ShowResult.orblosses = GetResult()->orblosses;
 
-	g_ShowResult.maxCombo = 10;
-	g_ShowResult.hits = 55;
-	g_ShowResult.misses = 45;
-	g_ShowResult.orbgets = 10;
-	g_ShowResult.orblosses = 2;
+	//g_ShowResult.maxCombo = 10;
+	//g_ShowResult.hits = 55;
+	//g_ShowResult.misses = 45;
+	//g_ShowResult.orbgets = 10;
+	//g_ShowResult.orblosses = 2;
 
 	int totalNotes = g_ShowResult.hits + g_ShowResult.misses;
 	if (totalNotes > 0)
@@ -106,7 +106,7 @@ void Result_Initialize(void)
 	{
 		g_ShowResult.score = 0;
 	}
-	hal::dout << "aaaaaaaaaaaaaaaaaaaaaa   " << g_ShowResult.score << std::endl;
+	//hal::dout << "aaaaaaaaaaaaaaaaaaaaaa   " << g_ShowResult.score << std::endl;
 
 
 	//ランク計算
@@ -310,14 +310,30 @@ void Result_Update(void)
 			if (valueProgress >= 1.0f)
 			{
 				valueProgress = 1.0f;
-				g_ResultRows[i].valueStr = std::to_string(g_ResultRows[i].targetValue);
+				if (i == 4) // オーブ数
+				{
+					int totalOrbs = g_ShowResult.orbgets + g_ShowResult.orblosses;
+					g_ResultRows[i].valueStr = std::to_string(g_ResultRows[i].targetValue) + "/" + std::to_string(totalOrbs);
+				}
+				else
+				{
+					g_ResultRows[i].valueStr = std::to_string(g_ResultRows[i].targetValue);
+				}
 			}
 			else
 			{
 				// イージング (Ease-Out Quad)
 				float easeProgress = 1.0f - (1.0f - valueProgress) * (1.0f - valueProgress);
 				int curVal = static_cast<int>(g_ResultRows[i].targetValue * easeProgress);
-				g_ResultRows[i].valueStr = std::to_string(curVal);
+				if (i == 4) // オーブ数
+				{
+					int totalOrbs = g_ShowResult.orbgets + g_ShowResult.orblosses;
+					g_ResultRows[i].valueStr = std::to_string(curVal) + "/" + std::to_string(totalOrbs);
+				}
+				else
+				{
+					g_ResultRows[i].valueStr = std::to_string(curVal);
+				}
 			}
 		}
 		else
