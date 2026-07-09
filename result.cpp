@@ -24,7 +24,7 @@ static Sprite2D* g_pResultBG = nullptr;
 static Sprite2D* g_pResultBackUI = nullptr;
 static ClickFont* g_pChangeSceneText = nullptr;
 static ScoreSummary g_ResultScoreSummary;
-static RESULT g_Result;
+static SnedResult g_Result;
 
 static FontRenderer* g_pMusicTexts[4] = { nullptr };
 static MultiLineFontRenderer* g_pAuthorFont= nullptr;
@@ -72,11 +72,9 @@ void Result_Initialize(void)
 	hal::dout << "[result.cpp]" << g_ResultScoreSummary.musicname << std::endl;
 	hal::dout << "[result.cpp]" << g_Result.maxCombo << std::endl;
 
-	g_Result.score += 100000; //デバッグ用にスコアを加算
-	g_Result.success += 100000;
+	g_Result.hits += 100000;
 	g_Result.maxCombo += 100000;
-	g_Result.miss += 100;
-	g_Result.accurary = 55.0f;  //accuracy?
+	g_Result.misses += 100;
 	g_ResultScoreSummary.difficulty = 1.5f;
 
 	g_pResultBG = new Sprite2D(
@@ -124,11 +122,9 @@ void Result_Initialize(void)
 	float startY = 294.0f;
 	float lineSpacing = 60.0f; // 行間隔
 
-	g_ResultRows[0] = { "スコア  ",    "", g_Result.score * 100, startX,  startY };
-	g_ResultRows[1] = { "ヒット数  ",    "", g_Result.success , startX ,  startY + lineSpacing };
+	g_ResultRows[1] = { "ヒット数  ",    "", g_Result.hits , startX ,  startY + lineSpacing };
 	g_ResultRows[2] = { "最大コンボ数  ", "", g_Result.maxCombo, startX ,	 startY + lineSpacing * 2 };
-	g_ResultRows[3] = { "ミス数  ",  "", g_Result.miss, startX ,  startY + lineSpacing * 3 };
-	g_ResultRows[4] = { "達成率  ", "", static_cast<int>(g_Result.accurary), startX ,  startY + lineSpacing * 4 };
+	g_ResultRows[3] = { "ミス数  ",  "", g_Result.misses, startX ,  startY + lineSpacing * 3 };
 
 	// 難易度の小数点以下1桁まで表示するためのstringstreamを使用
 	std::stringstream ss;
@@ -184,15 +180,6 @@ void Result_Initialize(void)
 
 	// 達成率(accurary)によって表示するテクスチャを決定する
 	std::wstring wRank = L"C"; // デフォルトはC
-	if (g_Result.accurary >= 95.0f) {
-		wRank = L"SS";
-	} else if (g_Result.accurary >= 90.0f) {
-		wRank = L"S";
-	} else if (g_Result.accurary >= 80.0f) {
-		wRank = L"A";
-	} else if (g_Result.accurary >= 50.0f) {
-		wRank = L"B";
-	}
 
 	// テクスチャのファイルパスを動的に生成
 	std::wstring rankTexturePath = L"asset\\texture\\Result_Rank_" + wRank + L"_UI.png";
