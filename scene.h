@@ -3,12 +3,13 @@
 #include <string>
 
 //リザルトに渡す構造体
-struct SnedResult {
-	int maxCombo;			//最大コンボ数
-	int hits;			//成功数
-	int misses;				//失敗数
-	int orbgets;
-	int orblosses;
+struct SendResult 
+{
+	int maxCombo;		//最大コンボ数
+	int hits;			//Hit数
+	int misses;			//Miss数
+	int orbgets;		//オーブ獲得
+	int orblosses;		//オーブ逃し
 };
 
 enum SCENE {
@@ -30,5 +31,5 @@ void SetScene(SCENE id);
 SCENE GetScene(void);
 void SetPlayJson(const std::string& jsonName);
 const std::string& GetPlayJson(void);
-void SetResult(const SnedResult& r);
-const SnedResult* GetResult();
+void SetResult(const SendResult& r);
+const SendResult* GetResult();

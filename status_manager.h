@@ -32,5 +32,5 @@ public:
 	bool  HasNewJudge()  const { return m_HasNewJudge; }
 	JUDGE ConsumeJudge()       { m_HasNewJudge = false; return m_LastJudge; }
 
-	SnedResult GetResult() const;
+	SendResult GetResult() const;
 };

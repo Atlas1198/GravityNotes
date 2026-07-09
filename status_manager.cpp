@@ -42,11 +42,11 @@ void StatusManager::OnJudgeHold(JUDGE result)
 	OnJudge(result);
 }
 
-SnedResult StatusManager::GetResult() const
+SendResult StatusManager::GetResult() const
 {
-	SnedResult r;
+	SeedResult r;
 	r.maxCombo = m_MaxCombo;
 	r.hits  = m_HitCount;
-	r.misses     = m_MissCount;
+	r.misses = m_MissCount;
 	return r;
 }

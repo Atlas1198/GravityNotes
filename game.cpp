@@ -14,9 +14,7 @@
 #include "sound.h"
 #include "ClickFont.h"
 #include "scene.h"
-#include "gamepad.h"
 #include "camera.h"
-
 #include "field.h"
 #include "player.h"
 #include "gamecamera.h"
@@ -112,12 +110,6 @@ void Game_Update(void)
 	}*/
 
 	if (Keyboard_IsKeyDownTrigger(KK_ENTER)) {
-		SnedResult r;
-		r.maxCombo = 175;
-		r.hits = 312;
-		r.misses = 26;
-
-		SetResult(r);
 		SetSceneFade(SCENE_RESULT);
 	}
 }
