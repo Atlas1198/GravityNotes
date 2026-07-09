@@ -212,7 +212,7 @@
     <ClCompile Include="orb_note.cpp" />
     <ClCompile Include="player.cpp" />
     <ClCompile Include="result.cpp" />
-    <ClCompile Include="rope_hold_note.cpp" />
+    <ClCompile Include="rainbow_note.cpp" />
     <ClCompile Include="scene.cpp" />
     <ClCompile Include="stageselect.cpp" />
     <ClCompile Include="shader\renderer.cpp" />
@@ -288,7 +288,7 @@
     <ClInclude Include="note_manager.h" />
     <ClInclude Include="orb_note.h" />
     <ClInclude Include="player.h" />
-    <ClInclude Include="rope_hold_note.h" />
+    <ClInclude Include="rainbow_note.h" />
     <ClInclude Include="scene.h" />
     <ClInclude Include="result.h" />
     <ClInclude Include="scoreloader.h" />

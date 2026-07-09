@@ -4,6 +4,8 @@
 #include "note_base.h"
 #include "scoreloader.h"
 
+class RopeHoldNote;
+
 enum JUDGE {
 	JUDGE_NONE = -1,
 	JUDGE_PERFECT,
@@ -42,7 +44,9 @@ public:
 
 	JUDGE Judge(int lane, int face);
 	JUDGE JudgeHold(int lane, int face);
-	JUDGE OnButtonRelease(int lane, int face); // ボタン離し時のロープホールド処理
+	JUDGE OnButtonRelease(int lane, int face);
+
+	RopeHoldNote* GetHoldingRope();
 
 	bool  HasPendingJudge()  const { return !m_PendingJudges.empty(); }
 	JUDGE PopPendingJudge()        { JUDGE j = m_PendingJudges.front(); m_PendingJudges.pop(); return j; }

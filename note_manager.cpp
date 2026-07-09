@@ -6,12 +6,13 @@
 #include "orb_note.h"
 #include "barrier_note.h"
 #include "hold_note.h"
-#include "rope_hold_note.h"
+#include "rainbow_note.h"
 
 static const float HIT_ZONE_Z     = 3.0f;
 static const float PASSIVE_ZONE_Z = 0.5f; // Orb・Barrier の自動判定Z
 static const float PERFECT_WINDOW = 1.0f;
 static const float GOOD_WINDOW    = 2.5f;
+static const float ROPE_ACTIVATE_WINDOW = 0.5f; // レインボーはプレイヤーの足元でのみ活性化（PASSIVE_ZONE_Z基準）
 
 // beat を「そのノーツをスポーンすべき時刻（秒）」に変換
 float NoteManager::BeatToSpawnTime(float beat) const
@@ -218,7 +219,7 @@ void NoteManager::Finalize()
 
 JUDGE NoteManager::Judge(int lane, int face)
 {
-	// Enemy・HoldNote（連撃）の判定
+	// Enemy の判定（KeyTrigger）
 	NoteBase* bestNote = nullptr;
 	float bestDist = FLT_MAX;
 
@@ -228,6 +229,7 @@ JUDGE NoteManager::Judge(int lane, int face)
 		if (note->GetLaneIndex() != lane || note->GetFace() != face) continue;
 		if (dynamic_cast<OrbNote*>(note) || dynamic_cast<BarrierNote*>(note)) continue;
 		if (dynamic_cast<RopeHoldNote*>(note)) continue; // ロープホールドは別扱い
+		if (dynamic_cast<HoldNote*>(note)) continue;     // Hold本体は非対象（子ノートで判定）
 
 		float dist = fabsf(note->GetPosZ() - HIT_ZONE_Z);
 		if (dist < bestDist)
@@ -244,19 +246,18 @@ JUDGE NoteManager::Judge(int lane, int face)
 		return JUDGE_NONE;
 	}
 
-	// RopeHoldNote: IDLE状態で判定窓内なら活性化（スコアは完了時に加算）
+	// HoldNote（連撃）の最初の一撃はKeyTriggerで取る
 	for (NoteBase* note : m_Notes)
 	{
-		RopeHoldNote* rope = dynamic_cast<RopeHoldNote*>(note);
-		if (!rope || rope->GetState() != RopeHoldNote::State::IDLE) continue;
-		if (rope->GetLaneIndex() != lane || rope->GetFace() != face) continue;
+		HoldNote* hold = dynamic_cast<HoldNote*>(note);
+		if (!hold || !hold->IsActive()) continue;
 
-		float dist = fabsf(rope->GetPosZ() - HIT_ZONE_Z);
-		if (dist < GOOD_WINDOW)
-		{
-			rope->Activate();
-			return JUDGE_NONE; // 活性化のみ。スコアは Complete 時に PendingJudge で加算
-		}
+		EnemyNote* child = hold->GetNearestActiveChild(lane, face);
+		if (!child) continue;
+
+		float dist = fabsf(child->GetPosZ() - HIT_ZONE_Z);
+		if (dist < PERFECT_WINDOW) { child->OnHit(); return JUDGE_PERFECT; }
+		if (dist < GOOD_WINDOW)    { child->OnHit(); return JUDGE_GOOD; }
 	}
 
 	return JUDGE_NONE;
@@ -264,6 +265,21 @@ JUDGE NoteManager::Judge(int lane, int face)
 
 JUDGE NoteManager::JudgeHold(int lane, int face)
 {
+	// RopeHoldNote: 足元（PASSIVE_ZONE_Z）に来た時だけKeyDownで活性化（スコアは完了時に加算）
+	for (NoteBase* note : m_Notes)
+	{
+		RopeHoldNote* rope = dynamic_cast<RopeHoldNote*>(note);
+		if (!rope || rope->GetState() != RopeHoldNote::State::IDLE) continue;
+		if (rope->GetLaneIndex() != lane || rope->GetFace() != face) continue;
+
+		float dist = fabsf(rope->GetPosZ() - PASSIVE_ZONE_Z);
+		if (dist < ROPE_ACTIVATE_WINDOW)
+		{
+			rope->Activate();
+			return JUDGE_NONE; // 活性化のみ。スコアは Complete 時に PendingJudge で加算
+		}
+	}
+
 	// RopeHoldNote が HOLDING 中はスコア加算なし（完了時に PendingJudge で加算）
 	for (NoteBase* note : m_Notes)
 	{
@@ -272,7 +288,7 @@ JUDGE NoteManager::JudgeHold(int lane, int face)
 			return JUDGE_NONE;
 	}
 
-	// HoldNote（連撃）の継続判定
+	// HoldNote（連撃）の継続判定（KeyDown）
 	for (NoteBase* note : m_Notes)
 	{
 		HoldNote* hold = dynamic_cast<HoldNote*>(note);
@@ -286,6 +302,17 @@ JUDGE NoteManager::JudgeHold(int lane, int face)
 		if (dist < GOOD_WINDOW)    { child->OnHit(); return JUDGE_GOOD; }
 	}
 	return JUDGE_NONE; // HoldNote が存在しない／範囲外のときは何もしない
+}
+
+RopeHoldNote* NoteManager::GetHoldingRope()
+{
+	for (NoteBase* note : m_Notes)
+	{
+		RopeHoldNote* rope = dynamic_cast<RopeHoldNote*>(note);
+		if (rope && rope->GetState() == RopeHoldNote::State::HOLDING)
+			return rope;
+	}
+	return nullptr;
 }
 
 JUDGE NoteManager::OnButtonRelease(int lane, int face)

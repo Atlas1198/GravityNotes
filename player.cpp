@@ -8,10 +8,11 @@
 #include "note_manager.h"
 #include "status_manager.h"
 #include "player.h"
+#include "rainbow_note.h"
 
 void Player::Init(NoteManager* nm, StatusManager* sm)
 {
-	m_Scale = { 0.02f,0.02f,0.02f };
+	m_Scale = { 0.017f,0.017f,0.017f };
 
 	m_pNoteManager   = nm;
 	m_pStatusManager = sm;
@@ -88,68 +89,98 @@ void Player::Update()
 {
 	int pad = GetGamePad();
 
-	//lane移動入力
-	Gamepad_ThumbStick ls = Gamepad_GetLeftStick(pad);
-	if (m_GravityFace == FACE::FACE_FLOOR || m_GravityFace == FACE::FACE_CEILING)
+	RopeHoldNote* holdingRope = m_pNoteManager->GetHoldingRope();
+
+	if (holdingRope)
 	{
-		if (ls.x <-0.5f || Keyboard_IsKeyDownTrigger(KK_A))//左移動
-			MoveLeft();
-		else if (ls.x > 0.5f || Keyboard_IsKeyDownTrigger(KK_D))//右移動
-			MoveRight();
+		// ロープ曲線に沿って位置・向きを更新
+		float t = holdingRope->GetHoldProgress();
+		XMFLOAT2 xy = holdingRope->GetCurveXY(t);
+		m_Position.x = xy.x;
+		m_Position.y = xy.y;
+
+		int startFace = holdingRope->GetFace();
+		int endFace   = holdingRope->GetEndFace();
+		m_GravityFace     = (t >= 0.5f) ? endFace : startFace;
+		m_TargetFace      = endFace;
+		m_LaneIndex       = LANE_CENTER;
+		m_TargetLaneIndex = LANE_CENTER;
+		m_IsMoving        = false;
+		m_IsGravityMoving = false;
+
+		// 開始面から終了面へ回転を補間
+		float rotStart = CalcFaceTargetRot(startFace).z;
+		float rotEnd   = CalcFaceTargetRot(endFace).z;
+		float diff = rotEnd - rotStart;
+		while (diff >  180.0f) diff -= 360.0f;
+		while (diff < -180.0f) diff += 360.0f;
+		m_Rotation.z = rotStart + diff * t;
 	}
 	else
 	{
-		if (ls.y > 0.5f || Keyboard_IsKeyDownTrigger(KK_W))//上移動
-			MoveRight();
-		else if (ls.y < -0.5f || Keyboard_IsKeyDownTrigger(KK_S))//下移動
-			MoveLeft();
-	}
-
-	//移動補間
-	if (m_IsMoving)
-	{
-		m_MoveTimer += dt;
-		float t = m_MoveTimer / m_MoveDuration;
-		if (t >= 1.0f)
+		//lane移動入力
+		Gamepad_ThumbStick ls = Gamepad_GetLeftStick(pad);
+		if (m_GravityFace == FACE::FACE_FLOOR || m_GravityFace == FACE::FACE_CEILING)
 		{
-			t = 1.0f;
-			m_LaneIndex = m_TargetLaneIndex;
-			m_IsMoving = false;
+			if (ls.x <-0.5f || Keyboard_IsKeyDownTrigger(KK_A))
+				MoveLeft();
+			else if (ls.x > 0.5f || Keyboard_IsKeyDownTrigger(KK_D))
+				MoveRight();
 		}
-		float eased = 1.0f - (1.0f - t) * (1.0f - t);
-		m_Position.x = m_StartPos.x + (m_TargetPos.x - m_StartPos.x) * eased;
-		m_Position.y = m_StartPos.y + (m_TargetPos.y - m_StartPos.y) * eased;
-	}
-
-	//重力変更入力
-	if (!m_IsGravityMoving)
-	{
-		Gamepad_ThumbStick rs = Gamepad_GetRightStick(pad);
-		if (rs.y > 0.5f || Keyboard_IsKeyDownTrigger(KK_UP))
-			ChangeGravity(FACE_CEILING);
-		else if (rs.y < -0.5f || Keyboard_IsKeyDownTrigger(KK_DOWN))
-			ChangeGravity(FACE_FLOOR);
-		else if (rs.x < -0.5f || Keyboard_IsKeyDownTrigger(KK_LEFT))
-			ChangeGravity(FACE_LEFT_WALL);
-		else if (rs.x > 0.5f || Keyboard_IsKeyDownTrigger(KK_RIGHT))
-			ChangeGravity(FACE_RIGHT_WALL);
-	}
-
-	//重力移動補間
-	if (m_IsGravityMoving)
-	{
-		m_GravityTimer += dt;
-		float t = m_GravityTimer / m_GravityDuration;
-		if (t >= 1.0f)
+		else
 		{
-			t = 1.0f;
-			m_GravityFace = m_TargetFace;
-			m_IsGravityMoving = false;
+			if (ls.y > 0.5f || Keyboard_IsKeyDownTrigger(KK_W))
+				MoveRight();
+			else if (ls.y < -0.5f || Keyboard_IsKeyDownTrigger(KK_S))
+				MoveLeft();
 		}
-		float eased = 1.0f - (1.0f - t) * (1.0f - t);
-		m_Position.x = m_GravityStartPos.x + (m_TargetPos.x - m_GravityStartPos.x) * eased;
-		m_Position.y = m_GravityStartPos.y + (m_TargetPos.y - m_GravityStartPos.y) * eased;
-		m_Rotation.z = m_GravityStartRot.z + (m_TargetRot.z - m_GravityStartRot.z) * eased;
+
+		//移動補間
+		if (m_IsMoving)
+		{
+			m_MoveTimer += dt;
+			float t = m_MoveTimer / m_MoveDuration;
+			if (t >= 1.0f)
+			{
+				t = 1.0f;
+				m_LaneIndex = m_TargetLaneIndex;
+				m_IsMoving = false;
+			}
+			float eased = 1.0f - (1.0f - t) * (1.0f - t);
+			m_Position.x = m_StartPos.x + (m_TargetPos.x - m_StartPos.x) * eased;
+			m_Position.y = m_StartPos.y + (m_TargetPos.y - m_StartPos.y) * eased;
+		}
+
+		//重力変更入力
+		if (!m_IsGravityMoving)
+		{
+			Gamepad_ThumbStick rs = Gamepad_GetRightStick(pad);
+			if (rs.y > 0.5f || Keyboard_IsKeyDownTrigger(KK_UP))
+				ChangeGravity(FACE_CEILING);
+			else if (rs.y < -0.5f || Keyboard_IsKeyDownTrigger(KK_DOWN))
+				ChangeGravity(FACE_FLOOR);
+			else if (rs.x < -0.5f || Keyboard_IsKeyDownTrigger(KK_LEFT))
+				ChangeGravity(FACE_LEFT_WALL);
+			else if (rs.x > 0.5f || Keyboard_IsKeyDownTrigger(KK_RIGHT))
+				ChangeGravity(FACE_RIGHT_WALL);
+		}
+
+		//重力移動補間
+		if (m_IsGravityMoving)
+		{
+			m_GravityTimer += dt;
+			float t = m_GravityTimer / m_GravityDuration;
+			if (t >= 1.0f)
+			{
+				t = 1.0f;
+				m_GravityFace = m_TargetFace;
+				m_IsGravityMoving = false;
+			}
+			float eased = 1.0f - (1.0f - t) * (1.0f - t);
+			m_Position.x = m_GravityStartPos.x + (m_TargetPos.x - m_GravityStartPos.x) * eased;
+			m_Position.y = m_GravityStartPos.y + (m_TargetPos.y - m_GravityStartPos.y) * eased;
+			m_Rotation.z = m_GravityStartRot.z + (m_TargetRot.z - m_GravityStartRot.z) * eased;
+		}
 	}
 
 	int animSlot = GetTriggeredAnimationSlot();
@@ -247,14 +278,16 @@ void Player::Update()
 			m_pEffectSlash->SetRotation(rot);
 		}
 
-		// 押した瞬間：Enemy・Hold 判定 / RopeHold 活性化
+		// 押した瞬間（KeyTrigger）：Enemy・Hold(最初の一撃) 判定
 		JUDGE result = m_pNoteManager->Judge(m_LaneIndex, m_GravityFace);
 		if (result != JUDGE_NONE)
 			m_pStatusManager->OnJudge(result);
 	}
-	else if (isHolding)
+
+	if (isHolding)
 	{
-		// 長押し中：HoldNote 継続判定 / RopeHoldNote は JUDGE_NONE を返す
+		// 押している間（KeyDown、トリガーの瞬間も含む）：
+		// HoldNote 継続判定 / RopeHoldNote の活性化・継続判定
 		JUDGE result = m_pNoteManager->JudgeHold(m_LaneIndex, m_GravityFace);
 		if (result != JUDGE_NONE)
 			m_pStatusManager->OnJudgeHold(result);

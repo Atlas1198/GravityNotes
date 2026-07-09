@@ -44,12 +44,9 @@ void StatusManager::OnJudgeHold(JUDGE result)
 
 SendResult StatusManager::GetResult() const
 {
-	int   total    = m_HitCount + m_MissCount;
-	float accuracy = total > 0 ? static_cast<float>(m_HitCount) / total * 100.0f : 0.0f;
-
-	SendResult r;
+	SeedResult r;
 	r.maxCombo = m_MaxCombo;
 	r.hits  = m_HitCount;
-	r.misses     = m_MissCount;
+	r.misses = m_MissCount;
 	return r;
 }
