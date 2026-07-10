@@ -34,7 +34,7 @@ SoundData* LoadMP3(const std::string& filename);
 void UnloadSound(SoundData* data);
 
 // 再生・停止
-void PlaySound(SoundData* data, bool loop = false);
+void PlaySound(SoundData* data, bool loop = false, float volumeScale = 1.0f);
 void StopSound(SoundData* data);
 
 // 再生位置取得（XAudio2 SamplesPlayed ベース、単位：秒）

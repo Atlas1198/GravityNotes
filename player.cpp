@@ -7,6 +7,7 @@
 #include "status_manager.h"
 #include "player.h"
 #include "rainbow_note.h"
+#include "sound.h"
 
 void Player::Init(NoteManager* nm, StatusManager* sm)
 {
@@ -60,6 +61,10 @@ void Player::Init(NoteManager* nm, StatusManager* sm)
 		PlayAnimationByIndex(0, true);
 		UpdateAnimation(dt);
 	}
+
+	m_pSwordSe = LoadMP3("asset/sound/se/sword.mp3");
+	m_pEnemyHitSe = LoadMP3("asset/sound/se/enemyHit.wav");
+	m_pKaihiSe = LoadMP3("asset/sound/se/kaihi.wav");
 }
 
 //仮置き
@@ -277,6 +282,19 @@ void Player::Update()
 		JUDGE result = m_pNoteManager->Judge(m_LaneIndex, m_GravityFace);
 		if (result != JUDGE_NONE)
 			m_pStatusManager->OnJudge(result);
+
+		if (result == JUDGE_PERFECT || result == JUDGE_GOOD)
+		{
+			if (m_pEnemyHitSe) PlaySound(m_pEnemyHitSe, false);
+		}
+		else
+		{
+			// 攻撃がヒットしなかった（空振った）時のみ sword 音を再生
+			if (m_pSwordSe)
+			{
+				PlaySound(m_pSwordSe, false, 0.25f);
+			}
+		}
 	}
 
 	if (isHolding)
@@ -286,6 +304,11 @@ void Player::Update()
 		JUDGE result = m_pNoteManager->JudgeHold(m_LaneIndex, m_GravityFace);
 		if (result != JUDGE_NONE)
 			m_pStatusManager->OnJudgeHold(result);
+
+		if (result == JUDGE_PERFECT || result == JUDGE_GOOD)
+		{
+			if (m_pEnemyHitSe) PlaySound(m_pEnemyHitSe, false);
+		}
 	}
 	else
 	{
@@ -299,6 +322,25 @@ void Player::Update()
 	while (m_pNoteManager->HasPendingJudge())
 		m_pStatusManager->OnJudge(m_pNoteManager->PopPendingJudge());
 
+	// Orb: スコア・コンボは変化させずHP回復/取り逃し数のみ反映
+	while (m_pNoteManager->HasPendingOrbEvent())
+	{
+		ORB_EVENT ev = m_pNoteManager->PopPendingOrbEvent();
+		if (ev == ORB_EVENT_HIT)
+			m_pStatusManager->OnOrbHit();
+		else
+			m_pStatusManager->OnOrbMiss();
+	}
+
+	// Barrier: 回避イベント処理
+	while (m_pNoteManager->HasPendingBarrierEvent())
+	{
+		BARRIER_EVENT ev = m_pNoteManager->PopPendingBarrierEvent();
+		if (ev == BARRIER_EVENT_KAIHI)
+		{
+			if (m_pKaihiSe) PlaySound(m_pKaihiSe, false);
+		}
+	}
 }
 
 void Player::Draw()
@@ -319,6 +361,10 @@ void Player::Draw()
 void Player::Finalize()
 {
 	SAFE_DELETE(m_pEffectSlash);
+
+	UnloadSound(m_pSwordSe);     m_pSwordSe = nullptr;
+	UnloadSound(m_pEnemyHitSe);  m_pEnemyHitSe = nullptr;
+	UnloadSound(m_pKaihiSe);     m_pKaihiSe = nullptr;
 }
 
 void Player::MoveLeft()
@@ -326,6 +372,9 @@ void Player::MoveLeft()
 	if (m_IsMoving || m_IsGravityMoving) return;
 	int newLane = Clamp(m_LaneIndex - 1, (int)LANE_LEFT, (int)LANE_RIGHT);
 	if (newLane == m_LaneIndex) return;
+
+	m_pNoteManager->CheckAndHitBarrier(m_LaneIndex, m_GravityFace, newLane, m_GravityFace);
+
 	m_TargetLaneIndex = newLane;
 	m_StartPos = m_Position;
 	m_TargetPos = CalcLaneTargetPos(m_TargetLaneIndex);
@@ -340,6 +389,9 @@ void Player::MoveRight()
 	if (m_IsMoving || m_IsGravityMoving) return;
 	int newLane = Clamp(m_LaneIndex + 1, (int)LANE_LEFT, (int)LANE_RIGHT);
 	if (newLane == m_LaneIndex) return;
+
+	m_pNoteManager->CheckAndHitBarrier(m_LaneIndex, m_GravityFace, newLane, m_GravityFace);
+
 	m_TargetLaneIndex = newLane;
 	m_StartPos = m_Position;
 	m_TargetPos = CalcLaneTargetPos(m_TargetLaneIndex);
@@ -352,6 +404,8 @@ void Player::MoveRight()
 void Player::ChangeGravity(int targetFace)
 {
 	if (targetFace == m_GravityFace) return;
+
+	m_pNoteManager->CheckAndHitBarrier(m_LaneIndex, m_GravityFace, LANE_CENTER, targetFace);
 
 	m_TargetFace = targetFace;
 

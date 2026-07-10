@@ -14,6 +14,8 @@ public:
     void SetColor(const XMFLOAT4& c) { m_Color = c; }
 };
 
+struct SoundData;
+
 class GameUI
 {
 public:
@@ -22,6 +24,8 @@ public:
     void Draw();
     void Finalize();
     void NotifyJudge(JUDGE judge);
+    void StartEndSequence(bool isDead, bool isAllHit);
+    void ShowResultLogos();
 
 private:
     // コンボ
@@ -42,4 +46,26 @@ private:
     Sprite2D* m_pMissSprite = nullptr;
     float     m_JudgeTimer  = 0.0f;
     bool      m_ShowHit     = false;
+
+    // 終了演出用UI
+    Sprite2D* m_pFadeOverlay    = nullptr;
+    Sprite2D* m_pClearSprite    = nullptr;
+    Sprite2D* m_pAllHitSprite   = nullptr;
+    Sprite2D* m_pGameOverSprite = nullptr;
+
+    // SEサウンドデータ
+    SoundData* m_pStageClearSe  = nullptr;
+    SoundData* m_pGameOverSe    = nullptr;
+    SoundData* m_pAllHitSe      = nullptr;
+
+    bool m_ShowEndOverlay = false;
+    bool m_ShowLogos      = false;
+    bool m_IsDead         = false;
+    bool m_IsAllHit       = false;
+
+    float m_FadeTimer    = 0.0f;
+    float m_FadeDuration = 3.0f;
+
+    float m_LogoAnimTimer    = 0.0f;
+    float m_LogoAnimDuration = 0.35f;
 };

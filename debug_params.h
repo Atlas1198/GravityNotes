@@ -17,6 +17,10 @@ struct DebugParams
     int   baseScore         = 100;    // 1ヒットあたりの基本スコア
     float comboMultiplier   = 0.1f;   // コンボ数 × この値が倍率に加算（1.0 + combo * multiplier）
 
+    // オーブ
+    int   orbHealAmount     = 30;     // オーブ取得時のHP回復量
+    float orbJudgeWindow    = 0.5f;   // オーブの早期HIT判定を開始するZ距離（PASSIVE_ZONE_Zより手前側のみ。Miss確定ラインはPASSIVE_ZONE_Z固定）
+
     static DebugParams& Get()
     {
         static DebugParams s;

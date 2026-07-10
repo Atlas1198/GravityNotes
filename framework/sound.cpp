@@ -368,14 +368,14 @@ void UpdateSoundCache() {
 }
 
 // 再生
-void PlaySound(SoundData* data, bool loop) {
+void PlaySound(SoundData* data, bool loop, float volumeScale) {
     if (!data || !data->pSourceVoice) return;
 
     data->loop = loop;
     data->pSourceVoice->Stop();
     data->pSourceVoice->FlushSourceBuffers();
 
-    const float volume = data->isBGM ? SOUND_BGM_VOLUME : SOUND_SE_VOLUME;
+    const float volume = (data->isBGM ? SOUND_BGM_VOLUME : SOUND_SE_VOLUME) * volumeScale;
     data->pSourceVoice->SetVolume(ClampVolume(volume));
 
     XAUDIO2_BUFFER buffer = { 0 };

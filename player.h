@@ -7,6 +7,7 @@
 
 class NoteManager;    // 前方宣言
 class StatusManager;  // 前方宣言
+struct SoundData;     // 前方宣言
 
 enum LANE {
 	LANE_LEFT = -1,	//=DOWN
@@ -46,6 +47,10 @@ private:
 	bool           m_IsEffectSlashActive;
 	bool           m_IsOverridePlaying;
 	ThreePointLight m_ThreePointLight;   // キャラクター用3点照明
+
+	SoundData*     m_pSwordSe = nullptr;
+	SoundData*     m_pEnemyHitSe = nullptr;
+	SoundData*     m_pKaihiSe = nullptr;
 
 public:
 	// デフォルトコンストラクタを追加し、基底 Sprite3D のコンストラクタを呼ぶ

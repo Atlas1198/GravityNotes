@@ -7,6 +7,7 @@
 #include "barrier_note.h"
 #include "hold_note.h"
 #include "rainbow_note.h"
+#include "debug_params.h"
 
 static const float HIT_ZONE_Z     = 3.0f;
 static const float PASSIVE_ZONE_Z = 0.5f; // Orb・Barrier の自動判定Z
@@ -41,6 +42,10 @@ void NoteManager::Init(const std::string& scoreFilePath)
 	m_ElapsedTime    = -3.0f;
 	m_NextEventIndex = 0;
 	m_BgmStarted     = false;
+	m_IsFadingOut    = false;
+	m_FadeOutDuration = 0.0f;
+	m_FadeOutTimer   = 0.0f;
+	m_FadeOutStartVolume = 1.0f;
 
 	m_ScoreData = LoadScore(scoreFilePath);
 
@@ -50,6 +55,15 @@ void NoteManager::Init(const std::string& scoreFilePath)
 
 void NoteManager::Update(int playerLane, int playerFace)
 {
+	// BGMフェードアウト処理
+	if (m_IsFadingOut && m_pBgmData && m_pBgmData->pSourceVoice)
+	{
+		m_FadeOutTimer += dt;
+		float volume = m_FadeOutStartVolume * (1.0f - (m_FadeOutTimer / m_FadeOutDuration));
+		if (volume < 0.0f) volume = 0.0f;
+		m_pBgmData->pSourceVoice->SetVolume(volume);
+	}
+
 	if (!m_BgmStarted)
 	{
 		m_ElapsedTime += dt;
@@ -149,28 +163,42 @@ void NoteManager::Update(int playerLane, int playerFace)
 		{
 			float z = m_Notes[i]->GetPosZ();
 
-			// Orb: 同 lane・face なら自動取得、違えばMiss
+			// Orb: PASSIVE_ZONE_Zよりwindow分手前からlane・faceの一致判定を開始する（早期HIT用の猶予）。
+			// ただしMiss確定ラインはPASSIVE_ZONE_Zのまま変えない（プレイヤーの足元まで表示され続けるのを防ぐ）
 			if (OrbNote* orb = dynamic_cast<OrbNote*>(m_Notes[i]))
 			{
-				if (z <= PASSIVE_ZONE_Z)
+				float window = D_PARAMS.orbJudgeWindow;
+				if (z <= PASSIVE_ZONE_Z + window)
 				{
 					if (m_Notes[i]->GetLaneIndex() == playerLane &&
 						m_Notes[i]->GetFace()      == playerFace)
+					{
 						orb->OnHit();
-					else
+						m_PendingOrbEvents.push(ORB_EVENT_HIT);
+					}
+					else if (z <= PASSIVE_ZONE_Z)
+					{
 						orb->OnMiss();
+						m_PendingOrbEvents.push(ORB_EVENT_MISS);
+					}
 				}
 			}
-			// Barrier: 同 lane・face なら被弾、違えば回避成功
+			// Barrier: タイミングはEnemyノーツと一緒（z < HIT_ZONE_Z - GOOD_WINDOW）
 			else if (BarrierNote* barrier = dynamic_cast<BarrierNote*>(m_Notes[i]))
 			{
-				if (z <= PASSIVE_ZONE_Z)
+				if (z < HIT_ZONE_Z - GOOD_WINDOW)
 				{
 					if (m_Notes[i]->GetLaneIndex() == playerLane &&
 						m_Notes[i]->GetFace()      == playerFace)
+					{
 						barrier->OnMiss();
+						m_PendingJudges.push(JUDGE_MISS);
+					}
 					else
+					{
+						// 操作をしなかった（元から安全な場所にいた）場合は、音や判定を出さずに自然消滅
 						barrier->OnHit();
+					}
 				}
 			}
 			// Enemy: 判定窓を通過したら押し逃しMiss
@@ -327,4 +355,59 @@ JUDGE NoteManager::OnButtonRelease(int lane, int face)
 		return (progress >= 0.5f) ? JUDGE_GOOD : JUDGE_MISS;
 	}
 	return JUDGE_NONE;
+}
+
+bool NoteManager::IsFinished() const
+{
+	return (m_NextEventIndex >= (int)m_ScoreData.events.size()) && m_Notes.empty();
+}
+
+void NoteManager::StartBgmFadeOut(float durationSec)
+{
+	m_IsFadingOut = true;
+	m_FadeOutDuration = durationSec;
+	m_FadeOutTimer = 0.0f;
+	m_FadeOutStartVolume = 1.0f;
+
+	if (m_pBgmData && m_pBgmData->pSourceVoice)
+	{
+		m_pBgmData->pSourceVoice->GetVolume(&m_FadeOutStartVolume);
+	}
+}
+
+bool NoteManager::CheckAndHitBarrier(int fromLane, int fromFace, int toLane, int toFace)
+{
+	// 1. 移動元にバリアがあるかチェック（回避成功）
+	for (NoteBase* note : m_Notes)
+	{
+		BarrierNote* barrier = dynamic_cast<BarrierNote*>(note);
+		if (!barrier || !barrier->IsActive() || barrier->IsHit()) continue;
+		if (barrier->GetLaneIndex() != fromLane || barrier->GetFace() != fromFace) continue;
+
+		float dist = fabsf(barrier->GetPosZ() - HIT_ZONE_Z);
+		if (dist < GOOD_WINDOW)
+		{
+			barrier->OnHit();
+			m_PendingJudges.push(JUDGE_PERFECT);
+			m_PendingBarrierEvents.push(BARRIER_EVENT_KAIHI);
+			return true;
+		}
+	}
+
+	// 2. 移動先にバリアがあるかチェック（被弾）
+	for (NoteBase* note : m_Notes)
+	{
+		BarrierNote* barrier = dynamic_cast<BarrierNote*>(note);
+		if (!barrier || !barrier->IsActive() || barrier->IsHit()) continue;
+		if (barrier->GetLaneIndex() != toLane || barrier->GetFace() != toFace) continue;
+
+		float dist = fabsf(barrier->GetPosZ() - HIT_ZONE_Z);
+		if (dist < GOOD_WINDOW)
+		{
+			barrier->OnMiss();
+			m_PendingJudges.push(JUDGE_MISS);
+			return true;
+		}
+	}
+	return false;
 }
