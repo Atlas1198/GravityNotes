@@ -304,6 +304,15 @@ void Player::Update()
 	while (m_pNoteManager->HasPendingJudge())
 		m_pStatusManager->OnJudge(m_pNoteManager->PopPendingJudge());
 
+	// Orb: スコア・コンボは変化させずHP回復/取り逃し数のみ反映
+	while (m_pNoteManager->HasPendingOrbEvent())
+	{
+		ORB_EVENT ev = m_pNoteManager->PopPendingOrbEvent();
+		if (ev == ORB_EVENT_HIT)
+			m_pStatusManager->OnOrbHit();
+		else
+			m_pStatusManager->OnOrbMiss();
+	}
 }
 
 void Player::Draw()
