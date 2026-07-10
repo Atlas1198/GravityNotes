@@ -52,6 +52,9 @@ void Player::Init(NoteManager* nm, StatusManager* sm)
 		m_pEffectSlash->SetBillboardMode(false);
 	}
 
+	// キャラクター用3点照明の初期化
+	m_ThreePointLight.Init();
+
 	SetAnimationBlendDuration(0.2);
 	if (GetAnimationCount() > 0)
 	{
@@ -342,6 +345,10 @@ void Player::Update()
 
 void Player::Draw()
 {
+	// プレイヤーを描く直前に3点照明を適用する。
+	// PBRシェーダー(S_PBR)のみが参照するため、Playerだけがこの照明で描かれる。
+	m_ThreePointLight.Apply(m_Position, m_Rotation);
+
 	UpdateBoneMatrices();
 	AnimSprite3D::Draw();
 

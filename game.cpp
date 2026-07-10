@@ -6,6 +6,7 @@
 #include "debug_ostream.h"
 #include "font.h"
 #include "mouse.h"
+#include "keyboard.h"
 #include "input_manager.h"
 #include "model.h"
 #include "debugcamera.h"
@@ -131,10 +132,9 @@ void Game_Update(void)
 	}
 
 	//マウスカーソルを表示/非表示切り替え(デバッグ用)
-	/*if (Keyboard_IsKeyDownTrigger(KK_U))
+	if (Keyboard_IsKeyDownTrigger(KK_U))
 	{
 		g_IsMouseCursorVisible = !g_IsMouseCursorVisible;
-		Mouse_SetVisible(g_IsMouseCursorVisible);
 		if (g_IsMouseCursorVisible)
 		{
 			UnLockMouse();
@@ -143,7 +143,7 @@ void Game_Update(void)
 		{
 			LockMouse();
 		}
-	}*/
+	}
 
 	// 状態更新
 	if (g_GameState == GameState::PLAYING)
@@ -173,6 +173,64 @@ void Game_Update(void)
 void Game_Draw(void)
 {
 	//④描画
+
+	// --- 影パス（4面ShadowMap作成）---
+	// トンネルの4面それぞれを、その面の内側からライトで照らして影を焼く。
+	// キャスターは Player(自分の重力面へ) と Enemy ノーツ(各自の面へ)。受け手は Field。
+	{
+		XMFLOAT3 pPos = g_pPlayer->GetPos();
+		int playerFace = g_pPlayer->GetGravityFace();
+
+		const float FACE_HALF = 2.5f;   // 各面(床/壁/天井)のトンネル半径
+		const float lightDist = 12.0f;  // 面から内側へどれだけ離れた所にライトを置くか
+		const float centerZ   = pPos.z + 6.0f; // 影の中心Z（プレイヤーの少し奥）
+
+		// 影の濃さ(0=真っ黒〜1=影なし。小さいほど濃い)。Player/Enemyで個別に設定できる。
+		const float SHADOW_BIAS              = 0.003f;
+		const float PLAYER_SHADOW_BRIGHTNESS = 0.35f; // ← Playerの影の濃さ
+		const float ENEMY_SHADOW_BRIGHTNESS  = 0.2f; // ← Enemyの影の濃さ
+
+		XMMATRIX faceView[NUM_SHADOW_FACES];
+		XMMATRIX faceProj[NUM_SHADOW_FACES];
+		XMMATRIX faceVP[NUM_SHADOW_FACES];
+		XMVECTOR camUp = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f); // 視線が±X/±Yなのでトンネル軸Zをup
+
+		for (int f = 0; f < NUM_SHADOW_FACES; f++)
+		{
+			XMVECTOR target, eye;
+			switch (f)
+			{
+			case FACE_FLOOR:      target = XMVectorSet(0.0f, -FACE_HALF, centerZ, 1.0f); eye = XMVectorSet(0.0f, -FACE_HALF + lightDist, centerZ, 1.0f); break;
+			case FACE_LEFT_WALL:  target = XMVectorSet(-FACE_HALF, 0.0f, centerZ, 1.0f); eye = XMVectorSet(-FACE_HALF + lightDist, 0.0f, centerZ, 1.0f); break;
+			case FACE_CEILING:    target = XMVectorSet(0.0f,  FACE_HALF, centerZ, 1.0f); eye = XMVectorSet(0.0f,  FACE_HALF - lightDist, centerZ, 1.0f); break;
+			case FACE_RIGHT_WALL: target = XMVectorSet( FACE_HALF, 0.0f, centerZ, 1.0f); eye = XMVectorSet( FACE_HALF - lightDist, 0.0f, centerZ, 1.0f); break;
+			}
+			faceView[f] = XMMatrixLookAtLH(eye, target, camUp);
+			// 正射影：幅20(レーン方向) × 奥行50(Z)
+			faceProj[f] = XMMatrixOrthographicLH(20.0f, 50.0f, 0.5f, lightDist * 2.0f);
+			faceVP[f]   = faceView[f] * faceProj[f];
+		}
+
+		SetFaceShadowMatrices(faceVP, SHADOW_BIAS, PLAYER_SHADOW_BRIGHTNESS, ENEMY_SHADOW_BRIGHTNESS);
+
+		for (int f = 0; f < NUM_SHADOW_FACES; f++)
+		{
+			// Playerスライス(0-3)：今いる重力面にだけ影を落とす
+			BeginFaceShadowMap(f);
+			SetCullState(CULLSTATE_BACK);
+			if (playerFace == f)
+				g_pPlayer->DrawShadowMap(faceView[f], faceProj[f]);
+			SetCullState(CULLSTATE_NONE);
+
+			// Enemyスライス(4-7)：その面にいる Enemy ノーツの影
+			BeginFaceShadowMap(f + NUM_SHADOW_FACES);
+			SetCullState(CULLSTATE_BACK);
+			g_pNoteManager->DrawShadowMapForFace(f, faceView[f], faceProj[f]);
+			SetCullState(CULLSTATE_NONE);
+		}
+		EndFaceShadowMap();
+	}
+
 	//3D
 	{
 		SetDepthEnable(true);

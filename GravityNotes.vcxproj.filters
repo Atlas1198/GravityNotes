@@ -145,6 +145,9 @@
     <ClCompile Include="light_game.cpp">
       <Filter>SCENE_GAME\cpp</Filter>
     </ClCompile>
+    <ClCompile Include="three_point_light.cpp">
+      <Filter>SCENE_GAME\cpp</Filter>
+    </ClCompile>
     <ClCompile Include="status_manager.cpp">
       <Filter>SCENE_GAME\cpp</Filter>
     </ClCompile>
@@ -345,6 +348,9 @@
     <ClInclude Include="light_game.h">
       <Filter>SCENE_GAME\h</Filter>
     </ClInclude>
+    <ClInclude Include="three_point_light.h">
+      <Filter>SCENE_GAME\h</Filter>
+    </ClInclude>
     <ClInclude Include="status_manager.h">
       <Filter>SCENE_GAME\h</Filter>
     </ClInclude>
@@ -482,6 +488,12 @@
       <Filter>フレームワーク\シェーダー</Filter>
     </FxCompile>
     <FxCompile Include="shader\NormalMapShadowReceiveVS.hlsl">
+      <Filter>フレームワーク\シェーダー</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\PhongShadowPS.hlsl">
+      <Filter>フレームワーク\シェーダー</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\PhongShadowVS.hlsl">
       <Filter>フレームワーク\シェーダー</Filter>
     </FxCompile>
     <FxCompile Include="shader\shader_vertex_skinning.hlsl">

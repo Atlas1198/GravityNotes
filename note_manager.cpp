@@ -295,6 +295,20 @@ void NoteManager::Draw()
 		note->Draw();
 }
 
+void NoteManager::DrawShadowMapForFace(int face, const XMMATRIX& lightView, const XMMATRIX& lightProjection)
+{
+	// 影を落とすのは Enemy ノーツのみ。指定された面にいるものだけ描く。
+	for (NoteBase* note : m_Notes)
+	{
+		if (!note->IsActive() || note->IsHit()) continue;
+		if (note->GetFace() != face) continue;
+		if (dynamic_cast<EnemyNote*>(note))
+		{
+			note->DrawShadowMap(lightView, lightProjection);
+		}
+	}
+}
+
 void NoteManager::Finalize()
 {
 	if (m_pBgmData != nullptr) {

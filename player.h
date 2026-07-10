@@ -3,6 +3,7 @@
 #include "anim_sprite3d.h"
 #include "mathhelper.h"
 #include "split_bilboard.h"
+#include "three_point_light.h"
 
 class NoteManager;    // 前方宣言
 class StatusManager;  // 前方宣言
@@ -45,6 +46,7 @@ private:
 	SplitBilBoard* m_pEffectSlash;
 	bool           m_IsEffectSlashActive;
 	bool           m_IsOverridePlaying;
+	ThreePointLight m_ThreePointLight;   // キャラクター用3点照明
 
 	SoundData*     m_pSwordSe = nullptr;
 	SoundData*     m_pEnemyHitSe = nullptr;
@@ -60,6 +62,8 @@ public:
 	void Update();
 	void Draw();
 	void Finalize();
+
+	ThreePointLight& GetThreePointLight() { return m_ThreePointLight; }
 
 	int GetLaneIndex()   const { return m_LaneIndex; }
 	int GetGravityFace() const { return m_GravityFace; }
