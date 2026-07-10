@@ -14,6 +14,8 @@ public:
     void SetColor(const XMFLOAT4& c) { m_Color = c; }
 };
 
+struct SoundData;
+
 class GameUI
 {
 public:
@@ -50,6 +52,11 @@ private:
     Sprite2D* m_pClearSprite    = nullptr;
     Sprite2D* m_pAllHitSprite   = nullptr;
     Sprite2D* m_pGameOverSprite = nullptr;
+
+    // SEサウンドデータ
+    SoundData* m_pStageClearSe  = nullptr;
+    SoundData* m_pGameOverSe    = nullptr;
+    SoundData* m_pAllHitSe      = nullptr;
 
     bool m_ShowEndOverlay = false;
     bool m_ShowLogos      = false;

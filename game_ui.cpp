@@ -1,6 +1,7 @@
 ﻿#include "game_ui.h"
 #include "define.h"
 #include <string>
+#include "sound.h"
 
 // --- 仮置き定数（後で調整してください） ---
 //コンボ表示
@@ -140,6 +141,11 @@ void GameUI::Init()
     m_FadeDuration   = 3.0f;
     m_LogoAnimTimer  = 0.0f;
     m_LogoAnimDuration = 0.35f;
+
+    // SEロード
+    m_pStageClearSe = LoadMP3("asset/sound/se/StageClear.mp3");
+    m_pGameOverSe   = LoadMP3("asset/sound/se/GameOver.mp3");
+    m_pAllHitSe     = LoadMP3("asset/sound/se/AllHit.mp3");
 }
 
 void GameUI::Update(const StatusManager* pStatus)
@@ -328,6 +334,11 @@ void GameUI::Finalize()
     delete m_pClearSprite;   m_pClearSprite   = nullptr;
     delete m_pAllHitSprite;  m_pAllHitSprite  = nullptr;
     delete m_pGameOverSprite;m_pGameOverSprite= nullptr;
+
+    // SE解放
+    UnloadSound(m_pStageClearSe);  m_pStageClearSe  = nullptr;
+    UnloadSound(m_pGameOverSe);    m_pGameOverSe    = nullptr;
+    UnloadSound(m_pAllHitSe);      m_pAllHitSe      = nullptr;
 }
 
 void GameUI::StartEndSequence(bool isDead, bool isAllHit)
@@ -351,6 +362,20 @@ void GameUI::ShowResultLogos()
     if (m_pFadeOverlay)
     {
         m_pFadeOverlay->SetColor({ 0.0f, 0.0f, 0.0f, 0.5f });
+    }
+
+    // クリア表示の瞬間に適切なSEを再生
+    if (m_IsDead)
+    {
+        if (m_pGameOverSe) PlaySound(m_pGameOverSe, false);
+    }
+    else if (m_IsAllHit)
+    {
+        if (m_pAllHitSe) PlaySound(m_pAllHitSe, false);
+    }
+    else
+    {
+        if (m_pStageClearSe) PlaySound(m_pStageClearSe, false);
     }
 
     // 初期状態を透明＆縮小状態に設定してアニメーション開始に備える

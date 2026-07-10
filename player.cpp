@@ -7,6 +7,7 @@
 #include "status_manager.h"
 #include "player.h"
 #include "rainbow_note.h"
+#include "sound.h"
 
 void Player::Init(NoteManager* nm, StatusManager* sm)
 {
@@ -57,6 +58,9 @@ void Player::Init(NoteManager* nm, StatusManager* sm)
 		PlayAnimationByIndex(0, true);
 		UpdateAnimation(dt);
 	}
+
+	m_pSwordSe = LoadMP3("asset/sound/se/sword.mp3");
+	m_pEnemyHitSe = LoadMP3("asset/sound/se/enemyHit.wav");
 }
 
 //仮置き
@@ -274,6 +278,19 @@ void Player::Update()
 		JUDGE result = m_pNoteManager->Judge(m_LaneIndex, m_GravityFace);
 		if (result != JUDGE_NONE)
 			m_pStatusManager->OnJudge(result);
+
+		if (result == JUDGE_PERFECT || result == JUDGE_GOOD)
+		{
+			if (m_pEnemyHitSe) PlaySound(m_pEnemyHitSe, false);
+		}
+		else
+		{
+			// 攻撃がヒットしなかった（空振った）時のみ sword 音を再生
+			if (m_pSwordSe)
+			{
+				PlaySound(m_pSwordSe, false, 0.25f);
+			}
+		}
 	}
 
 	if (isHolding)
@@ -283,6 +300,11 @@ void Player::Update()
 		JUDGE result = m_pNoteManager->JudgeHold(m_LaneIndex, m_GravityFace);
 		if (result != JUDGE_NONE)
 			m_pStatusManager->OnJudgeHold(result);
+
+		if (result == JUDGE_PERFECT || result == JUDGE_GOOD)
+		{
+			if (m_pEnemyHitSe) PlaySound(m_pEnemyHitSe, false);
+		}
 	}
 	else
 	{
@@ -321,6 +343,9 @@ void Player::Draw()
 void Player::Finalize()
 {
 	SAFE_DELETE(m_pEffectSlash);
+
+	UnloadSound(m_pSwordSe);     m_pSwordSe = nullptr;
+	UnloadSound(m_pEnemyHitSe);  m_pEnemyHitSe = nullptr;
 }
 
 void Player::MoveLeft()

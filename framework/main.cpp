@@ -180,13 +180,13 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 
 	Keyboard_Initialize();
 	Mouse_Initialize(hWnd);
+	InitSound();
 	Input_Initialize();
 	InputMonitorConsole_Initialize();
 	InitShader();
 	Font_InitializeGlobalData();
 	Sprite_Initialize();
 	Fade_Initialize();
-	InitSound();
 	Gamepad_Initialize();
 
 	Init();
