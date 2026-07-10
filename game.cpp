@@ -6,8 +6,7 @@
 #include "debug_ostream.h"
 #include "font.h"
 #include "mouse.h"
-#include "keyboard.h"
-#include "gamepad.h"
+#include "input_manager.h"
 #include "model.h"
 #include "debugcamera.h"
 #include "debug_ui.h"
@@ -109,7 +108,7 @@ void Game_Update(void)
 		}
 	}*/
 
-	if (Keyboard_IsKeyDownTrigger(KK_ENTER)) {
+	if (Input_IsActionTrigger(INPUT_ACTION_DEBUG_RESULT)) {
 		SetSceneFade(SCENE_RESULT);
 	}
 }

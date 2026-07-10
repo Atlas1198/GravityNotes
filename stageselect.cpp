@@ -1,7 +1,7 @@
 ﻿#include "stageselect.h"
 #include "sprite2d.h"
 #include "texture.h"
-#include "keyboard.h"
+#include "input_manager.h"
 #include "fade.h"
 #include "debug_ostream.h"
 #include "define.h"
@@ -368,15 +368,15 @@ void StageSelect_Update(void)
 	{
 		bool isInputPressed = false;
 
-		// 上下矢印キーでレコードのステージを変更
-		if (Keyboard_IsKeyDownTrigger(KK_UP)) {
+		// 上下矢印、wasd、DPad、Lスティック上下でレコードのステージを変更
+		if (Input_IsActionTrigger(INPUT_ACTION_MENU_UP)) {
 			g_NextStage = g_SelectedStage - 1;
 			if (g_NextStage < 0) g_NextStage = g_MaxStages - 1;
 			isInputPressed = true;
 			//ChangeSelectedScore(-1);
 			g_ScrollTarget -= 1.0f;  // 1段階上へスライド
 		}
-		else if (Keyboard_IsKeyDownTrigger(KK_DOWN)) {
+		else if (Input_IsActionTrigger(INPUT_ACTION_MENU_DOWN)) {
 			g_NextStage = g_SelectedStage + 1;
 			if (g_NextStage >= g_MaxStages) g_NextStage = 0;
 			isInputPressed = true;
@@ -541,7 +541,7 @@ void StageSelect_Update(void)
 	// --- パート 5: ゲーム開始の決定 (ENTER / SPACE) ---
 	// ディスクが安定して再生している場合のみゲーム開始への遷移を許可し、SetPlayJson -> SetSceneFade の順序を厳密に遵守する
 	if (g_CurrentState == STATE_PLAYING) {
-		if (Keyboard_IsKeyDownTrigger(KK_BACK) || Keyboard_IsKeyDownTrigger(KK_ENTER)) {
+		if (Input_IsActionTrigger(INPUT_ACTION_DECIDE)) {
 			// 本番のステージに遷移する前に、待機中のBGMを解放する
 			if (g_pCurrentBgmData != nullptr) {
 				StopSound(g_pCurrentBgmData);

@@ -232,9 +232,9 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 			int steps = 0;
 			while (accumulator >= FIXED_STEP && steps < 5)
 			{
+				Gamepad_Update();
 				Input_Update();
 				InputMonitorConsole_Update();
-				Gamepad_Update();
 
 				if(pad<0) pad = Gamepad_FindConnectedPlayer();
 
