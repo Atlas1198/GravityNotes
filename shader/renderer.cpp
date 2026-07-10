@@ -55,6 +55,7 @@ XMMATRIX				g_ProjectionMatrix;
 
 ID3D11DepthStencilState* g_DepthStateEnable;
 ID3D11DepthStencilState* g_DepthStateDisable;
+ID3D11DepthStencilState* g_DepthStateEnableNoWrite = nullptr;
 
 static float	bFactor[4] = { 0.0f,0.0f,0.0f,0.0f };
 static ID3D11BlendState* bState[BLENDSTATE_MAX];
@@ -251,6 +252,18 @@ void SetDepthEnable( bool Enable )
 	{
 		g_ImmediateContext->OMSetDepthStencilState( g_DepthStateDisable, NULL );
 		Direct3D_SetViewport2D();
+	}
+}
+
+void SetDepthWriteEnable( bool Enable )
+{
+	if( Enable )
+	{
+		g_ImmediateContext->OMSetDepthStencilState( g_DepthStateEnable, NULL );
+	}
+	else
+	{
+		g_ImmediateContext->OMSetDepthStencilState( g_DepthStateEnableNoWrite, NULL );
 	}
 }
 
@@ -552,6 +565,10 @@ HRESULT InitRenderer(HINSTANCE hInstance, HWND hWnd, BOOL bWindow)
 	depthStencilDesc.DepthWriteMask	= D3D11_DEPTH_WRITE_MASK_ZERO;
 	g_D3DDevice->CreateDepthStencilState( &depthStencilDesc, &g_DepthStateDisable );//深度無効ステート
 
+	depthStencilDesc.DepthEnable = TRUE;
+	depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+	g_D3DDevice->CreateDepthStencilState( &depthStencilDesc, &g_DepthStateEnableNoWrite );//深度有効・書き込み無効ステート
+
 	//深度テスト有効にしておく
 	g_ImmediateContext->OMSetDepthStencilState( g_DepthStateEnable, NULL );
 
@@ -759,6 +776,7 @@ void FinalizeRenderer(void)
 	SAFE_RELEASE(g_FaceShadowSRV);
 	for (int i = 0; i < NUM_SHADOW_SLICES; i++) SAFE_RELEASE(g_FaceShadowDSV[i]);
 	SAFE_RELEASE(g_FaceShadowTexture);
+	SAFE_RELEASE(g_DepthStateEnableNoWrite);
 	SAFE_RELEASE(g_ShadowMapSampler);
 	SAFE_RELEASE(g_ShadowMapShaderView);
 	SAFE_RELEASE(g_ShadowMapDepthView);

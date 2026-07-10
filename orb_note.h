@@ -9,6 +9,8 @@ private:
 	SplitBilBoard* m_pBillboard;
 	float m_AnimTimer;
 
+	XMFLOAT3 GetOffsetPos() const;
+
 public:
 	OrbNote() : NoteBase(), m_pBillboard(nullptr), m_AnimTimer(0.0f) {}
 	~OrbNote();

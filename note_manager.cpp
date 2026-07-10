@@ -51,6 +51,9 @@ void NoteManager::Init(const std::string& scoreFilePath)
 
 	std::string bgmPath = "asset\\sound\\bgm\\" + m_ScoreData.music;
 	m_pBgmData = LoadMP3(bgmPath);
+	m_pOrbGetsSe = LoadMP3("asset/sound/se/orbgets.wav");
+	m_pRainbowSe = LoadMP3("asset/sound/se/Rainbow.wav");
+	m_RainbowSePlaying = false;
 }
 
 void NoteManager::Update(int playerLane, int playerFace)
@@ -181,16 +184,19 @@ void NoteManager::Update(int playerLane, int playerFace)
 			// ただしMiss確定ラインはPASSIVE_ZONE_Zのまま変えない（プレイヤーの足元まで表示され続けるのを防ぐ）
 			if (OrbNote* orb = dynamic_cast<OrbNote*>(m_Notes[i]))
 			{
-				float window = D_PARAMS.orbJudgeWindow;
-				if (z <= PASSIVE_ZONE_Z + window)
+				if (z <= HIT_ZONE_Z)
 				{
 					if (m_Notes[i]->GetLaneIndex() == playerLane &&
 						m_Notes[i]->GetFace()      == playerFace)
 					{
 						orb->OnHit();
 						m_PendingOrbEvents.push(ORB_EVENT_HIT);
+						if (m_pOrbGetsSe != nullptr)
+						{
+							PlaySound(m_pOrbGetsSe, false);
+						}
 					}
-					else if (z <= PASSIVE_ZONE_Z)
+					else if (z < HIT_ZONE_Z - GOOD_WINDOW)
 					{
 						orb->OnMiss();
 						m_PendingOrbEvents.push(ORB_EVENT_MISS);
@@ -238,6 +244,49 @@ void NoteManager::Update(int playerLane, int playerFace)
 			m_Notes.erase(m_Notes.begin() + i);
 		}
 	}
+
+	// RopeHoldNote (Rainbow) の再生・フェードアウト制御
+	RopeHoldNote* holdingRope = GetHoldingRope();
+	if (holdingRope != nullptr)
+	{
+		if (!m_RainbowSePlaying)
+		{
+			if (m_pRainbowSe != nullptr)
+			{
+				PlaySound(m_pRainbowSe, true);
+			}
+			m_RainbowSePlaying = true;
+		}
+
+		// 音量のフェードアウト制御 (進捗85%以降で音量1.0から0.0へ減衰)
+		float progress = holdingRope->GetHoldProgress();
+		float vol = 1.0f;
+		if (progress >= 0.85f)
+		{
+			vol = (1.0f - progress) / 0.15f;
+			if (vol < 0.0f) vol = 0.0f;
+		}
+
+		if (m_pRainbowSe != nullptr && m_pRainbowSe->pSourceVoice != nullptr)
+		{
+			m_pRainbowSe->pSourceVoice->SetVolume(vol * SOUND_SE_VOLUME);
+		}
+	}
+	else
+	{
+		if (m_RainbowSePlaying)
+		{
+			if (m_pRainbowSe != nullptr)
+			{
+				StopSound(m_pRainbowSe);
+				if (m_pRainbowSe->pSourceVoice != nullptr)
+				{
+					m_pRainbowSe->pSourceVoice->SetVolume(SOUND_SE_VOLUME);
+				}
+			}
+			m_RainbowSePlaying = false;
+		}
+	}
 }
 
 void NoteManager::Draw()
@@ -267,6 +316,16 @@ void NoteManager::Finalize()
 		UnloadSound(m_pBgmData);
 		m_pBgmData = nullptr;
 	}
+	if (m_pOrbGetsSe != nullptr) {
+		UnloadSound(m_pOrbGetsSe);
+		m_pOrbGetsSe = nullptr;
+	}
+	if (m_pRainbowSe != nullptr) {
+		StopSound(m_pRainbowSe);
+		UnloadSound(m_pRainbowSe);
+		m_pRainbowSe = nullptr;
+	}
+	m_RainbowSePlaying = false;
 
 	for (NoteBase* note : m_Notes)
 		delete note;
