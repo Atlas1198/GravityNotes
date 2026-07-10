@@ -22,6 +22,7 @@ struct SoundData {
     bool loop = false;
     bool isBGM = false;
     std::wstring path;
+    UINT64 startSamples = 0;
 };
 
 // 初期化・終了
