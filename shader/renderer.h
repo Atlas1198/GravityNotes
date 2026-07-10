@@ -139,6 +139,10 @@ void CreatePixelShader(ID3D11PixelShader** PixelShader, const char* FileName);
 
 void SetLight(LIGHT Light);
 
+// 3点照明(PBR専用)。キー/フィル/リムの3灯をまとめてb7へ送る。
+#define NUM_PLAYER_LIGHTS 3
+void SetPlayerLights(const LIGHT lights[NUM_PLAYER_LIGHTS]);
+
 void Direct3D_ResizeWindow(unsigned int clientW, unsigned int clientH);
 float Direct3D_GetClientWidth(void);
 float Direct3D_GetClientHeight(void);

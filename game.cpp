@@ -6,6 +6,7 @@
 #include "debug_ostream.h"
 #include "font.h"
 #include "mouse.h"
+#include "keyboard.h"
 #include "input_manager.h"
 #include "model.h"
 #include "debugcamera.h"
@@ -94,10 +95,9 @@ void Game_Update(void)
 	}
 
 	//マウスカーソルを表示/非表示切り替え(デバッグ用)
-	/*if (Keyboard_IsKeyDownTrigger(KK_U))
+	if (Keyboard_IsKeyDownTrigger(KK_U))
 	{
 		g_IsMouseCursorVisible = !g_IsMouseCursorVisible;
-		Mouse_SetVisible(g_IsMouseCursorVisible);
 		if (g_IsMouseCursorVisible)
 		{
 			UnLockMouse();
@@ -106,7 +106,7 @@ void Game_Update(void)
 		{
 			LockMouse();
 		}
-	}*/
+	}
 
 	if (Input_IsActionTrigger(INPUT_ACTION_DEBUG_RESULT)) {
 		SetSceneFade(SCENE_RESULT);

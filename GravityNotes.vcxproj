@@ -211,6 +211,7 @@
     <ClCompile Include="note_manager.cpp" />
     <ClCompile Include="orb_note.cpp" />
     <ClCompile Include="player.cpp" />
+    <ClCompile Include="three_point_light.cpp" />
     <ClCompile Include="result.cpp" />
     <ClCompile Include="rainbow_note.cpp" />
     <ClCompile Include="scene.cpp" />
@@ -288,6 +289,7 @@
     <ClInclude Include="note_manager.h" />
     <ClInclude Include="orb_note.h" />
     <ClInclude Include="player.h" />
+    <ClInclude Include="three_point_light.h" />
     <ClInclude Include="rainbow_note.h" />
     <ClInclude Include="scene.h" />
     <ClInclude Include="result.h" />

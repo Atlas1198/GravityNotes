@@ -41,6 +41,7 @@ ID3D11Buffer*			g_ViewBuffer = NULL;
 ID3D11Buffer*			g_ProjectionBuffer = NULL;
 ID3D11Buffer*			g_MaterialBuffer = NULL;
 ID3D11Buffer*			g_LightBuffer = NULL;
+ID3D11Buffer*			g_PlayerLightBuffer = NULL;	// 3点照明(PBR専用)
 ID3D11Buffer*			g_CameraBuffer = NULL;
 ID3D11Buffer*			g_ParameterBuffer = NULL;
 ID3D11Buffer*			g_ShadowBuffer = NULL;
@@ -595,6 +596,16 @@ HRESULT InitRenderer(HINSTANCE hInstance, HWND hWnd, BOOL bWindow)
 	g_ImmediateContext->VSSetConstantBuffers(4, 1, &g_LightBuffer);
 	g_ImmediateContext->PSSetConstantBuffers(4, 1, &g_LightBuffer);
 
+	// 3点照明(PBR専用)用定数バッファ生成 b7を使う
+	hBufferDesc.ByteWidth = sizeof(LIGHT) * NUM_PLAYER_LIGHTS;
+	g_D3DDevice->CreateBuffer(&hBufferDesc, NULL, &g_PlayerLightBuffer);
+	g_ImmediateContext->PSSetConstantBuffers(7, 1, &g_PlayerLightBuffer);
+	// 既定は全て無効（PBRは単一ライトへフォールバックする）
+	{
+		LIGHT initLights[NUM_PLAYER_LIGHTS] = {};
+		SetPlayerLights(initLights);
+	}
+
 	hBufferDesc.ByteWidth = sizeof(XMFLOAT4);
 	g_D3DDevice->CreateBuffer(&hBufferDesc, NULL, &g_CameraBuffer);
 	g_ImmediateContext->PSSetConstantBuffers(5, 1, &g_CameraBuffer);
@@ -634,6 +645,7 @@ void FinalizeRenderer(void)
 	if( g_VertexShader )		g_VertexShader->Release();
 	if( g_PixelShader )			g_PixelShader->Release();
 	SAFE_RELEASE(g_ShadowBuffer);
+	SAFE_RELEASE(g_PlayerLightBuffer);
 	SAFE_RELEASE(g_ShadowMapSampler);
 	SAFE_RELEASE(g_ShadowMapShaderView);
 	SAFE_RELEASE(g_ShadowMapDepthView);
@@ -740,6 +752,12 @@ void CreatePixelShader(ID3D11PixelShader** PixelShader, const char* FileName)
 void SetLight(LIGHT Light)
 {
 	g_ImmediateContext->UpdateSubresource(g_LightBuffer, 0, NULL, &Light, 0, 0);
+}
+
+// 3点照明(キー/フィル/リム)をまとめてPBRシェーダー(b7)へ送る。
+void SetPlayerLights(const LIGHT lights[NUM_PLAYER_LIGHTS])
+{
+	g_ImmediateContext->UpdateSubresource(g_PlayerLightBuffer, 0, NULL, lights, 0, 0);
 }
 
 //=============================================================================
