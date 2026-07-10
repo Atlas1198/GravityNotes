@@ -61,6 +61,7 @@ void Player::Init(NoteManager* nm, StatusManager* sm)
 
 	m_pSwordSe = LoadMP3("asset/sound/se/sword.mp3");
 	m_pEnemyHitSe = LoadMP3("asset/sound/se/enemyHit.wav");
+	m_pKaihiSe = LoadMP3("asset/sound/se/kaihi.wav");
 }
 
 //仮置き
@@ -327,6 +328,16 @@ void Player::Update()
 		else
 			m_pStatusManager->OnOrbMiss();
 	}
+
+	// Barrier: 回避イベント処理
+	while (m_pNoteManager->HasPendingBarrierEvent())
+	{
+		BARRIER_EVENT ev = m_pNoteManager->PopPendingBarrierEvent();
+		if (ev == BARRIER_EVENT_KAIHI)
+		{
+			if (m_pKaihiSe) PlaySound(m_pKaihiSe, false);
+		}
+	}
 }
 
 void Player::Draw()
@@ -346,6 +357,7 @@ void Player::Finalize()
 
 	UnloadSound(m_pSwordSe);     m_pSwordSe = nullptr;
 	UnloadSound(m_pEnemyHitSe);  m_pEnemyHitSe = nullptr;
+	UnloadSound(m_pKaihiSe);     m_pKaihiSe = nullptr;
 }
 
 void Player::MoveLeft()
@@ -353,6 +365,9 @@ void Player::MoveLeft()
 	if (m_IsMoving || m_IsGravityMoving) return;
 	int newLane = Clamp(m_LaneIndex - 1, (int)LANE_LEFT, (int)LANE_RIGHT);
 	if (newLane == m_LaneIndex) return;
+
+	m_pNoteManager->CheckAndHitBarrier(m_LaneIndex, m_GravityFace, newLane, m_GravityFace);
+
 	m_TargetLaneIndex = newLane;
 	m_StartPos = m_Position;
 	m_TargetPos = CalcLaneTargetPos(m_TargetLaneIndex);
@@ -367,6 +382,9 @@ void Player::MoveRight()
 	if (m_IsMoving || m_IsGravityMoving) return;
 	int newLane = Clamp(m_LaneIndex + 1, (int)LANE_LEFT, (int)LANE_RIGHT);
 	if (newLane == m_LaneIndex) return;
+
+	m_pNoteManager->CheckAndHitBarrier(m_LaneIndex, m_GravityFace, newLane, m_GravityFace);
+
 	m_TargetLaneIndex = newLane;
 	m_StartPos = m_Position;
 	m_TargetPos = CalcLaneTargetPos(m_TargetLaneIndex);
@@ -379,6 +397,8 @@ void Player::MoveRight()
 void Player::ChangeGravity(int targetFace)
 {
 	if (targetFace == m_GravityFace) return;
+
+	m_pNoteManager->CheckAndHitBarrier(m_LaneIndex, m_GravityFace, LANE_CENTER, targetFace);
 
 	m_TargetFace = targetFace;
 

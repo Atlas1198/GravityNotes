@@ -48,6 +48,7 @@ private:
 
 	SoundData*     m_pSwordSe = nullptr;
 	SoundData*     m_pEnemyHitSe = nullptr;
+	SoundData*     m_pKaihiSe = nullptr;
 
 public:
 	// デフォルトコンストラクタを追加し、基底 Sprite3D のコンストラクタを呼ぶ

@@ -183,16 +183,22 @@ void NoteManager::Update(int playerLane, int playerFace)
 					}
 				}
 			}
-			// Barrier: 同 lane・face なら被弾、違えば回避成功
+			// Barrier: タイミングはEnemyノーツと一緒（z < HIT_ZONE_Z - GOOD_WINDOW）
 			else if (BarrierNote* barrier = dynamic_cast<BarrierNote*>(m_Notes[i]))
 			{
-				if (z <= PASSIVE_ZONE_Z)
+				if (z < HIT_ZONE_Z - GOOD_WINDOW)
 				{
 					if (m_Notes[i]->GetLaneIndex() == playerLane &&
 						m_Notes[i]->GetFace()      == playerFace)
+					{
 						barrier->OnMiss();
+						m_PendingJudges.push(JUDGE_MISS);
+					}
 					else
+					{
+						// 操作をしなかった（元から安全な場所にいた）場合は、音や判定を出さずに自然消滅
 						barrier->OnHit();
+					}
 				}
 			}
 			// Enemy: 判定窓を通過したら押し逃しMiss
@@ -367,4 +373,41 @@ void NoteManager::StartBgmFadeOut(float durationSec)
 	{
 		m_pBgmData->pSourceVoice->GetVolume(&m_FadeOutStartVolume);
 	}
+}
+
+bool NoteManager::CheckAndHitBarrier(int fromLane, int fromFace, int toLane, int toFace)
+{
+	// 1. 移動元にバリアがあるかチェック（回避成功）
+	for (NoteBase* note : m_Notes)
+	{
+		BarrierNote* barrier = dynamic_cast<BarrierNote*>(note);
+		if (!barrier || !barrier->IsActive() || barrier->IsHit()) continue;
+		if (barrier->GetLaneIndex() != fromLane || barrier->GetFace() != fromFace) continue;
+
+		float dist = fabsf(barrier->GetPosZ() - HIT_ZONE_Z);
+		if (dist < GOOD_WINDOW)
+		{
+			barrier->OnHit();
+			m_PendingJudges.push(JUDGE_PERFECT);
+			m_PendingBarrierEvents.push(BARRIER_EVENT_KAIHI);
+			return true;
+		}
+	}
+
+	// 2. 移動先にバリアがあるかチェック（被弾）
+	for (NoteBase* note : m_Notes)
+	{
+		BarrierNote* barrier = dynamic_cast<BarrierNote*>(note);
+		if (!barrier || !barrier->IsActive() || barrier->IsHit()) continue;
+		if (barrier->GetLaneIndex() != toLane || barrier->GetFace() != toFace) continue;
+
+		float dist = fabsf(barrier->GetPosZ() - HIT_ZONE_Z);
+		if (dist < GOOD_WINDOW)
+		{
+			barrier->OnMiss();
+			m_PendingJudges.push(JUDGE_MISS);
+			return true;
+		}
+	}
+	return false;
 }
