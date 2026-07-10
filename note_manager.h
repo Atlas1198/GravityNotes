@@ -36,7 +36,10 @@ private:
 	float     m_ElapsedTime;
 	int       m_NextEventIndex;
 	SoundData* m_pBgmData = nullptr;
+	SoundData* m_pOrbGetsSe = nullptr;
+	SoundData* m_pRainbowSe = nullptr;
 	bool      m_BgmStarted = false;
+	bool      m_RainbowSePlaying = false;
 
 	std::queue<JUDGE> m_PendingJudges;
 	std::queue<ORB_EVENT> m_PendingOrbEvents;

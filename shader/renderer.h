@@ -109,6 +109,7 @@ ID3D11Device *GetDevice( void );
 ID3D11DeviceContext *GetDeviceContext( void );
 
 void SetDepthEnable( bool Enable );
+void SetDepthWriteEnable( bool Enable );
 
 void SetWorldViewProjection2D(void);
 void ResetWorldViewProjection3D(void);

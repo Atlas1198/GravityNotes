@@ -203,7 +203,15 @@ void Billboard::Draw(void)
 	if (!m_VertexBuffer || !m_Texture) return;
 
 	SetBlendState(BLENDSTATE_ALFA);
-	SetDepthEnable(!m_WallFadeEnabled); // 壁越し透過無効ならデプステスト有効
+	if (!m_WallFadeEnabled)
+	{
+		SetDepthEnable(true);
+		SetDepthWriteEnable(false); // 半透明なのでデプス書き込みは無効にする
+	}
+	else
+	{
+		SetDepthEnable(false);
+	}
 
 	XMMATRIX view = GetCamera()->GetView();
 	XMMATRIX proj = GetCamera()->GetProjection();
@@ -263,5 +271,6 @@ void Billboard::Draw(void)
 	// 次に描く別のシェーダーへNormalMapが残らないよう、t2だけ外しておく。
 	ID3D11ShaderResourceView* nullSRV = nullptr;
 	context->PSSetShaderResources(2, 1, &nullSRV);
+	SetDepthWriteEnable(true); // デプス書き込みを元に戻す
 	SetDepthEnable(true); // 常に戻す
 }

@@ -9,6 +9,7 @@ namespace
 	const int   ORB_USABLE_FRAMES = 54; // グリッドは55マスだが最後の1マスは未使用
 	const float ORB_ANIM_FPS     = 18.0f;
 	const XMFLOAT2 ORB_BILLBOARD_SIZE = { 2.0f, 2.0f };
+	const float ORB_DRAW_Y_OFFSET    = 1.0f;
 }
 
 OrbNote::~OrbNote()
@@ -29,15 +30,17 @@ void OrbNote::Init(int lane, int face, float spawnZ, float speed)
 
 	if (!m_pBillboard)
 	{
+		XMFLOAT3 drawPos = GetOffsetPos();
 		m_pBillboard = new SplitBilBoard(
 			ORB_SHEET_COLS, ORB_SHEET_ROWS,
-			GetPos(), ORB_BILLBOARD_SIZE, { 0.0f, 0.0f, 0.0f },
+			drawPos, ORB_BILLBOARD_SIZE, { 0.0f, 0.0f, 0.0f },
 			"asset/texture/OrbAnimationSpriteSheetRed.png",
 			false
 		);
 		m_pBillboard->SetBillboardMode(true);
+		m_pBillboard->SetWallFadeEnabled(false);
 	}
-	m_pBillboard->SetPos(GetPos());
+	m_pBillboard->SetPos(GetOffsetPos());
 	m_pBillboard->SetTextureIndex(0);
 }
 
@@ -47,7 +50,7 @@ void OrbNote::Update()
 
 	if (m_pBillboard)
 	{
-		m_pBillboard->SetPos(GetPos());
+		m_pBillboard->SetPos(GetOffsetPos());
 
 		// SplitBilBoardの自動アニメーションはグリッド全体(55駒)を回してしまうため、
 		// 使用駒数(54駒)だけを手動でループさせる
@@ -66,4 +69,15 @@ void OrbNote::Draw()
 {
 	if (m_pBillboard)
 		m_pBillboard->Draw();
+}
+
+XMFLOAT3 OrbNote::GetOffsetPos() const
+{
+	XMFLOAT3 pos = GetPos();
+	int face = GetFace();
+	if (face == 0)      pos.y += ORB_DRAW_Y_OFFSET; // 床
+	else if (face == 1) pos.x += ORB_DRAW_Y_OFFSET; // 左壁
+	else if (face == 2) pos.y -= ORB_DRAW_Y_OFFSET; // 天井
+	else if (face == 3) pos.x -= ORB_DRAW_Y_OFFSET; // 右壁
+	return pos;
 }
