@@ -254,7 +254,7 @@ void Result_Initialize(void)
 		wRank = L"S";
 		break;
 	case RR_AH:
-		wRank = L"EX";
+		wRank = L"AH";
 		break;
 	default:
 		break;
