@@ -7,6 +7,7 @@
 #include "barrier_note.h"
 #include "hold_note.h"
 #include "rainbow_note.h"
+#include "debug_params.h"
 
 static const float HIT_ZONE_Z     = 3.0f;
 static const float PASSIVE_ZONE_Z = 0.5f; // Orb・Barrier の自動判定Z
@@ -162,16 +163,24 @@ void NoteManager::Update(int playerLane, int playerFace)
 		{
 			float z = m_Notes[i]->GetPosZ();
 
-			// Orb: 同 lane・face なら自動取得、違えばMiss
+			// Orb: PASSIVE_ZONE_Zよりwindow分手前からlane・faceの一致判定を開始する（早期HIT用の猶予）。
+			// ただしMiss確定ラインはPASSIVE_ZONE_Zのまま変えない（プレイヤーの足元まで表示され続けるのを防ぐ）
 			if (OrbNote* orb = dynamic_cast<OrbNote*>(m_Notes[i]))
 			{
-				if (z <= PASSIVE_ZONE_Z)
+				float window = D_PARAMS.orbJudgeWindow;
+				if (z <= PASSIVE_ZONE_Z + window)
 				{
 					if (m_Notes[i]->GetLaneIndex() == playerLane &&
 						m_Notes[i]->GetFace()      == playerFace)
+					{
 						orb->OnHit();
-					else
+						m_PendingOrbEvents.push(ORB_EVENT_HIT);
+					}
+					else if (z <= PASSIVE_ZONE_Z)
+					{
 						orb->OnMiss();
+						m_PendingOrbEvents.push(ORB_EVENT_MISS);
+					}
 				}
 			}
 			// Barrier: 同 lane・face なら被弾、違えば回避成功

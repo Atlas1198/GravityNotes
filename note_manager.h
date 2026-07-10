@@ -13,6 +13,11 @@ enum JUDGE {
 	JUDGE_MISS
 };
 
+enum ORB_EVENT {
+	ORB_EVENT_HIT,
+	ORB_EVENT_MISS
+};
+
 struct SoundData;
 
 class NoteManager
@@ -29,6 +34,7 @@ private:
 	bool      m_BgmStarted = false;
 
 	std::queue<JUDGE> m_PendingJudges;
+	std::queue<ORB_EVENT> m_PendingOrbEvents;
 
 	float m_FadeOutDuration = 0.0f;
 	float m_FadeOutTimer = 0.0f;
@@ -55,6 +61,9 @@ public:
 
 	bool  HasPendingJudge()  const { return !m_PendingJudges.empty(); }
 	JUDGE PopPendingJudge()        { JUDGE j = m_PendingJudges.front(); m_PendingJudges.pop(); return j; }
+
+	bool      HasPendingOrbEvent() const { return !m_PendingOrbEvents.empty(); }
+	ORB_EVENT PopPendingOrbEvent()       { ORB_EVENT e = m_PendingOrbEvents.front(); m_PendingOrbEvents.pop(); return e; }
 	bool  IsFinished() const;
 	void  StartBgmFadeOut(float durationSec);
 };

@@ -1,5 +1,6 @@
 ﻿#include "status_manager.h"
 #include "debug_params.h"
+#include "debug_ostream.h"
 
 void StatusManager::Init(int maxHP)
 {
@@ -8,8 +9,10 @@ void StatusManager::Init(int maxHP)
 	m_Score    = 0;
 	m_Combo    = 0;
 	m_MaxCombo = 0;
-	m_HitCount  = 0;
-	m_MissCount = 0;
+	m_Hits      = 0;
+	m_Misses    = 0;
+	m_OrbGets   = 0;
+	m_OrbLosses = 0;
 }
 
 void StatusManager::Finalize()
@@ -24,7 +27,7 @@ void StatusManager::OnJudge(JUDGE result)
 	{
 		m_HP-=30;
 		m_Combo = 0;
-		m_MissCount++;
+		m_Misses++;
 		return;
 	}
 
@@ -34,7 +37,7 @@ void StatusManager::OnJudge(JUDGE result)
 	m_Combo++;
 	if (m_Combo > m_MaxCombo)
 		m_MaxCombo = m_Combo;
-	m_HitCount++;
+	m_Hits++;
 }
 
 void StatusManager::OnJudgeHold(JUDGE result)
@@ -42,13 +45,36 @@ void StatusManager::OnJudgeHold(JUDGE result)
 	OnJudge(result);
 }
 
+void StatusManager::OnOrbHit()
+{
+	// スコア・コンボは変化させずHP回復のみ行う
+	m_HP += D_PARAMS.orbHealAmount;
+	if (m_HP > m_MaxHP)
+		m_HP = m_MaxHP;
+	m_OrbGets++;
+
+#ifdef _DEBUG
+	hal::dout << "[Orb] HIT  HP=" << m_HP << "/" << m_MaxHP << " orbGets=" << m_OrbGets << std::endl;
+#endif
+}
+
+void StatusManager::OnOrbMiss()
+{
+	// HP・コンボは変化させず取り逃し数のみ加算する
+	m_OrbLosses++;
+
+#ifdef _DEBUG
+	hal::dout << "[Orb] MISS orbLosses=" << m_OrbLosses << std::endl;
+#endif
+}
+
 SendResult StatusManager::GetResult() const
 {
 	SendResult r;
-	r.maxCombo = m_MaxCombo;
-	r.hits  = m_HitCount;
-	r.misses = m_MissCount;
-	r.orbgets = 10;     // 適当な数値
-	r.orblosses = 2;    // 適当な数値
+	r.maxCombo   = m_MaxCombo;
+	r.hits       = m_Hits;
+	r.misses     = m_Misses;
+	r.orbgets    = m_OrbGets;
+	r.orblosses  = m_OrbLosses;
 	return r;
 }
