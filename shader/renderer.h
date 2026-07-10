@@ -74,6 +74,18 @@ struct SHADOW_CONSTANT
 	XMFLOAT4 Param;	// x:深度のずれ防止 y:影部分の明るさ z,w:ShadowMapの1テクセル分のUVサイズ
 };
 
+// トンネルの4面それぞれ用のShadowMap定数。
+// 面ごとに別の光方向で影を焼き、受け手は面ごとに対応するスライスを読む。
+// さらに Player用/Enemy用でスライスを分け、濃さを個別に設定できるようにする。
+#define NUM_SHADOW_FACES 4
+#define NUM_SHADOW_SLICES 8  // 4面 × 2種(0-3:Player, 4-7:Enemy)
+struct FACE_SHADOW_CONSTANT
+{
+	XMFLOAT4X4 LightViewProjection[NUM_SHADOW_FACES];
+	XMFLOAT4 Param;	 // x:バイアス y:Playerの影の濃さ z,w:1テクセルのUVサイズ
+	XMFLOAT4 Param2; // x:Enemyの影の濃さ
+};
+
 enum	BLENDSTATE
 {
 	BLENDSTATE_NONE = 0,	//ブレンドしない
@@ -130,6 +142,15 @@ void BeginShadowMap(void);
 
 // ShadowMapへの描画を終えて、通常の画面描画へ戻す。
 void EndShadowMap(void);
+
+// --- 4面ShadowMap（トンネルの各面用）---
+// 4面分のライト行列(既にView*Projection済み)と、Player/Enemyそれぞれの影の濃さをGPUへ送る。
+// bias:深度ずれ防止  playerBrightness/enemyBrightness:影の濃さ(0=真っ黒〜1=影なし)
+void SetFaceShadowMatrices(const XMMATRIX faceViewProjection[NUM_SHADOW_FACES], float bias, float playerBrightness, float enemyBrightness);
+// 指定したスライス(0-3:Player各面, 4-7:Enemy各面)へ描き込み開始。
+void BeginFaceShadowMap(int slice);
+// 4面ShadowMapへの描画を終えて、通常描画へ戻し、配列を受け手へ読ませる。
+void EndFaceShadowMap(void);
 
 
 void SetMaterial( MATERIAL Material );

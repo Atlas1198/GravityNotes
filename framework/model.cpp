@@ -1445,6 +1445,82 @@ void ModelDrawShadowMap(MODEL* model, XMFLOAT3 pos, XMFLOAT3 rot, XMFLOAT3 scale
 	RenderNode(model, model->AiScene->mRootNode, identity, XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), false);
 }
 
+// スキニングモデルをShadowMapへ描く。
+// 既存のスキニング用VS(ボーンで頂点を動かす)を流用し、
+// View/Projectionにライト視点の行列を入れて深度だけを書き込む。
+// ピクセルシェーダーは色を出さない ShadowMap 用の空PSを使う。
+void ModelDrawShadowMapSkinned(MODEL* model, XMFLOAT3 pos, XMFLOAT3 rot, XMFLOAT3 scale, const BoneMatrices& boneMatrices, XMMATRIX lightView, XMMATRIX lightProjection)
+{
+	if (!model) return;
+
+	// スキニングリソース(専用VS・入力レイアウト・ボーン定数バッファ)を用意
+	if (!(model->HasSkinning && EnsureSkinningResources()))
+	{
+		// スキニングが無いモデルは静的版で影を落とす
+		ModelDrawShadowMap(model, pos, rot, scale, lightView, lightProjection);
+		return;
+	}
+
+	ID3D11DeviceContext* context = GetDeviceContext();
+
+	context->IASetInputLayout(g_SkinningVertexLayout);
+	context->VSSetShader(g_SkinningVertexShader, nullptr, 0);
+	// ボーン行列をb7(VS)へ転送
+	D3D11_MAPPED_SUBRESOURCE mapped;
+	if (SUCCEEDED(context->Map(g_SkinningBoneBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped)))
+	{
+		memcpy(mapped.pData, boneMatrices.matrices, sizeof(XMMATRIX) * BoneMatrices::MAX_BONES);
+		context->Unmap(g_SkinningBoneBuffer, 0);
+		context->VSSetConstantBuffers(7, 1, &g_SkinningBoneBuffer);
+	}
+
+	// 深度だけを書く空のピクセルシェーダー(ShadowMap用)
+	context->PSSetShader(GetShader(S_SHADOW_MAP)->GetPixelShader(), nullptr, 0);
+
+	XMMATRIX TranslationMatrix = XMMatrixTranslation(pos.x, pos.y, pos.z);
+	XMMATRIX RotationMatrix = XMMatrixRotationRollPitchYaw(
+		XMConvertToRadians(rot.x),
+		XMConvertToRadians(rot.y),
+		XMConvertToRadians(rot.z));
+	XMMATRIX ScalingMatrix = XMMatrixScaling(scale.x, scale.y, scale.z);
+	XMMATRIX World = ScalingMatrix * RotationMatrix * TranslationMatrix;
+
+	SetWorldMatrix(World);
+	// View/Projectionにライト視点の行列を入れる
+	SetViewMatrix(lightView);
+	SetProjectionMatrix(lightProjection);
+
+	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	// スキニング済み頂点バッファでメッシュを描画
+	for (unsigned int m = 0; m < model->AiScene->mNumMeshes; m++)
+	{
+		ID3D11Buffer* vertexBuffer = nullptr;
+		UINT stride = sizeof(VertexSkinned);
+		UINT offset = 0;
+		if (model->SkinnedVertexBuffer && model->SkinnedVertexBuffer[m])
+		{
+			vertexBuffer = model->SkinnedVertexBuffer[m];
+		}
+		else if (model->VertexBuffer)
+		{
+			// スキニングバッファが無いメッシュは通常頂点で
+			vertexBuffer = model->VertexBuffer[m];
+			stride = sizeof(Vertex3D);
+		}
+		if (!vertexBuffer) continue;
+
+		context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
+		context->IASetIndexBuffer(model->IndexBuffer[m], DXGI_FORMAT_R32_UINT, 0);
+
+		unsigned int indexCount = model->MeshIndexCounts[m];
+		if (indexCount > 0)
+		{
+			context->DrawIndexed(indexCount, 0, 0);
+		}
+	}
+}
+
 void ModelAnimationDraw(MODEL* model, XMFLOAT3 pos, XMFLOAT3 rot, XMFLOAT3 scale, const BoneMatrices& boneMatrices, const XMFLOAT4& color, bool useColorReplace, SHADERTYPE shadertype, const AnimationClip* clip, double animTime)
 {
 	if (!model) return;

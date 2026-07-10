@@ -12,9 +12,10 @@ enum SHADERTYPE {
 	S_PBR,
 	S_RIM_LIGHT,
 	S_OUTLINE,
-	S_SHADOW_MAP,		// ShadowMap作成用。色ではなく深度だけを描く。	
+	S_SHADOW_MAP,		// ShadowMap作成用。色ではなく深度だけを描く。
 	S_SHADOW_RECEIVE,	// ShadowMapを読んで、床などに影を反映する。
 	S_NORMAL_MAP_SHADOW_RECEIVE, // ShadowMapの落ち影とNormalMapの凹凸表現を同時に使う床テスト用。
+	S_PHONG_SHADOW,		// Phong(点光源ランバート) + ShadowMap受け取り。フィールド用。
 	S_MAX,
 };
 
@@ -28,7 +29,8 @@ const std::string filenames[S_MAX] = {
 	"ShadowMap",
 	"ShadowReceive",
 	// shader/NormalMapShadowReceiveVS.cso と PS.cso を読み込む。
-	"NormalMapShadowReceive"
+	"NormalMapShadowReceive",
+	"PhongShadow"
 };
 
 class ShaderManager

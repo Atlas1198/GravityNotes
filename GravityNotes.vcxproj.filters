@@ -490,6 +490,12 @@
     <FxCompile Include="shader\NormalMapShadowReceiveVS.hlsl">
       <Filter>フレームワーク\シェーダー</Filter>
     </FxCompile>
+    <FxCompile Include="shader\PhongShadowPS.hlsl">
+      <Filter>フレームワーク\シェーダー</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\PhongShadowVS.hlsl">
+      <Filter>フレームワーク\シェーダー</Filter>
+    </FxCompile>
     <FxCompile Include="shader\shader_vertex_skinning.hlsl">
       <Filter>フレームワーク\3D</Filter>
     </FxCompile>

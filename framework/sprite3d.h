@@ -68,6 +68,17 @@ public:
 		}
 	}
 
+	// ShadowMapへ影(深度)を描く。静的モデル用。
+	// スキニングモデルは AnimSprite3D 側でオーバーライドする。
+	virtual void DrawShadowMap(const XMMATRIX& lightView, const XMMATRIX& lightProjection)
+	{
+		if (m_IsGlb) return; // GLBは今回の影対象外
+		if (m_Model)
+		{
+			ModelDrawShadowMap(m_Model, GetPos(), GetRot(), GetScale(), lightView, lightProjection);
+		}
+	}
+
 	virtual void Draw(void)
 	{
 		// 使用する色を決定

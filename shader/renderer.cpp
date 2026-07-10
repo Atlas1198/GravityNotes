@@ -68,6 +68,13 @@ static ID3D11DepthStencilView* g_ShadowMapDepthView = NULL;
 static ID3D11ShaderResourceView* g_ShadowMapShaderView = NULL;
 static ID3D11SamplerState* g_ShadowMapSampler = NULL;
 
+// 面ごとの影(4面: FLOOR/LEFT_WALL/CEILING/RIGHT_WALL)用のShadowMap配列。
+// トンネルの各面へ、それぞれの光方向で影を落とすために使う。
+static ID3D11Texture2D* g_FaceShadowTexture = NULL;
+static ID3D11DepthStencilView* g_FaceShadowDSV[NUM_SHADOW_SLICES] = {};
+static ID3D11ShaderResourceView* g_FaceShadowSRV = NULL;
+static ID3D11Buffer* g_FaceShadowBuffer = NULL; // b9: 4面分の行列＋濃さ
+
 // ウィンドウクライアントサイズ（ビューポート計算用）
 static float g_ClientWidth  = DRAW_SCREEN_WIDTH;
 static float g_ClientHeight = DRAW_SCREEN_HEIGHT;
@@ -364,6 +371,60 @@ void EndShadowMap(void)
 	g_ImmediateContext->PSSetSamplers(1, 1, &g_ShadowMapSampler);
 }
 
+// --- 4面ShadowMap ---
+void SetFaceShadowMatrices(const XMMATRIX faceViewProjection[NUM_SHADOW_FACES], float bias, float playerBrightness, float enemyBrightness)
+{
+	if (!g_FaceShadowBuffer) return;
+
+	FACE_SHADOW_CONSTANT c = {};
+	for (int i = 0; i < NUM_SHADOW_FACES; i++)
+	{
+		// HLSL側でmulしやすいよう転置して送る。
+		XMStoreFloat4x4(&c.LightViewProjection[i], XMMatrixTranspose(faceViewProjection[i]));
+	}
+	c.Param = XMFLOAT4(
+		bias,
+		playerBrightness,
+		1.0f / static_cast<float>(SHADOW_MAP_SIZE),
+		1.0f / static_cast<float>(SHADOW_MAP_SIZE));
+	c.Param2 = XMFLOAT4(enemyBrightness, 0.0f, 0.0f, 0.0f);
+
+	g_ImmediateContext->UpdateSubresource(g_FaceShadowBuffer, 0, NULL, &c, 0, 0);
+}
+
+void BeginFaceShadowMap(int slice)
+{
+	if (slice < 0 || slice >= NUM_SHADOW_SLICES) return;
+
+	// 読みながら書くのを避けるため、配列SRV(t6)を一旦外す。
+	ID3D11ShaderResourceView* nullSRV = NULL;
+	g_ImmediateContext->PSSetShaderResources(6, 1, &nullSRV);
+
+	SetDepthEnable(true);
+	g_ImmediateContext->OMSetRenderTargets(0, NULL, g_FaceShadowDSV[slice]);
+	g_ImmediateContext->ClearDepthStencilView(g_FaceShadowDSV[slice], D3D11_CLEAR_DEPTH, 1.0f, 0);
+
+	D3D11_VIEWPORT vp;
+	vp.TopLeftX = 0.0f;
+	vp.TopLeftY = 0.0f;
+	vp.Width = (FLOAT)SHADOW_MAP_SIZE;
+	vp.Height = (FLOAT)SHADOW_MAP_SIZE;
+	vp.MinDepth = 0.0f;
+	vp.MaxDepth = 1.0f;
+	g_ImmediateContext->RSSetViewports(1, &vp);
+}
+
+void EndFaceShadowMap(void)
+{
+	// 通常の画面描画用RenderTargetへ戻す（SetDepthEnableでビューポートも3Dへ復帰）。
+	g_ImmediateContext->OMSetRenderTargets(1, &g_RenderTargetView, g_DepthStencilView);
+	SetDepthEnable(true);
+
+	// 受け手が4面ShadowMap配列を読めるように、t6へセット（サンプラーはs1を流用）。
+	g_ImmediateContext->PSSetShaderResources(6, 1, &g_FaceShadowSRV);
+	g_ImmediateContext->PSSetSamplers(1, 1, &g_ShadowMapSampler);
+}
+
 
 void SetBlendState(BLENDSTATE blend)
 {
@@ -557,6 +618,54 @@ HRESULT InitRenderer(HINSTANCE hInstance, HWND hWnd, BOOL bWindow)
 	g_D3DDevice->CreateSamplerState(&shadowSamplerDesc, &g_ShadowMapSampler);
 	g_ImmediateContext->PSSetSamplers(1, 1, &g_ShadowMapSampler);
 
+	// --- 4面ShadowMap（Texture2DArray 4スライス）---
+	{
+		D3D11_TEXTURE2D_DESC td;
+		ZeroMemory(&td, sizeof(td));
+		td.Width = SHADOW_MAP_SIZE;
+		td.Height = SHADOW_MAP_SIZE;
+		td.MipLevels = 1;
+		td.ArraySize = NUM_SHADOW_SLICES;
+		td.Format = DXGI_FORMAT_R32_TYPELESS;
+		td.SampleDesc.Count = 1;
+		td.Usage = D3D11_USAGE_DEFAULT;
+		td.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+		g_D3DDevice->CreateTexture2D(&td, NULL, &g_FaceShadowTexture);
+
+		// スライスごとの深度書き込みView
+		for (int i = 0; i < NUM_SHADOW_SLICES; i++)
+		{
+			D3D11_DEPTH_STENCIL_VIEW_DESC dsv;
+			ZeroMemory(&dsv, sizeof(dsv));
+			dsv.Format = DXGI_FORMAT_D32_FLOAT;
+			dsv.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+			dsv.Texture2DArray.FirstArraySlice = i;
+			dsv.Texture2DArray.ArraySize = 1;
+			g_D3DDevice->CreateDepthStencilView(g_FaceShadowTexture, &dsv, &g_FaceShadowDSV[i]);
+		}
+
+		// 配列全体を読むためのSRV
+		D3D11_SHADER_RESOURCE_VIEW_DESC srv;
+		ZeroMemory(&srv, sizeof(srv));
+		srv.Format = DXGI_FORMAT_R32_FLOAT;
+		srv.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+		srv.Texture2DArray.MostDetailedMip = 0;
+		srv.Texture2DArray.MipLevels = 1;
+		srv.Texture2DArray.FirstArraySlice = 0;
+		srv.Texture2DArray.ArraySize = NUM_SHADOW_SLICES;
+		g_D3DDevice->CreateShaderResourceView(g_FaceShadowTexture, &srv, &g_FaceShadowSRV);
+
+		// 4面分の行列を送る定数バッファ b9
+		D3D11_BUFFER_DESC bd;
+		ZeroMemory(&bd, sizeof(bd));
+		bd.ByteWidth = sizeof(FACE_SHADOW_CONSTANT);
+		bd.Usage = D3D11_USAGE_DEFAULT;
+		bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		g_D3DDevice->CreateBuffer(&bd, NULL, &g_FaceShadowBuffer);
+		g_ImmediateContext->VSSetConstantBuffers(9, 1, &g_FaceShadowBuffer);
+		g_ImmediateContext->PSSetConstantBuffers(9, 1, &g_FaceShadowBuffer);
+	}
+
 
 	//定数バッファ生成
 
@@ -646,6 +755,10 @@ void FinalizeRenderer(void)
 	if( g_PixelShader )			g_PixelShader->Release();
 	SAFE_RELEASE(g_ShadowBuffer);
 	SAFE_RELEASE(g_PlayerLightBuffer);
+	SAFE_RELEASE(g_FaceShadowBuffer);
+	SAFE_RELEASE(g_FaceShadowSRV);
+	for (int i = 0; i < NUM_SHADOW_SLICES; i++) SAFE_RELEASE(g_FaceShadowDSV[i]);
+	SAFE_RELEASE(g_FaceShadowTexture);
 	SAFE_RELEASE(g_ShadowMapSampler);
 	SAFE_RELEASE(g_ShadowMapShaderView);
 	SAFE_RELEASE(g_ShadowMapDepthView);
