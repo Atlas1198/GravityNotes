@@ -134,18 +134,6 @@
 			"lane": 1
 		},
 		{
-			"beat": 13.0,
-			"type": "Enemy",
-			"wall": "Up",
-			"lane": 1
-		},
-		{
-			"beat": 14.0,
-			"type": "Enemy",
-			"wall": "Up",
-			"lane": 1
-		},
-		{
 			"beat": 16.0,
 			"type": "Rainbow",
 			"wall": "Up",
@@ -154,27 +142,119 @@
 			"endWall": "Down"
 		},
 		{
-			"beat": 20.0,
+			"beat": 24.0,
+			"type": "Hold",
+			"wall": "Down",
+			"lane": 1,
+			"endBeat": 27.0,
+			"endLane": 1
+		},
+		{
+			"beat": 28.0,
 			"type": "Enemy",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 29.0,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 28.5,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 29.5,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 13.0,
+			"type": "Orb",
+			"wall": "Up",
+			"lane": 1
+		},
+		{
+			"beat": 14.0,
+			"type": "Orb",
+			"wall": "Up",
+			"lane": 1
+		},
+		{
+			"beat": 30.5,
+			"type": "Orb",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 31.0,
+			"type": "Orb",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 15.0,
+			"type": "Enemy",
+			"wall": "Up",
+			"lane": 1
+		},
+		{
+			"beat": 22.5,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 23.0,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 20.0,
+			"type": "Orb",
 			"wall": "Down",
 			"lane": 1
 		},
 		{
 			"beat": 20.5,
-			"type": "Enemy",
+			"type": "Orb",
 			"wall": "Down",
 			"lane": 1
 		},
 		{
 			"beat": 21.0,
-			"type": "Enemy",
+			"type": "Orb",
 			"wall": "Down",
 			"lane": 1
 		},
 		{
 			"beat": 21.5,
-			"type": "Enemy",
+			"type": "Orb",
 			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 21.5,
+			"type": "Orb",
+			"wall": "Left",
+			"lane": 1
+		},
+		{
+			"beat": 21.5,
+			"type": "Orb",
+			"wall": "Up",
+			"lane": 1
+		},
+		{
+			"beat": 21.5,
+			"type": "Orb",
+			"wall": "Right",
 			"lane": 1
 		}
 	]
