@@ -30,6 +30,11 @@ private:
 
 	std::queue<JUDGE> m_PendingJudges;
 
+	float m_FadeOutDuration = 0.0f;
+	float m_FadeOutTimer = 0.0f;
+	float m_FadeOutStartVolume = 1.0f;
+	bool  m_IsFadingOut = false;
+
 	float BeatToSpawnTime(float beat) const;
 	int   WallToFace(ScoreWall wall)  const;
 
@@ -50,4 +55,6 @@ public:
 
 	bool  HasPendingJudge()  const { return !m_PendingJudges.empty(); }
 	JUDGE PopPendingJudge()        { JUDGE j = m_PendingJudges.front(); m_PendingJudges.pop(); return j; }
+	bool  IsFinished() const;
+	void  StartBgmFadeOut(float durationSec);
 };

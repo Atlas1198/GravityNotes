@@ -48,5 +48,7 @@ SendResult StatusManager::GetResult() const
 	r.maxCombo = m_MaxCombo;
 	r.hits  = m_HitCount;
 	r.misses = m_MissCount;
+	r.orbgets = 10;     // 適当な数値
+	r.orblosses = 2;    // 適当な数値
 	return r;
 }

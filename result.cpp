@@ -91,12 +91,6 @@ void Result_Initialize(void)
 	g_ShowResult.orbgets = GetResult()->orbgets;
 	g_ShowResult.orblosses = GetResult()->orblosses;
 
-	//g_ShowResult.maxCombo = 10;
-	//g_ShowResult.hits = 55;
-	//g_ShowResult.misses = 45;
-	//g_ShowResult.orbgets = 10;
-	//g_ShowResult.orblosses = 2;
-
 	int totalNotes = g_ShowResult.hits + g_ShowResult.misses;
 	if (totalNotes > 0)
 	{
@@ -106,7 +100,6 @@ void Result_Initialize(void)
 	{
 		g_ShowResult.score = 0;
 	}
-	//hal::dout << "aaaaaaaaaaaaaaaaaaaaaa   " << g_ShowResult.score << std::endl;
 
 
 	//ランク計算

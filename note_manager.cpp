@@ -41,6 +41,10 @@ void NoteManager::Init(const std::string& scoreFilePath)
 	m_ElapsedTime    = -3.0f;
 	m_NextEventIndex = 0;
 	m_BgmStarted     = false;
+	m_IsFadingOut    = false;
+	m_FadeOutDuration = 0.0f;
+	m_FadeOutTimer   = 0.0f;
+	m_FadeOutStartVolume = 1.0f;
 
 	m_ScoreData = LoadScore(scoreFilePath);
 
@@ -50,6 +54,15 @@ void NoteManager::Init(const std::string& scoreFilePath)
 
 void NoteManager::Update(int playerLane, int playerFace)
 {
+	// BGMフェードアウト処理
+	if (m_IsFadingOut && m_pBgmData && m_pBgmData->pSourceVoice)
+	{
+		m_FadeOutTimer += dt;
+		float volume = m_FadeOutStartVolume * (1.0f - (m_FadeOutTimer / m_FadeOutDuration));
+		if (volume < 0.0f) volume = 0.0f;
+		m_pBgmData->pSourceVoice->SetVolume(volume);
+	}
+
 	if (!m_BgmStarted)
 	{
 		m_ElapsedTime += dt;
@@ -327,4 +340,22 @@ JUDGE NoteManager::OnButtonRelease(int lane, int face)
 		return (progress >= 0.5f) ? JUDGE_GOOD : JUDGE_MISS;
 	}
 	return JUDGE_NONE;
+}
+
+bool NoteManager::IsFinished() const
+{
+	return (m_NextEventIndex >= (int)m_ScoreData.events.size()) && m_Notes.empty();
+}
+
+void NoteManager::StartBgmFadeOut(float durationSec)
+{
+	m_IsFadingOut = true;
+	m_FadeOutDuration = durationSec;
+	m_FadeOutTimer = 0.0f;
+	m_FadeOutStartVolume = 1.0f;
+
+	if (m_pBgmData && m_pBgmData->pSourceVoice)
+	{
+		m_pBgmData->pSourceVoice->GetVolume(&m_FadeOutStartVolume);
+	}
 }
