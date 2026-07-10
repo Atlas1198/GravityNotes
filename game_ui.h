@@ -41,11 +41,12 @@ private:
     int           m_LastHP   = -1;
     void UpdateHP(int hp, int maxHP);
 
-    // Hit / Miss
-    Sprite2D* m_pHitSprite  = nullptr;
-    Sprite2D* m_pMissSprite = nullptr;
-    float     m_JudgeTimer  = 0.0f;
-    bool      m_ShowHit     = false;
+    // Hit / Miss / Kaihi
+    Sprite2D* m_pHitSprite   = nullptr;
+    Sprite2D* m_pMissSprite  = nullptr;
+    Sprite2D* m_pKaihiSprite = nullptr;
+    float     m_JudgeTimer   = 0.0f;
+    JUDGE     m_CurrentJudge = JUDGE_NONE;
 
     // 終了演出用UI
     Sprite2D* m_pFadeOverlay    = nullptr;

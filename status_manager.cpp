@@ -21,6 +21,17 @@ void StatusManager::Finalize()
 
 void StatusManager::OnJudge(JUDGE result)
 {
+	if (result == JUDGE_SILENT_COMBO)
+	{
+		float multiplier = 1.0f + m_Combo * D_PARAMS.comboMultiplier;
+		m_Score += static_cast<int>(D_PARAMS.baseScore * multiplier);
+		m_Combo++;
+		if (m_Combo > m_MaxCombo)
+			m_MaxCombo = m_Combo;
+		m_Hits++;
+		return;
+	}
+
 	m_LastJudge   = result;
 	m_HasNewJudge = true;
 	if (result == JUDGE_MISS)

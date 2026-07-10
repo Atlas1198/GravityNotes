@@ -125,7 +125,7 @@ void NoteManager::Update(int playerLane, int playerFace)
 		case ScoreType::Barrier:
 		{
 			BarrierNote* note = new BarrierNote();
-			note->Init(gameLane, face, initZ, m_NoteSpeed);
+			note->Init(gameLane, face, initZ, m_NoteSpeed, ev.beat);
 			m_Notes.push_back(note);
 			break;
 		}
@@ -208,16 +208,23 @@ void NoteManager::Update(int playerLane, int playerFace)
 			{
 				if (z < HIT_ZONE_Z - GOOD_WINDOW)
 				{
+					float beat = barrier->GetBeat();
 					if (m_Notes[i]->GetLaneIndex() == playerLane &&
 						m_Notes[i]->GetFace()      == playerFace)
 					{
 						barrier->OnMiss();
 						m_PendingJudges.push(JUDGE_MISS);
+						m_ProcessedBarrierBeats.insert(beat);
 					}
 					else
 					{
 						// 操作をしなかった（元から安全な場所にいた）場合は、音や判定を出さずに自然消滅
 						barrier->OnHit();
+						if (m_ProcessedBarrierBeats.find(beat) == m_ProcessedBarrierBeats.end())
+						{
+							m_PendingJudges.push(JUDGE_SILENT_COMBO);
+							m_ProcessedBarrierBeats.insert(beat);
+						}
 					}
 				}
 			}
@@ -481,7 +488,12 @@ bool NoteManager::CheckAndHitBarrier(int fromLane, int fromFace, int toLane, int
 		if (dist < GOOD_WINDOW)
 		{
 			barrier->OnHit();
-			m_PendingJudges.push(JUDGE_PERFECT);
+			float beat = barrier->GetBeat();
+			if (m_ProcessedBarrierBeats.find(beat) == m_ProcessedBarrierBeats.end())
+			{
+				m_PendingJudges.push(JUDGE_KAIHI);
+				m_ProcessedBarrierBeats.insert(beat);
+			}
 			m_PendingBarrierEvents.push(BARRIER_EVENT_KAIHI);
 			return true;
 		}
@@ -499,6 +511,8 @@ bool NoteManager::CheckAndHitBarrier(int fromLane, int fromFace, int toLane, int
 		{
 			barrier->OnMiss();
 			m_PendingJudges.push(JUDGE_MISS);
+			float beat = barrier->GetBeat();
+			m_ProcessedBarrierBeats.insert(beat);
 			return true;
 		}
 	}

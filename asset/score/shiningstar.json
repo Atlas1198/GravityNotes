@@ -232,30 +232,6 @@
 			"type": "Orb",
 			"wall": "Down",
 			"lane": 1
-		},
-		{
-			"beat": 21.5,
-			"type": "Orb",
-			"wall": "Down",
-			"lane": 1
-		},
-		{
-			"beat": 21.5,
-			"type": "Orb",
-			"wall": "Left",
-			"lane": 1
-		},
-		{
-			"beat": 21.5,
-			"type": "Orb",
-			"wall": "Up",
-			"lane": 1
-		},
-		{
-			"beat": 21.5,
-			"type": "Orb",
-			"wall": "Right",
-			"lane": 1
 		}
 	]
 }
