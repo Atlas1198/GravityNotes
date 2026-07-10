@@ -105,14 +105,18 @@ inline ScoreData LoadScore(const std::string& filePath)
 				scoreEvent.lane    = event["lane"].get<int>();
 				scoreEvent.type    = ParseScoreType(event["type"].get<std::string>());
 				scoreEvent.wall    = ParseScoreWall(event["wall"].get<std::string>());
-				scoreEvent.endBeat = event.value("endBeat", scoreEvent.beat);
-				scoreEvent.endLane = event.value("endLane", scoreEvent.lane);
+				scoreEvent.endBeat = event.contains("endBeat") ? event["endBeat"].get<float>() : scoreEvent.beat;
+				scoreEvent.endLane = event.contains("endLane") ? event["endLane"].get<int>() : scoreEvent.lane;
 				// endWall: RopeHold専用（なければ wall と同値）
 				std::string endWallStr = event.value("endWall", std::string(""));
 				scoreEvent.endWall = endWallStr.empty() ? scoreEvent.wall : ParseScoreWall(endWallStr);
 
 				scoreData.events.push_back(scoreEvent);
 			}
+
+			std::sort(scoreData.events.begin(), scoreData.events.end(), [](const ScoreEvent& a, const ScoreEvent& b) {
+				return a.beat < b.beat;
+			});
 		}
 
 		return scoreData;

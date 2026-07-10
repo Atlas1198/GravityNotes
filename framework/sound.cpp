@@ -386,6 +386,10 @@ void PlaySound(SoundData* data, bool loop, float volumeScale) {
         buffer.LoopCount = XAUDIO2_LOOP_INFINITE;
     }
 
+    XAUDIO2_VOICE_STATE voiceState = {};
+    data->pSourceVoice->GetState(&voiceState);
+    data->startSamples = voiceState.SamplesPlayed;
+
     data->pSourceVoice->SubmitSourceBuffer(&buffer);
     data->pSourceVoice->Start(0);
 }
@@ -404,7 +408,7 @@ double GetPlaybackPositionSec(const SoundData* data)
     if (!data || !data->pSourceVoice || !data->pWfx) return 0.0;
     XAUDIO2_VOICE_STATE state = {};
     data->pSourceVoice->GetState(&state);
-    return static_cast<double>(state.SamplesPlayed) / data->pWfx->nSamplesPerSec;
+    return static_cast<double>(state.SamplesPlayed - data->startSamples) / data->pWfx->nSamplesPerSec;
 }
 
 // マスターボリューム設定

@@ -159,6 +159,20 @@ void NoteManager::Update(int playerLane, int playerFace)
 	{
 		m_Notes[i]->Update();
 
+		if (RopeHoldNote* rope = dynamic_cast<RopeHoldNote*>(m_Notes[i]))
+		{
+			if (rope->GetState() == RopeHoldNote::State::HOLDING)
+			{
+				unsigned __int64 samples = 0;
+				if (m_pBgmData && m_pBgmData->pSourceVoice)
+				{
+					XAUDIO2_VOICE_STATE state = {};
+					m_pBgmData->pSourceVoice->GetState(&state);
+					samples = state.SamplesPlayed;
+				}
+			}
+		}
+
 		if (!m_Notes[i]->IsHit())
 		{
 			float z = m_Notes[i]->GetPosZ();
@@ -283,8 +297,14 @@ JUDGE NoteManager::Judge(int lane, int face)
 
 	if (bestNote)
 	{
-		if (bestDist < PERFECT_WINDOW) { bestNote->OnHit(); return JUDGE_PERFECT; }
-		if (bestDist < GOOD_WINDOW)    { bestNote->OnHit(); return JUDGE_GOOD; }
+		JUDGE j = JUDGE_NONE;
+		if (bestDist < PERFECT_WINDOW) { bestNote->OnHit(); j = JUDGE_PERFECT; }
+		else if (bestDist < GOOD_WINDOW)    { bestNote->OnHit(); j = JUDGE_GOOD; }
+
+		if (j != JUDGE_NONE)
+		{
+			return j;
+		}
 		return JUDGE_NONE;
 	}
 

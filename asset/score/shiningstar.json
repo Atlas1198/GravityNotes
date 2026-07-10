@@ -132,6 +132,50 @@
 			"type": "Enemy",
 			"wall": "Down",
 			"lane": 1
+		},
+		{
+			"beat": 13.0,
+			"type": "Enemy",
+			"wall": "Up",
+			"lane": 1
+		},
+		{
+			"beat": 14.0,
+			"type": "Enemy",
+			"wall": "Up",
+			"lane": 1
+		},
+		{
+			"beat": 16.0,
+			"type": "Rainbow",
+			"wall": "Up",
+			"lane": 1,
+			"endBeat": 19.0,
+			"endWall": "Down"
+		},
+		{
+			"beat": 20.0,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 20.5,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 21.0,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 21.5,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 1
 		}
 	]
 }
