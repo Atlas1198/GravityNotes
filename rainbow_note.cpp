@@ -1,14 +1,13 @@
-#define NOMINMAX
+﻿#define NOMINMAX
 #include "rainbow_note.h"
 #include "game.h"
 #include <algorithm>
 #include <cmath>
 
-static const float ROPE_HIT_ZONE_Z   = 3.0f;
-static const float ROPE_ACTIVE_RANGE = 2.5f;
+static const float ROPE_HIT_ZONE_Z   = -0.5f;
+static const float ROPE_ACTIVE_RANGE = 0.0f;
 static const float TUNNEL_HALF       = 2.5f;
-static const float RIBBON_INSET      = 0.05f;  // z-fighting防止：壁から内側にずらす量
-static const float RIBBON_NEAR_Z     = -3.0f;
+static const float RIBBON_INSET      = 0.10f;  // z-fighting防止：壁から内側にずらす量
 static const int   TILE_COLS         = 6;
 static const int   TILE_ROWS         = 5;
 static const int   TILE_COUNT        = TILE_COLS * TILE_ROWS; // 30
@@ -151,13 +150,12 @@ void RopeHoldNote::Update()
 		return;
 	}
 
-	// IDLE: 判定窓を過ぎたら FAILED（ゲームプレイ終了）、ただし描画は継続
+	// IDLE: 判定窓を過ぎたら FAILED（始点を取れなかった場合、途中離しと同様に即座に非表示）
 	if (m_State == State::IDLE && GetPosZ() < ROPE_HIT_ZONE_Z - ROPE_ACTIVE_RANGE)
-		m_State = State::FAILED;
-
-	// ロープ終端がデスポーンZを過ぎてから非アクティブ化
-	if (m_State == State::FAILED && GetPosZ() + m_RopeLength < RIBBON_NEAR_Z)
+	{
+		m_State    = State::FAILED;
 		m_IsActive = false;
+	}
 }
 
 void RopeHoldNote::Draw()
@@ -182,7 +180,6 @@ void RopeHoldNote::Draw()
 		? ROPE_HIT_ZONE_Z
 		: std::max(0.0f, m_Position.z);
 	const float drawFar  = m_Position.z + m_RopeLength;
-	const float totalLen = (drawFar - drawNear > 0.001f) ? drawFar - drawNear : 0.001f;
 
 	const float geoStep = tileZWidth / RIBBON_SUBDIV;
 
@@ -204,8 +201,9 @@ void RopeHoldNote::Draw()
 			float z0s = z + s       * geoStep;
 			float z1s = z + (s + 1) * geoStep;
 
-			float t0 = std::max(0.0f, std::min((z0s - drawNear) / totalLen, 1.0f));
-			float t1 = std::max(0.0f, std::min((z1s - drawNear) / totalLen, 1.0f));
+			// t はリボン全長 m_RopeLength に対する固定割合（描画範囲の縮小で再正規化しない）
+			float t0 = std::max(0.0f, std::min((z0s - m_Position.z) / m_RopeLength, 1.0f));
+			float t1 = std::max(0.0f, std::min((z1s - m_Position.z) / m_RopeLength, 1.0f));
 
 			XMFLOAT2 xy0 = QuadBezier(p0, p1, p2, t0);
 			XMFLOAT2 xy1 = QuadBezier(p0, p1, p2, t1);

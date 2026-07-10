@@ -19,20 +19,39 @@
 
 using namespace DirectX;
 
+enum ResultRank
+{
+	RR_C = 0,
+	RR_B,
+	RR_A,
+	RR_S,
+	RR_AH
+};
+
+struct ShowResult
+{
+	int score;
+	ResultRank rank;
+	int maxCombo;
+	int hits;
+	int misses;
+	int orbgets;
+	int orblosses;
+};
+
 // ①インスタンス、ポインタ用意
 static Sprite2D* g_pResultBG = nullptr;
 static Sprite2D* g_pResultBackUI = nullptr;
 static ClickFont* g_pChangeSceneText = nullptr;
-static ScoreSummary g_ResultScoreSummary;
-static RESULT g_Result;
+static ScoreSummary g_ScoreSummary;
+static ShowResult g_ShowResult;
 
 static FontRenderer* g_pMusicTexts[4] = { nullptr };
-static MultiLineFontRenderer* g_pAuthorFont= nullptr;
+static MultiLineFontRenderer* g_pAuthorFont = nullptr;
 static float g_MusicTextPos[4][2];
 static float g_MusicTextScale[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 static Sprite2D* g_pRankTextre = nullptr;
 static Sprite2D* g_pNextSceneTexture = nullptr;
-
 
 // アニメーション用の構造体
 struct ResultRowData {
@@ -47,7 +66,6 @@ static const int MAX_ROWS = 5;
 static ResultRowData g_ResultRows[MAX_ROWS];
 static FontRenderer* g_pLabelFont = nullptr;
 static FontRenderer* g_pValueFont = nullptr;
-	
 
 static float g_CountUpTimer = 0.0f;
 static const float COUNT_UP_MAX_TIME = 90.0f;		// 90フレーム(1.5秒)でカウントアップ
@@ -61,23 +79,59 @@ static const float RANK_ANIM_DURATION = 30.0f;		// 30フレーム(0.5秒)
 
 void Result_Initialize(void)
 {
-	// ②各種初期化
-	
-	//プレイした楽曲の概要を取得
-	g_ResultScoreSummary = LoadSingleScoreSummary(GetPlayJson());
-	//リザルトデータを実体化させてコピー
-	g_Result = *GetResult();
+	//======================================================================
 
-	//デバッグ出力（構造体の中身をいい感じに表示すればOK）
-	hal::dout << "[result.cpp]" << g_ResultScoreSummary.musicname << std::endl;
-	hal::dout << "[result.cpp]" << g_Result.maxCombo << std::endl;
+	//プレイした楽曲の概要を取得　上書き禁止
+	g_ScoreSummary = LoadSingleScoreSummary(GetPlayJson());
 
-	g_Result.score += 100000; //デバッグ用にスコアを加算
-	g_Result.success += 100000;
-	g_Result.maxCombo += 100000;
-	g_Result.miss += 100;
-	g_Result.accurary = 55.0f;  //accuracy?
-	g_ResultScoreSummary.difficulty = 1.5f;
+	////リザルトデータを実体化させてコピー　上書き禁止
+	g_ShowResult.maxCombo = GetResult()->maxCombo;
+	g_ShowResult.hits = GetResult()->hits;
+	g_ShowResult.misses = GetResult()->misses;
+	g_ShowResult.orbgets = GetResult()->orbgets;
+	g_ShowResult.orblosses = GetResult()->orblosses;
+
+	//g_ShowResult.maxCombo = 10;
+	//g_ShowResult.hits = 55;
+	//g_ShowResult.misses = 45;
+	//g_ShowResult.orbgets = 10;
+	//g_ShowResult.orblosses = 2;
+
+	int totalNotes = g_ShowResult.hits + g_ShowResult.misses;
+	if (totalNotes > 0)
+	{
+		g_ShowResult.score = static_cast<int>((static_cast<double>(g_ShowResult.hits) / totalNotes) * 1000000);
+	}
+	else
+	{
+		g_ShowResult.score = 0;
+	}
+	//hal::dout << "aaaaaaaaaaaaaaaaaaaaaa   " << g_ShowResult.score << std::endl;
+
+
+	//ランク計算
+	if (g_ShowResult.score >= 1000000)
+	{
+		g_ShowResult.rank = RR_AH;
+	}
+	else if (g_ShowResult.score >= 950000)
+	{
+		g_ShowResult.rank = RR_S;
+	}
+	else if (g_ShowResult.score == 900000)
+	{
+		g_ShowResult.rank = RR_A;
+	}
+	else if (g_ShowResult.score == 800000)
+	{
+		g_ShowResult.rank = RR_B;
+	}
+	else
+	{
+		g_ShowResult.rank = RR_C;
+	}
+
+	//======================================================================
 
 	g_pResultBG = new Sprite2D(
 		{ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 },					//位置
@@ -89,25 +143,25 @@ void Result_Initialize(void)
 	);
 
 	g_pResultBackUI = new Sprite2D(
-		{ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 },				
-		{ SCREEN_WIDTH, SCREEN_HEIGHT },						
-		0.0f,													
-		{ 1.0f, 1.0f, 1.0f, 1.0f },								
-		BLENDSTATE_ALFA,										
-		L"asset\\texture\\Result_Back_UI.png"					
+		{ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 },
+		{ SCREEN_WIDTH, SCREEN_HEIGHT },
+		0.0f,
+		{ 1.0f, 1.0f, 1.0f, 1.0f },
+		BLENDSTATE_ALFA,
+		L"asset\\texture\\Result_Back_UI.png"
 	);
 
 	g_pNextSceneTexture = new Sprite2D(
-		{ SCREEN_WIDTH *4/5, 613.0f },
-		{ 85*4, 39*4 },											
-		0.0f,													
-		{ 1.0f, 1.0f, 1.0f, 1.0f },								
-		BLENDSTATE_ALFA,										
-		L"asset\\texture\\Result_Button_UI.png"					
+		{ SCREEN_WIDTH * 4 / 5, 613.0f },
+		{ 85 * 4, 39 * 4 },
+		0.0f,
+		{ 1.0f, 1.0f, 1.0f, 1.0f },
+		BLENDSTATE_ALFA,
+		L"asset\\texture\\Result_Button_UI.png"
 	);
 
 	g_pChangeSceneText = new ClickFont(
-		{ SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT * 5 / 6 },				//位置
+		{ 1009, 612 },				//位置
 		50.0f,														//文字サイズ
 		0.0f,														//回転（度）
 		{ 1.0f, 1.0f, 1.0f, 1.0f },									//通常色
@@ -120,19 +174,19 @@ void Result_Initialize(void)
 	g_pValueFont = new FontRenderer({ 0, 0 }, 43.0f, 0.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, "", TA_MIDDLE);
 
 	// 各行の初期状態
-	float startX = 100.0f;    
+	float startX = 100.0f;
 	float startY = 294.0f;
 	float lineSpacing = 60.0f; // 行間隔
 
-	g_ResultRows[0] = { "スコア  ",    "", g_Result.score * 100, startX,  startY };
-	g_ResultRows[1] = { "ヒット数  ",    "", g_Result.success , startX ,  startY + lineSpacing };
-	g_ResultRows[2] = { "最大コンボ数  ", "", g_Result.maxCombo, startX ,	 startY + lineSpacing * 2 };
-	g_ResultRows[3] = { "ミス数  ",  "", g_Result.miss, startX ,  startY + lineSpacing * 3 };
-	g_ResultRows[4] = { "達成率  ", "", static_cast<int>(g_Result.accurary), startX ,  startY + lineSpacing * 4 };
+	g_ResultRows[0] = { "スコア  ",    "", g_ShowResult.score, startX,  startY };
+	g_ResultRows[1] = { "最大コンボ数  ", "", g_ShowResult.maxCombo, startX , startY + lineSpacing };
+	g_ResultRows[2] = { "ヒット数  ",    "", g_ShowResult.hits , startX ,  startY + lineSpacing * 2 };
+	g_ResultRows[3] = { "ミス数  ",  "", g_ShowResult.misses, startX ,  startY + lineSpacing * 3 };
+	g_ResultRows[4] = { "オーブ数  ", "", g_ShowResult.orbgets, startX ,  startY + lineSpacing * 4 };
 
 	// 難易度の小数点以下1桁まで表示するためのstringstreamを使用
 	std::stringstream ss;
-	ss << std::fixed << std::setprecision(1) << g_ResultScoreSummary.difficulty;
+	ss << std::fixed << std::setprecision(1) << g_ScoreSummary.difficulty;
 
 
 	// 楽曲情報のテキストを生成
@@ -149,13 +203,13 @@ void Result_Initialize(void)
 	for (int i = 0; i < 4; ++i) {
 		g_MusicTextPos[i][0] = initialPos[i][0];
 		g_MusicTextPos[i][1] = initialPos[i][1];
-		g_MusicTextScale[i]  = initialScale[i];
+		g_MusicTextScale[i] = initialScale[i];
 	}
 
 	std::string texts[4] = {
-		g_ResultScoreSummary.musicname,
-		g_ResultScoreSummary.musicauthor,
-		g_ResultScoreSummary.scoreauthor,
+		g_ScoreSummary.musicname,
+		g_ScoreSummary.musicauthor,
+		g_ScoreSummary.scoreauthor,
 		"難易度 : " + ss.str()
 	};
 
@@ -182,19 +236,31 @@ void Result_Initialize(void)
 		TA_START
 	);
 
-	// 達成率(accurary)によって表示するテクスチャを決定する
+	//// 達成率(accurary)によって表示するテクスチャを決定する
 	std::wstring wRank = L"C"; // デフォルトはC
-	if (g_Result.accurary >= 95.0f) {
-		wRank = L"SS";
-	} else if (g_Result.accurary >= 90.0f) {
-		wRank = L"S";
-	} else if (g_Result.accurary >= 80.0f) {
-		wRank = L"A";
-	} else if (g_Result.accurary >= 50.0f) {
+
+	switch (g_ShowResult.rank)
+	{
+	case RR_C:
+		wRank = L"C";
+		break;
+	case RR_B:
 		wRank = L"B";
+		break;
+	case RR_A:
+		wRank = L"A";
+		break;
+	case RR_S:
+		wRank = L"S";
+		break;
+	case RR_AH:
+		wRank = L"EX";
+		break;
+	default:
+		break;
 	}
 
-	// テクスチャのファイルパスを動的に生成
+	//テクスチャのファイルパスを動的に生成
 	std::wstring rankTexturePath = L"asset\\texture\\Result_Rank_" + wRank + L"_UI.png";
 
 	g_pRankTextre = new Sprite2D(
@@ -225,11 +291,11 @@ void Result_Update(void)
 
 		// 初期座標リセット
 		for (int i = 0; i < MAX_ROWS; ++i) {
-			g_ResultRows[i].currentX = 100.0f ; // startX
+			g_ResultRows[i].currentX = 100.0f; // startX
 			g_ResultRows[i].valueStr = ""; // 表示リセット
 		}
-	}    
-	
+	}
+
 
 	g_ResultSceneTimer += 1.0f;
 
@@ -244,20 +310,30 @@ void Result_Update(void)
 			if (valueProgress >= 1.0f)
 			{
 				valueProgress = 1.0f;
-				g_ResultRows[i].valueStr = std::to_string(g_ResultRows[i].targetValue);
+				if (i == 4) // オーブ数
+				{
+					int totalOrbs = g_ShowResult.orbgets + g_ShowResult.orblosses;
+					g_ResultRows[i].valueStr = std::to_string(g_ResultRows[i].targetValue) + "/" + std::to_string(totalOrbs);
+				}
+				else
+				{
+					g_ResultRows[i].valueStr = std::to_string(g_ResultRows[i].targetValue);
+				}
 			}
 			else
 			{
 				// イージング (Ease-Out Quad)
 				float easeProgress = 1.0f - (1.0f - valueProgress) * (1.0f - valueProgress);
 				int curVal = static_cast<int>(g_ResultRows[i].targetValue * easeProgress);
-				g_ResultRows[i].valueStr = std::to_string(curVal);
-			}
-
-			// ACCURACYの場合は末尾に%をつける
-			if (i == 4)
-			{
-				g_ResultRows[i].valueStr += "%";
+				if (i == 4) // オーブ数
+				{
+					int totalOrbs = g_ShowResult.orbgets + g_ShowResult.orblosses;
+					g_ResultRows[i].valueStr = std::to_string(curVal) + "/" + std::to_string(totalOrbs);
+				}
+				else
+				{
+					g_ResultRows[i].valueStr = std::to_string(curVal);
+				}
 			}
 		}
 		else
@@ -308,7 +384,7 @@ void Result_Draw(void)
 
 
 	if (g_pLabelFont && g_pValueFont)
-	{	
+	{
 		for (int i = 0; i < MAX_ROWS; ++i)
 		{
 			float labelStartTime = i * ROW_DELAY;
@@ -322,7 +398,7 @@ void Result_Draw(void)
 
 			// valueStr が空でなければ数値を描画（Update側で制御済み）
 			if (!g_ResultRows[i].valueStr.empty()) {
-				g_pValueFont->SetPos({ g_ResultRows[i].currentX + 350.0f + (i * 20.0f), g_ResultRows[i].y});
+				g_pValueFont->SetPos({ g_ResultRows[i].currentX + 350.0f + (i * 20.0f), g_ResultRows[i].y });
 				g_pValueFont->SetText(g_ResultRows[i].valueStr);
 				g_pValueFont->Draw();
 			}
@@ -341,6 +417,7 @@ void Result_Finalize(void)
 	for (int i = 0; i < 4; ++i) {
 		SAFE_DELETE(g_pMusicTexts[i]);
 	}
+
 	SAFE_DELETE(g_pRankTextre);
 	SAFE_DELETE(g_pLabelFont);
 	SAFE_DELETE(g_pValueFont);
@@ -354,18 +431,15 @@ void Result_DebugUIDraw(void)
 {
 	ImGui::Begin("Result Scene Editor");
 	if (ImGui::CollapsingHeader("Music Texts")) {
-		for (int i = 0; i < 4; ++i) {
-			ImGui::PushID(i);
-			ImGui::Text("Line %d", i);
-			if (ImGui::DragFloat2("Position", g_MusicTextPos[i], 1.0f)) {
-				if (g_pMusicTexts[i]) g_pMusicTexts[i]->SetPos({ g_MusicTextPos[i][0], g_MusicTextPos[i][1] });
+
+	}
+	if (ImGui::CollapsingHeader("Change Scene Text")) {
+		if (g_pChangeSceneText) {
+			float pos[2] = { g_pChangeSceneText->GetPosX(), g_pChangeSceneText->GetPosY() };
+			if (ImGui::DragFloat2("Position##ChangeSceneText", pos, 1.0f)) {
+				g_pChangeSceneText->SetPos({ pos[0], pos[1] });
 			}
-			if (ImGui::DragFloat("Scale", &g_MusicTextScale[i], 0.01f, 0.1f, 10.0f)) {
-				if (g_pMusicTexts[i]) g_pMusicTexts[i]->SetSize({ g_MusicTextScale[i], g_MusicTextScale[i] });
-			}
-			ImGui::PopID();
 		}
 	}
 	ImGui::End();
 }
-

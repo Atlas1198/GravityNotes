@@ -658,8 +658,6 @@ void FontRenderer::Draw() {
 		prev_glyph_draw = glyph_index;
 		char_count++;
 	}
-
-	SetDepthEnable(true);
 }
 
 void FontRenderer::SetText(const std::string& text) {

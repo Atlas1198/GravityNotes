@@ -116,12 +116,7 @@ void GameUI::Update(const StatusManager* pStatus)
     if (m_JudgeTimer > 0.0f)
         m_JudgeTimer -= 1.0f / FPS;
 
-    // フェード中はコンボ数字を透明にする（SplitSprite はフェードに乗らないため手動対応）
-    XMFLOAT4 digitColor = (GetFadeState() == FADE_NONE)
-        ? XMFLOAT4{ 1.0f, 1.0f, 1.0f, 1.0f }
-        : XMFLOAT4{ 1.0f, 1.0f, 1.0f, 0.0f };
-    for (int i = 0; i < COMBO_MAX_DIGITS; ++i)
-        m_pComboDigits[i]->SetColor(digitColor);
+
 }
 
 void GameUI::UpdateComboDigits(int combo)

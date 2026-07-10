@@ -14,9 +14,7 @@
 #include "sound.h"
 #include "ClickFont.h"
 #include "scene.h"
-#include "gamepad.h"
 #include "camera.h"
-
 #include "field.h"
 #include "player.h"
 #include "gamecamera.h"
@@ -112,15 +110,6 @@ void Game_Update(void)
 	}*/
 
 	if (Keyboard_IsKeyDownTrigger(KK_ENTER)) {
-		RESULT r;
-		r.score = 13232;
-		r.rank = "A";
-		r.accurary = 87.45f;
-		r.maxCombo = 175;
-		r.success = 312;
-		r.miss = 26;
-
-		SetResult(r);
 		SetSceneFade(SCENE_RESULT);
 	}
 }

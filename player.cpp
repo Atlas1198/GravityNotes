@@ -12,7 +12,7 @@
 
 void Player::Init(NoteManager* nm, StatusManager* sm)
 {
-	m_Scale = { 0.02f,0.02f,0.02f };
+	m_Scale = { 0.017f,0.017f,0.017f };
 
 	m_pNoteManager   = nm;
 	m_pStatusManager = sm;
@@ -46,6 +46,7 @@ void Player::Init(NoteManager* nm, StatusManager* sm)
 	);
 	if (m_pEffectSlash)
 	{
+		m_pEffectSlash->SetWallFadeEnabled(false);
 		m_pEffectSlash->SetLoop(false);
 		m_pEffectSlash->SetFPS(30.0f);
 		m_pEffectSlash->SetAnimationEnabled(false);
@@ -87,10 +88,6 @@ static int GetTriggeredAnimationSlot()
 void Player::Update()
 {
 	int pad = GetGamePad();
-	bool connected = Gamepad_IsConnected(pad);
-	if (connected) {
-		return;
-	}
 
 	RopeHoldNote* holdingRope = m_pNoteManager->GetHoldingRope();
 
@@ -281,14 +278,16 @@ void Player::Update()
 			m_pEffectSlash->SetRotation(rot);
 		}
 
-		// 押した瞬間：Enemy・Hold 判定 / RopeHold 活性化
+		// 押した瞬間（KeyTrigger）：Enemy・Hold(最初の一撃) 判定
 		JUDGE result = m_pNoteManager->Judge(m_LaneIndex, m_GravityFace);
 		if (result != JUDGE_NONE)
 			m_pStatusManager->OnJudge(result);
 	}
-	else if (isHolding)
+
+	if (isHolding)
 	{
-		// 長押し中：HoldNote 継続判定 / RopeHoldNote は JUDGE_NONE を返す
+		// 押している間（KeyDown、トリガーの瞬間も含む）：
+		// HoldNote 継続判定 / RopeHoldNote の活性化・継続判定
 		JUDGE result = m_pNoteManager->JudgeHold(m_LaneIndex, m_GravityFace);
 		if (result != JUDGE_NONE)
 			m_pStatusManager->OnJudgeHold(result);
