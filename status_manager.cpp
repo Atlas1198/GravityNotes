@@ -44,7 +44,7 @@ void StatusManager::OnJudgeHold(JUDGE result)
 
 SendResult StatusManager::GetResult() const
 {
-	SeedResult r;
+	SendResult r;
 	r.maxCombo = m_MaxCombo;
 	r.hits  = m_HitCount;
 	r.misses = m_MissCount;
