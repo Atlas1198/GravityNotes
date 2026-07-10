@@ -1,7 +1,7 @@
 ﻿#include "result.h"
 #include "sprite2d.h"
 #include "texture.h"
-#include "keyboard.h"
+#include "input_manager.h"
 #include "fade.h"
 #include "debug_ostream.h"
 #include "define.h"
@@ -91,12 +91,6 @@ void Result_Initialize(void)
 	g_ShowResult.orbgets = GetResult()->orbgets;
 	g_ShowResult.orblosses = GetResult()->orblosses;
 
-	//g_ShowResult.maxCombo = 10;
-	//g_ShowResult.hits = 55;
-	//g_ShowResult.misses = 45;
-	//g_ShowResult.orbgets = 10;
-	//g_ShowResult.orblosses = 2;
-
 	int totalNotes = g_ShowResult.hits + g_ShowResult.misses;
 	if (totalNotes > 0)
 	{
@@ -106,7 +100,6 @@ void Result_Initialize(void)
 	{
 		g_ShowResult.score = 0;
 	}
-	//hal::dout << "aaaaaaaaaaaaaaaaaaaaaa   " << g_ShowResult.score << std::endl;
 
 
 	//ランク計算
@@ -254,7 +247,7 @@ void Result_Initialize(void)
 		wRank = L"S";
 		break;
 	case RR_AH:
-		wRank = L"EX";
+		wRank = L"AH";
 		break;
 	default:
 		break;
@@ -283,8 +276,8 @@ void Result_Update(void)
 	//③処理
 	g_pChangeSceneText->Update();
 
-	// デバッグ用: Rキーでアニメーションをリスタート
-	if (Keyboard_IsKeyDownTrigger(KK_R))
+	// デバッグ用: Rキーでアニメーションをリスタート（直接インクルード削除に伴いコメントアウト）
+	/*if (Keyboard_IsKeyDownTrigger(KK_R))
 	{
 		// 既存のタイマーリセット（g_CountUpTimerは廃止してもOK）
 		g_ResultSceneTimer = 0.0f;
@@ -294,7 +287,7 @@ void Result_Update(void)
 			g_ResultRows[i].currentX = 100.0f; // startX
 			g_ResultRows[i].valueStr = ""; // 表示リセット
 		}
-	}
+	}*/
 
 
 	g_ResultSceneTimer += 1.0f;
@@ -362,8 +355,8 @@ void Result_Update(void)
 		g_pRankTextre->SetSize({ 1500.0f, 1500.0f }); // 初期サイズは大きめ
 	}
 
-	//ClickFontがクリックされた
-	if (g_pChangeSceneText->IsClick())
+	//ClickFontがクリックされた、または決定ボタンが押された
+	if (g_pChangeSceneText->IsClick() || Input_IsActionTrigger(INPUT_ACTION_DECIDE))
 	{
 		SetPlayJson("");//resultを抜けるときに初期化
 		SetSceneFade(SCENE_STAGESELECT);

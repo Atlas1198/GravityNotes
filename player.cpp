@@ -1,7 +1,5 @@
 ﻿#include "main.h"
-#include "keyboard.h"
-#include "mouse.h"
-#include "gamepad.h"
+#include "input_manager.h"
 #include "mathhelper.h"
 
 #include "game.h"
@@ -64,7 +62,7 @@ void Player::Init(NoteManager* nm, StatusManager* sm)
 //仮置き
 static int GetTriggeredAnimationSlot()
 {
-	static const Keyboard_Keys keys[] = {
+	/*static const Keyboard_Keys keys[] = {
 		KK_D5,
 		KK_D6,
 		KK_D7,
@@ -79,7 +77,7 @@ static int GetTriggeredAnimationSlot()
 		{
 			return i;
 		}
-	}
+	}*/
 
 	return -1;
 }
@@ -87,7 +85,7 @@ static int GetTriggeredAnimationSlot()
 
 void Player::Update()
 {
-	int pad = GetGamePad();
+	// pad変数とGetGamePad()は不要になったため削除しました
 
 	RopeHoldNote* holdingRope = m_pNoteManager->GetHoldingRope();
 
@@ -119,19 +117,18 @@ void Player::Update()
 	else
 	{
 		//lane移動入力
-		Gamepad_ThumbStick ls = Gamepad_GetLeftStick(pad);
 		if (m_GravityFace == FACE::FACE_FLOOR || m_GravityFace == FACE::FACE_CEILING)
 		{
-			if (ls.x <-0.5f || Keyboard_IsKeyDownTrigger(KK_A))
+			if (Input_IsActionTrigger(INPUT_ACTION_MOVE_LEFT))
 				MoveLeft();
-			else if (ls.x > 0.5f || Keyboard_IsKeyDownTrigger(KK_D))
+			else if (Input_IsActionTrigger(INPUT_ACTION_MOVE_RIGHT))
 				MoveRight();
 		}
 		else
 		{
-			if (ls.y > 0.5f || Keyboard_IsKeyDownTrigger(KK_W))
+			if (Input_IsActionTrigger(INPUT_ACTION_MOVE_UP))
 				MoveRight();
-			else if (ls.y < -0.5f || Keyboard_IsKeyDownTrigger(KK_S))
+			else if (Input_IsActionTrigger(INPUT_ACTION_MOVE_DOWN))
 				MoveLeft();
 		}
 
@@ -154,14 +151,13 @@ void Player::Update()
 		//重力変更入力
 		if (!m_IsGravityMoving)
 		{
-			Gamepad_ThumbStick rs = Gamepad_GetRightStick(pad);
-			if (rs.y > 0.5f || Keyboard_IsKeyDownTrigger(KK_UP))
+			if (Input_IsActionTrigger(INPUT_ACTION_GRAVITY_UP))
 				ChangeGravity(FACE_CEILING);
-			else if (rs.y < -0.5f || Keyboard_IsKeyDownTrigger(KK_DOWN))
+			else if (Input_IsActionTrigger(INPUT_ACTION_GRAVITY_DOWN))
 				ChangeGravity(FACE_FLOOR);
-			else if (rs.x < -0.5f || Keyboard_IsKeyDownTrigger(KK_LEFT))
+			else if (Input_IsActionTrigger(INPUT_ACTION_GRAVITY_LEFT))
 				ChangeGravity(FACE_LEFT_WALL);
-			else if (rs.x > 0.5f || Keyboard_IsKeyDownTrigger(KK_RIGHT))
+			else if (Input_IsActionTrigger(INPUT_ACTION_GRAVITY_RIGHT))
 				ChangeGravity(FACE_RIGHT_WALL);
 		}
 
@@ -222,12 +218,8 @@ void Player::Update()
 	}
 
 	//ノーツヒット入力
-	bool isPressed  = !m_IsGravityMoving && (Keyboard_IsKeyDownTrigger(KK_SPACE) ||
-					  Gamepad_GetLeftTrigger(pad) > 0.5f   ||
-					  Gamepad_GetRightTrigger(pad) > 0.5f);
-	bool isHolding  = !m_IsGravityMoving && (Keyboard_IsKeyDown(KK_SPACE) ||
-					  Gamepad_GetLeftTrigger(pad) > 0.5f   ||
-					  Gamepad_GetRightTrigger(pad) > 0.5f);
+	bool isPressed  = !m_IsGravityMoving && Input_IsActionTrigger(INPUT_ACTION_ATTACK);
+	bool isHolding  = !m_IsGravityMoving && Input_IsActionDown(INPUT_ACTION_ATTACK);
 
 	if (isPressed)
 	{

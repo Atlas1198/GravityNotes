@@ -94,6 +94,52 @@ void GameUI::Init()
         "HP 1000/ 1000",
         TA_START
     );
+
+    // 演出用スプライトの生成
+    m_pFadeOverlay = new Sprite2D(
+        { SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f },
+        { (float)SCREEN_WIDTH, (float)SCREEN_HEIGHT },
+        0.0f,
+        { 0.0f, 0.0f, 0.0f, 0.0f }, // 初期値は透明
+        BLENDSTATE_ALFA,
+        L"asset\\texture\\fade.png"
+    );
+
+    m_pClearSprite = new Sprite2D(
+        { SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f },
+        { 800.0f, 800.0f },
+        0.0f,
+        { 1.0f, 1.0f, 1.0f, 1.0f },
+        BLENDSTATE_ALFA,
+        L"asset\\texture\\Result_Text_Clear_UI.png"
+    );
+
+    m_pAllHitSprite = new Sprite2D(
+        { SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f - 150.0f }, // 150上
+        { 800.0f, 800.0f },
+        0.0f,
+        { 1.0f, 1.0f, 1.0f, 1.0f },
+        BLENDSTATE_ALFA,
+        L"asset\\texture\\Result_Text_AllHit_UI.png"
+    );
+
+    m_pGameOverSprite = new Sprite2D(
+        { SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f },
+        { 800.0f, 800.0f },
+        0.0f,
+        { 1.0f, 1.0f, 1.0f, 1.0f },
+        BLENDSTATE_ALFA,
+        L"asset\\texture\\Result_Text_GameOver_UI.png"
+    );
+
+    m_ShowEndOverlay = false;
+    m_ShowLogos      = false;
+    m_IsDead         = false;
+    m_IsAllHit       = false;
+    m_FadeTimer      = 0.0f;
+    m_FadeDuration   = 3.0f;
+    m_LogoAnimTimer  = 0.0f;
+    m_LogoAnimDuration = 0.35f;
 }
 
 void GameUI::Update(const StatusManager* pStatus)
@@ -116,7 +162,60 @@ void GameUI::Update(const StatusManager* pStatus)
     if (m_JudgeTimer > 0.0f)
         m_JudgeTimer -= 1.0f / FPS;
 
+    // 終了時の透過フェードイン更新
+    if (m_ShowEndOverlay && m_FadeTimer < m_FadeDuration)
+    {
+        m_FadeTimer += 1.0f / FPS;
+        if (m_FadeTimer > m_FadeDuration)
+            m_FadeTimer = m_FadeDuration;
 
+        float alpha = (m_FadeTimer / m_FadeDuration) * 0.5f; // 最大0.5
+        if (m_pFadeOverlay)
+            m_pFadeOverlay->SetColor({ 0.0f, 0.0f, 0.0f, alpha });
+    }
+
+    // ロゴ「ぽこん！」ポップアニメーション更新
+    if (m_ShowLogos && m_LogoAnimTimer < m_LogoAnimDuration)
+    {
+        m_LogoAnimTimer += 1.0f / FPS;
+        if (m_LogoAnimTimer > m_LogoAnimDuration)
+            m_LogoAnimTimer = m_LogoAnimDuration;
+
+        float t = m_LogoAnimTimer / m_LogoAnimDuration; // 0.0 -> 1.0
+
+        // 急激に表示されるよう、立ち上がりを早くする (tの平方根を使用)
+        float alpha = sqrtf(t);
+        if (alpha > 1.0f) alpha = 1.0f;
+
+        // Ease-Out Back イージング (ぽこんと弾む)
+        float s = 1.0f;
+        if (t < 1.0f)
+        {
+            float c1 = 1.70158f;
+            float c3 = c1 + 1.0f;
+            float tm1 = t - 1.0f;
+            s = 1.0f + c3 * tm1 * tm1 * tm1 + c1 * tm1 * tm1;
+        }
+
+        float baseSize = 800.0f;
+        float currentSize = baseSize * s;
+
+        if (m_pClearSprite)
+        {
+            m_pClearSprite->SetColor({ 1.0f, 1.0f, 1.0f, alpha });
+            m_pClearSprite->SetSize({ currentSize, currentSize });
+        }
+        if (m_pAllHitSprite)
+        {
+            m_pAllHitSprite->SetColor({ 1.0f, 1.0f, 1.0f, alpha });
+            m_pAllHitSprite->SetSize({ currentSize, currentSize });
+        }
+        if (m_pGameOverSprite)
+        {
+            m_pGameOverSprite->SetColor({ 1.0f, 1.0f, 1.0f, alpha });
+            m_pGameOverSprite->SetSize({ currentSize, currentSize });
+        }
+    }
 }
 
 void GameUI::UpdateComboDigits(int combo)
@@ -183,6 +282,30 @@ void GameUI::Draw()
     {
         m_pComboDigits[i]->Draw();
     }
+
+    // 結果オーバーレイの描画
+    if (m_ShowEndOverlay)
+    {
+        if (m_pFadeOverlay) m_pFadeOverlay->Draw();
+
+        if (m_ShowLogos)
+        {
+            if (m_IsDead)
+            {
+                if (m_pGameOverSprite) m_pGameOverSprite->Draw();
+            }
+            else if (m_IsAllHit)
+            {
+                // All Hit の場合は AllHit と StageClear (ClearSprite) の両方を表示
+                if (m_pAllHitSprite) m_pAllHitSprite->Draw();
+                if (m_pClearSprite)  m_pClearSprite->Draw();
+            }
+            else
+            {
+                if (m_pClearSprite) m_pClearSprite->Draw();
+            }
+        }
+    }
 }
 
 void GameUI::Finalize()
@@ -200,4 +323,50 @@ void GameUI::Finalize()
     delete m_pHPText;    m_pHPText    = nullptr;
     delete m_pHitSprite; m_pHitSprite = nullptr;
     delete m_pMissSprite;m_pMissSprite= nullptr;
+
+    delete m_pFadeOverlay;   m_pFadeOverlay   = nullptr;
+    delete m_pClearSprite;   m_pClearSprite   = nullptr;
+    delete m_pAllHitSprite;  m_pAllHitSprite  = nullptr;
+    delete m_pGameOverSprite;m_pGameOverSprite= nullptr;
+}
+
+void GameUI::StartEndSequence(bool isDead, bool isAllHit)
+{
+    m_ShowEndOverlay = true;
+    m_ShowLogos      = false;
+    m_IsDead         = isDead;
+    m_IsAllHit       = isAllHit;
+    m_FadeTimer      = 0.0f;
+    if (m_pFadeOverlay)
+    {
+        m_pFadeOverlay->SetColor({ 0.0f, 0.0f, 0.0f, 0.0f });
+    }
+}
+
+void GameUI::ShowResultLogos()
+{
+    m_ShowLogos = true;
+    m_LogoAnimTimer = 0.0f; // アニメーションタイマーリセット
+    m_FadeTimer = m_FadeDuration; // フェードを強制完了状態にする
+    if (m_pFadeOverlay)
+    {
+        m_pFadeOverlay->SetColor({ 0.0f, 0.0f, 0.0f, 0.5f });
+    }
+
+    // 初期状態を透明＆縮小状態に設定してアニメーション開始に備える
+    if (m_pClearSprite)
+    {
+        m_pClearSprite->SetColor({ 1.0f, 1.0f, 1.0f, 0.0f });
+        m_pClearSprite->SetSize({ 0.0f, 0.0f });
+    }
+    if (m_pAllHitSprite)
+    {
+        m_pAllHitSprite->SetColor({ 1.0f, 1.0f, 1.0f, 0.0f });
+        m_pAllHitSprite->SetSize({ 0.0f, 0.0f });
+    }
+    if (m_pGameOverSprite)
+    {
+        m_pGameOverSprite->SetColor({ 1.0f, 1.0f, 1.0f, 0.0f });
+        m_pGameOverSprite->SetSize({ 0.0f, 0.0f });
+    }
 }

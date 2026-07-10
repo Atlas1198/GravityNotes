@@ -1,7 +1,7 @@
 ﻿#include "title.h"
 #include "sprite2d.h"
 #include "texture.h"
-#include "keyboard.h"
+#include "input_manager.h"
 #include "fade.h"
 #include "debug_ostream.h"
 #include "define.h"
@@ -61,8 +61,8 @@ void Title_Update(void)
 	g_pChangeSceneText->Update();
 	g_pDebugSceneText->Update();
 
-	//ClickFontがクリックされた
-	if (g_pChangeSceneText->IsClick())
+	//ClickFontがクリックされた、または決定ボタンが押された
+	if (g_pChangeSceneText->IsClick() || Input_IsActionTrigger(INPUT_ACTION_DECIDE))
 	{
 		SetSceneFade(SCENE_STAGESELECT);
 	}

@@ -36,6 +36,11 @@ private:
 	std::queue<JUDGE> m_PendingJudges;
 	std::queue<ORB_EVENT> m_PendingOrbEvents;
 
+	float m_FadeOutDuration = 0.0f;
+	float m_FadeOutTimer = 0.0f;
+	float m_FadeOutStartVolume = 1.0f;
+	bool  m_IsFadingOut = false;
+
 	float BeatToSpawnTime(float beat) const;
 	int   WallToFace(ScoreWall wall)  const;
 
@@ -59,4 +64,6 @@ public:
 
 	bool      HasPendingOrbEvent() const { return !m_PendingOrbEvents.empty(); }
 	ORB_EVENT PopPendingOrbEvent()       { ORB_EVENT e = m_PendingOrbEvents.front(); m_PendingOrbEvents.pop(); return e; }
+	bool  IsFinished() const;
+	void  StartBgmFadeOut(float durationSec);
 };

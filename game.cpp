@@ -6,8 +6,7 @@
 #include "debug_ostream.h"
 #include "font.h"
 #include "mouse.h"
-#include "keyboard.h"
-#include "gamepad.h"
+#include "input_manager.h"
 #include "model.h"
 #include "debugcamera.h"
 #include "debug_ui.h"
@@ -25,11 +24,20 @@
 
 using namespace DirectX;
 
+// ゲーム状態の定義
+enum class GameState {
+	PLAYING,
+	FINISHED_WAIT,    // 終了検知後、表示開始までの2秒待機中（何も表示しない）
+	FINISHED_DISPLAY, // 2秒経過後、ロゴ等を表示する終了演出中（2秒間表示して自動遷移）
+};
+
+static GameState      g_GameState = GameState::PLAYING;
+static float          g_FinishTimer = 0.0f;
+
 // ①インスタンス、ポインタ用意
 static Sprite2D* g_pGameSprite = nullptr;
 static ClickFont* g_pChangeSceneText = nullptr;
 static FontRenderer* g_pSelectedJsonText = nullptr;
-
 static Field*         g_pField         = nullptr;
 static Player*        g_pPlayer        = nullptr;
 static NoteManager*   g_pNoteManager   = nullptr;
@@ -41,6 +49,10 @@ void Game_Initialize(void)
 {
 	//int pad = Gamepad_FindConnectedPlayer();
 	//if (pad < 0)return;//デバック時必要なし
+
+  // 各状態の初期化
+	g_GameState   = GameState::PLAYING;
+	g_FinishTimer = 0.0f;
 
   //各種初期化
 	GameCamera::Init();
@@ -68,6 +80,30 @@ void Game_Initialize(void)
 
 void Game_Update(void)
 {
+	if (g_GameState == GameState::FINISHED_WAIT)
+	{
+		// 終了演出待機中：3秒間余韻を持たせる（黒フェードが徐々に表示される）
+		g_FinishTimer += dt;
+		if (g_FinishTimer >= 3.0f)
+		{
+			g_GameState = GameState::FINISHED_DISPLAY;
+			g_FinishTimer = 0.0f;
+
+			// UI側にロゴの表示開始を通知
+			g_pGameUI->ShowResultLogos();
+		}
+	}
+	else if (g_GameState == GameState::FINISHED_DISPLAY)
+	{
+		// 終了演出表示中：3秒間ロゴ等を表示し続け、3秒経過したら自動でリザルト画面へ遷移
+		g_FinishTimer += dt;
+		if (g_FinishTimer >= 3.0f)
+		{
+			SetResult(g_pStatusManager->GetResult());
+			SetSceneFade(SCENE_RESULT);
+		}
+	}
+
 	//3D
 	{
 		GameCamera::Update(g_pPlayer);
@@ -109,7 +145,27 @@ void Game_Update(void)
 		}
 	}*/
 
-	if (Keyboard_IsKeyDownTrigger(KK_ENTER)) {
+	// 状態更新
+	if (g_GameState == GameState::PLAYING)
+	{
+		bool isDead = g_pStatusManager->IsDead();
+		bool isFinished = g_pNoteManager->IsFinished();
+		if (isDead || isFinished)
+		{
+			g_GameState = GameState::FINISHED_WAIT;
+			g_FinishTimer = 0.0f;
+
+			// UI側に終了演出（フェードイン）開始を通知
+			bool isAllHit = (!isDead && g_pStatusManager->GetResult().misses == 0);
+			g_pGameUI->StartEndSequence(isDead, isAllHit);
+
+			// 6.0秒かけて音をフェードアウト
+			g_pNoteManager->StartBgmFadeOut(6.0f);
+		}
+	}
+
+	if (Input_IsActionTrigger(INPUT_ACTION_DEBUG_RESULT)) {
+		SetResult(g_pStatusManager->GetResult());
 		SetSceneFade(SCENE_RESULT);
 	}
 }
