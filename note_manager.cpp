@@ -367,7 +367,7 @@ JUDGE NoteManager::Judge(int lane, int face)
 	for (NoteBase* note : m_Notes)
 	{
 		if (!note->IsActive() || note->IsHit()) continue;
-		if (note->GetLaneIndex() != lane || note->GetFace() != face) continue;
+		if (!IsSameOrCornerPosition(note->GetLaneIndex(), note->GetFace(), lane, face)) continue;
 		if (dynamic_cast<OrbNote*>(note) || dynamic_cast<BarrierNote*>(note)) continue;
 		if (dynamic_cast<RopeHoldNote*>(note)) continue; // ロープホールドは別扱い
 		if (dynamic_cast<HoldNote*>(note)) continue;     // Hold本体は非対象（子ノートで判定）
@@ -498,7 +498,8 @@ bool NoteManager::CheckAndHitBarrier(int fromLane, int fromFace, int toLane, int
 	{
 		BarrierNote* barrier = dynamic_cast<BarrierNote*>(note);
 		if (!barrier || !barrier->IsActive() || barrier->IsHit()) continue;
-		if (barrier->GetLaneIndex() != fromLane || barrier->GetFace() != fromFace) continue;
+		// 回避成功判定のみ角ペアを許容（被弾判定は完全一致のまま）
+		if (!IsSameOrCornerPosition(barrier->GetLaneIndex(), barrier->GetFace(), fromLane, fromFace)) continue;
 
 		float dist = fabsf(barrier->GetPosZ() - HIT_ZONE_Z);
 		if (dist < HIT_WINDOW)

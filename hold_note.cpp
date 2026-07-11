@@ -107,7 +107,7 @@ EnemyNote* HoldNote::GetNearestActiveChild(int lane, int face) const
 	for (EnemyNote* child : m_ChildNotes)
 	{
 		if (!child->IsActive() || child->IsHit()) continue;
-		if (child->GetLaneIndex() != lane || child->GetFace() != face) continue;
+		if (!IsSameOrCornerPosition(child->GetLaneIndex(), child->GetFace(), lane, face)) continue;
 
 		float dist = fabsf(child->GetPosZ() - HOLD_HIT_ZONE_Z);
 		if (dist < minDist)
