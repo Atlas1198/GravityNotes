@@ -124,6 +124,15 @@ static void DrawRibbonQuad(XMFLOAT3 corners[4],
 
 // ==========================================================
 
+void RopeHoldNote::FinalizeSharedResources()
+{
+	if (g_RibbonVB)
+	{
+		g_RibbonVB->Release();
+		g_RibbonVB = nullptr;
+	}
+}
+
 void RopeHoldNote::Init(int startLane, int endLane, int startFace, int endFace,
                         float startZ, float endZ, float speed)
 {

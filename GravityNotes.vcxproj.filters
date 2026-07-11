@@ -136,10 +136,19 @@
     <ClCompile Include="enemy_note.cpp">
       <Filter>SCENE_GAME\cpp</Filter>
     </ClCompile>
+    <ClCompile Include="enemy_defeat_effect.cpp">
+      <Filter>SCENE_GAME\cpp</Filter>
+    </ClCompile>
     <ClCompile Include="barrier_note.cpp">
       <Filter>SCENE_GAME\cpp</Filter>
     </ClCompile>
     <ClCompile Include="orb_note.cpp">
+      <Filter>SCENE_GAME\cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="orb_collect_effect.cpp">
+      <Filter>SCENE_GAME\cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="particle_manager.cpp">
       <Filter>SCENE_GAME\cpp</Filter>
     </ClCompile>
     <ClCompile Include="light_game.cpp">
@@ -339,10 +348,19 @@
     <ClInclude Include="enemy_note.h">
       <Filter>SCENE_GAME\h</Filter>
     </ClInclude>
+    <ClInclude Include="enemy_defeat_effect.h">
+      <Filter>SCENE_GAME\h</Filter>
+    </ClInclude>
     <ClInclude Include="barrier_note.h">
       <Filter>SCENE_GAME\h</Filter>
     </ClInclude>
     <ClInclude Include="orb_note.h">
+      <Filter>SCENE_GAME\h</Filter>
+    </ClInclude>
+    <ClInclude Include="orb_collect_effect.h">
+      <Filter>SCENE_GAME\h</Filter>
+    </ClInclude>
+    <ClInclude Include="particle_manager.h">
       <Filter>SCENE_GAME\h</Filter>
     </ClInclude>
     <ClInclude Include="light_game.h">
@@ -442,6 +460,12 @@
     <FxCompile Include="shader\UnlitTextureVS.hlsl">
       <Filter>フレームワーク\シェーダー</Filter>
     </FxCompile>
+    <FxCompile Include="shader\ChromaKeyPS.hlsl">
+      <Filter>フレームワーク\シェーダー</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\ChromaKeyVS.hlsl">
+      <Filter>フレームワーク\シェーダー</Filter>
+    </FxCompile>
     <FxCompile Include="shader\VertexDirectionalLightingPS.hlsl">
       <Filter>フレームワーク\シェーダー</Filter>
     </FxCompile>
@@ -472,6 +496,8 @@
     <FxCompile Include="shader\OutlineVS.hlsl">
       <Filter>フレームワーク\シェーダー</Filter>
     </FxCompile>
+    <FxCompile Include="shader\BillboardShadowMapPS.hlsl" />
+    <FxCompile Include="shader\BillboardShadowMapVS.hlsl" />
     <FxCompile Include="shader\ShadowMapPS.hlsl">
       <Filter>フレームワーク\シェーダー</Filter>
     </FxCompile>

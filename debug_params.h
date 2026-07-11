@@ -12,6 +12,9 @@ struct DebugParams
     // プレイヤー
     float laneWidth         = 2.0f;   // レーン間の距離 (units)
     float gravityTransTime  = 0.3f;   // 重力移動にかかる時間 (sec)
+    float damageFlashColor[4] = { 1.0f, 0.1f, 0.1f, 1.0f };
+    float damageFlashDuration = 0.7f; // ダメージ点滅の合計時間 (sec)
+    float damageFlashInterval = 0.08f;// 通常色/点滅色の切替間隔 (sec)
 
     // スコア
     int   baseScore         = 100;    // 1ヒットあたりの基本スコア

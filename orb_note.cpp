@@ -10,6 +10,7 @@ namespace
 	const float ORB_ANIM_FPS     = 18.0f;
 	const XMFLOAT2 ORB_BILLBOARD_SIZE = { 2.0f, 2.0f };
 	const float ORB_DRAW_Y_OFFSET    = 1.0f;
+	const float ORB_SHADOW_FORWARD_OFFSET = 1.5f; // 影だけプレイヤー進行方向(+Z)へずらす
 }
 
 OrbNote::~OrbNote()
@@ -69,6 +70,26 @@ void OrbNote::Draw()
 {
 	if (m_pBillboard)
 		m_pBillboard->Draw();
+}
+
+void OrbNote::DrawShadowMap(const XMMATRIX& lightView, const XMMATRIX& lightProjection)
+{
+	if (m_pBillboard)
+	{
+		XMFLOAT3 originalPos = m_pBillboard->GetPos();
+		XMFLOAT3 shadowPos = originalPos;
+		shadowPos.z += ORB_SHADOW_FORWARD_OFFSET;
+		m_pBillboard->SetPos(shadowPos);
+		m_pBillboard->DrawShadowMap(lightView, lightProjection);
+		m_pBillboard->SetPos(originalPos);
+	}
+}
+
+float OrbNote::GetDrawDepth(const XMMATRIX& view) const
+{
+	XMFLOAT3 drawPos = GetOffsetPos();
+	XMVECTOR viewPos = XMVector3TransformCoord(XMLoadFloat3(&drawPos), view);
+	return XMVectorGetZ(viewPos);
 }
 
 XMFLOAT3 OrbNote::GetOffsetPos() const

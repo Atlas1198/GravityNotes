@@ -120,11 +120,6 @@ void GameCamera::Update(Player* player) {
 			GetCamera()->UpdateView(s_Instance->m_Pos, s_Instance->m_AtPos);
 		}
 	}
-
-	if (Keyboard_IsKeyDownTrigger(KK_ESCAPE))
-	{
-		SetSceneFade(SCENE_TITLE);
-	}
 }
 
 void GameCamera::Draw() {

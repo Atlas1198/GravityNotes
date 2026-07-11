@@ -8,6 +8,10 @@
 #include "hold_note.h"
 #include "rainbow_note.h"
 #include "debug_params.h"
+#include "enemy_defeat_effect.h"
+#include "orb_collect_effect.h"
+#include "camera.h"
+#include <algorithm>
 
 static const float HIT_ZONE_Z     = 3.0f;
 static const float PASSIVE_ZONE_Z = 0.5f; // Orb・Barrier の自動判定Z
@@ -27,6 +31,16 @@ float NoteManager::BeatToSpawnTime(float beat) const
 	return hitTime - travelTime;
 }
 
+float NoteManager::BeatToSeconds(float beat) const
+{
+	return beat * 60.0f / m_ScoreData.bpm;
+}
+
+float NoteManager::BeatToZ(float beat) const
+{
+	return (BeatToSeconds(beat) - m_ElapsedTime) * m_NoteSpeed + HIT_ZONE_Z;
+}
+
 int NoteManager::WallToFace(ScoreWall wall) const
 {
 	switch (wall)
@@ -39,8 +53,27 @@ int NoteManager::WallToFace(ScoreWall wall) const
 	}
 }
 
+JUDGE NoteManager::JudgeByDistance(NoteBase* note, float targetZ)
+{
+	float dist = fabsf(note->GetPosZ() - targetZ);
+	if (dist >= HIT_WINDOW) return JUDGE_NONE;
+
+	// エネミーが消える前の座標を使って撃破パーティクルを生成する。
+	if (m_pEnemyDefeatEffect && dynamic_cast<EnemyNote*>(note))
+		m_pEnemyDefeatEffect->Spawn(note->GetPos(), note->GetFace());
+
+	note->OnHit();
+	return JUDGE_HIT;
+}
+
 void NoteManager::Init(const std::string& scoreFilePath)
 {
+	// 撃破エフェクトはNoteManagerが生成から解放まで所有する。
+	if (!m_pEnemyDefeatEffect)
+		m_pEnemyDefeatEffect = new EnemyDefeatEffect();
+	if (!m_pOrbCollectEffect)
+		m_pOrbCollectEffect = new OrbCollectEffect();
+
 	m_NoteSpeed      = 10.0f;
 	m_SpawnZ         = 80.0f;
 	m_ElapsedTime    = -3.0f;
@@ -53,7 +86,7 @@ void NoteManager::Init(const std::string& scoreFilePath)
 
 	m_ScoreData = LoadScore(scoreFilePath);
 
-	std::string bgmPath = "asset\\sound\\bgm\\" + m_ScoreData.music;
+	std::string bgmPath = "asset/score/" + m_ScoreData.music;
 	m_pBgmData = LoadMP3(bgmPath);
 	m_pOrbGetsSe = LoadMP3("asset/sound/se/orbgets.wav");
 	m_pRainbowSe = LoadMP3("asset/sound/se/Rainbow.wav");
@@ -166,20 +199,6 @@ void NoteManager::Update(int playerLane, int playerFace)
 	{
 		m_Notes[i]->Update();
 
-		if (RopeHoldNote* rope = dynamic_cast<RopeHoldNote*>(m_Notes[i]))
-		{
-			if (rope->GetState() == RopeHoldNote::State::HOLDING)
-			{
-				unsigned __int64 samples = 0;
-				if (m_pBgmData && m_pBgmData->pSourceVoice)
-				{
-					XAUDIO2_VOICE_STATE state = {};
-					m_pBgmData->pSourceVoice->GetState(&state);
-					samples = state.SamplesPlayed;
-				}
-			}
-		}
-
 		if (!m_Notes[i]->IsHit())
 		{
 			float z = m_Notes[i]->GetPosZ();
@@ -194,6 +213,9 @@ void NoteManager::Update(int playerLane, int playerFace)
 					if (m_Notes[i]->GetLaneIndex() == playerLane &&
 						m_Notes[i]->GetFace()      == playerFace)
 					{
+						// Orbが消える前の表示座標から取得パーティクルを生成する。
+						if (m_pOrbCollectEffect)
+							m_pOrbCollectEffect->Spawn(orb->GetEffectPosition(), orb->GetFace());
 						orb->OnHit();
 						m_PendingOrbEvents.push(ORB_EVENT_HIT);
 						if (m_pOrbGetsSe != nullptr)
@@ -299,36 +321,54 @@ void NoteManager::Update(int playerLane, int playerFace)
 			m_RainbowSePlaying = false;
 		}
 	}
+
+	// ノーツが消えた後も、残っている粒子は寿命まで更新する。
+	if (m_pEnemyDefeatEffect)
+		m_pEnemyDefeatEffect->Update(dt);
+	if (m_pOrbCollectEffect)
+		m_pOrbCollectEffect->Update(dt);
 }
 
 void NoteManager::Draw()
 {
-	// Orb（ビルボード、SetWallFadeEnabled(false)によりデプス書き込み無効）は
-	// 挿入順（スポーン順）のまま不透明ノーツと混在して描画すると、
-	// 後から描かれる不透明ノーツがデプス書き込みされていないOrbを塗りつぶしてしまい、
-	// 実際は手前にあるOrbが奥のEnemy等に隠れて見える不具合が起きる。
-	// 不透明ノーツを先にすべて描画してデプスバッファを確定させてから、
-	// Orbを最後に描画することで正しい前後関係を保証する。
+	std::vector<OrbNote*> sortedOrbs;
+	sortedOrbs.reserve(m_Notes.size());
+
+	// 不透明ノーツを先に描き、透過Orbは深度ソート用に分ける。
 	for (NoteBase* note : m_Notes)
 	{
-		if (dynamic_cast<OrbNote*>(note)) continue;
-		note->Draw();
-	}
-	for (NoteBase* note : m_Notes)
-	{
-		if (dynamic_cast<OrbNote*>(note))
+		if (OrbNote* orb = dynamic_cast<OrbNote*>(note))
+			sortedOrbs.push_back(orb);
+		else
 			note->Draw();
 	}
+
+	const XMMATRIX view = GetCamera()->GetView();
+	std::stable_sort(
+		sortedOrbs.begin(),
+		sortedOrbs.end(),
+		[&view](const OrbNote* lhs, const OrbNote* rhs)
+		{
+			return lhs->GetDrawDepth(view) > rhs->GetDrawDepth(view);
+		});
+	for (OrbNote* orb : sortedOrbs)
+		orb->Draw();
+
+	// ノーツより後に描き、撃破エフェクトを手前へ見せる。
+	if (m_pEnemyDefeatEffect)
+		m_pEnemyDefeatEffect->Draw();
+	if (m_pOrbCollectEffect)
+		m_pOrbCollectEffect->Draw();
 }
 
 void NoteManager::DrawShadowMapForFace(int face, const XMMATRIX& lightView, const XMMATRIX& lightProjection)
 {
-	// 影を落とすのは Enemy ノーツのみ。指定された面にいるものだけ描く。
+	// 指定された面のEnemyモデルとOrbビルボードをShadowMapへ描く。
 	for (NoteBase* note : m_Notes)
 	{
 		if (!note->IsActive() || note->IsHit()) continue;
 		if (note->GetFace() != face) continue;
-		if (dynamic_cast<EnemyNote*>(note))
+		if (dynamic_cast<EnemyNote*>(note) || dynamic_cast<OrbNote*>(note))
 		{
 			note->DrawShadowMap(lightView, lightProjection);
 		}
@@ -356,6 +396,11 @@ void NoteManager::Finalize()
 	for (NoteBase* note : m_Notes)
 		delete note;
 	m_Notes.clear();
+	delete m_pEnemyDefeatEffect;
+	m_pEnemyDefeatEffect = nullptr;
+	delete m_pOrbCollectEffect;
+	m_pOrbCollectEffect = nullptr;
+	RopeHoldNote::FinalizeSharedResources();
 }
 
 JUDGE NoteManager::Judge(int lane, int face)
@@ -382,14 +427,7 @@ JUDGE NoteManager::Judge(int lane, int face)
 
 	if (bestNote)
 	{
-		JUDGE j = JUDGE_NONE;
-		if (bestDist < HIT_WINDOW) { bestNote->OnHit(); j = JUDGE_HIT; }
-
-		if (j != JUDGE_NONE)
-		{
-			return j;
-		}
-		return JUDGE_NONE;
+		return JudgeByDistance(bestNote, HIT_ZONE_Z);
 	}
 
 	// HoldNote（連撃）の最初の一撃はKeyTriggerで取る
@@ -401,8 +439,8 @@ JUDGE NoteManager::Judge(int lane, int face)
 		EnemyNote* child = hold->GetNearestActiveChild(lane, face);
 		if (!child) continue;
 
-		float dist = fabsf(child->GetPosZ() - HIT_ZONE_Z);
-		if (dist < HIT_WINDOW) { child->OnHit(); return JUDGE_HIT; }
+		JUDGE j = JudgeByDistance(child, HIT_ZONE_Z);
+		if (j != JUDGE_NONE) return j;
 	}
 
 	return JUDGE_NONE;
@@ -442,8 +480,8 @@ JUDGE NoteManager::JudgeHold(int lane, int face)
 		EnemyNote* child = hold->GetNearestActiveChild(lane, face);
 		if (!child) continue;
 
-		float dist = fabsf(child->GetPosZ() - HIT_ZONE_Z);
-		if (dist < HIT_WINDOW) { child->OnHit(); return JUDGE_HIT; }
+		JUDGE j = JudgeByDistance(child, HIT_ZONE_Z);
+		if (j != JUDGE_NONE) return j;
 	}
 	return JUDGE_NONE; // HoldNote が存在しない／範囲外のときは何もしない
 }
@@ -480,6 +518,11 @@ bool NoteManager::IsFinished() const
 
 void NoteManager::StartBgmFadeOut(float durationSec)
 {
+	if (durationSec <= 0.0f)
+	{
+		durationSec = dt;
+	}
+
 	m_IsFadingOut = true;
 	m_FadeOutDuration = durationSec;
 	m_FadeOutTimer = 0.0f;

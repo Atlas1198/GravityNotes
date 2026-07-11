@@ -8,6 +8,17 @@
 #include "player.h"
 #include "rainbow_note.h"
 #include "sound.h"
+#include "debug_params.h"
+
+namespace
+{
+	float NormalizeAngleDelta(float angle)
+	{
+		while (angle > 180.0f) angle -= 360.0f;
+		while (angle < -180.0f) angle += 360.0f;
+		return angle;
+	}
+}
 
 void Player::Init(NoteManager* nm, StatusManager* sm)
 {
@@ -35,6 +46,8 @@ void Player::Init(NoteManager* nm, StatusManager* sm)
 
 	m_IsEffectSlashActive = false;
 	m_IsOverridePlaying = false;
+	m_DamageFlashRemaining = 0.0f;
+	m_DamageFlashElapsed = 0.0f;
 	m_pEffectSlash = new SplitBilBoard(
 		4, 4,
 		{ 0.0f, 0.5f, 0.0f },
@@ -67,33 +80,36 @@ void Player::Init(NoteManager* nm, StatusManager* sm)
 	m_pKaihiSe = LoadMP3("asset/sound/se/kaihi.wav");
 }
 
-//仮置き
-static int GetTriggeredAnimationSlot()
-{
-	/*static const Keyboard_Keys keys[] = {
-		KK_D5,
-		KK_D6,
-		KK_D7,
-		KK_D8,
-		KK_D9,
-		KK_D0,
-	};
-
-	for (int i = 0; i < (int)ARRAYSIZE(keys); i++)
-	{
-		if (Keyboard_IsKeyDownTrigger(keys[i]))
-		{
-			return i;
-		}
-	}*/
-
-	return -1;
-}
-
-
 void Player::Update()
 {
 	// pad変数とGetGamePad()は不要になったため削除しました
+	if (m_DamageFlashRemaining > 0.0f)
+	{
+		m_DamageFlashRemaining -= dt;
+		m_DamageFlashElapsed += dt;
+		if (m_DamageFlashRemaining <= 0.0f)
+		{
+			m_DamageFlashRemaining = 0.0f;
+			m_DamageFlashElapsed = 0.0f;
+		}
+	}
+
+	auto processJudge = [this](JUDGE result, bool isHold)
+	{
+		if (result == JUDGE_NONE)
+			return;
+
+		if (isHold)
+			m_pStatusManager->OnJudgeHold(result);
+		else
+			m_pStatusManager->OnJudge(result);
+
+		if (result == JUDGE_MISS)
+		{
+			m_DamageFlashRemaining = D_PARAMS.damageFlashDuration;
+			m_DamageFlashElapsed = 0.0f;
+		}
+	};
 
 	RopeHoldNote* holdingRope = m_pNoteManager->GetHoldingRope();
 
@@ -117,9 +133,7 @@ void Player::Update()
 		// 開始面から終了面へ回転を補間
 		float rotStart = CalcFaceTargetRot(startFace).z;
 		float rotEnd   = CalcFaceTargetRot(endFace).z;
-		float diff = rotEnd - rotStart;
-		while (diff >  180.0f) diff -= 360.0f;
-		while (diff < -180.0f) diff += 360.0f;
+		float diff = NormalizeAngleDelta(rotEnd - rotStart);
 		m_Rotation.z = rotStart + diff * t;
 	}
 	else
@@ -184,17 +198,6 @@ void Player::Update()
 			m_Position.x = m_GravityStartPos.x + (m_TargetPos.x - m_GravityStartPos.x) * eased;
 			m_Position.y = m_GravityStartPos.y + (m_TargetPos.y - m_GravityStartPos.y) * eased;
 			m_Rotation.z = m_GravityStartRot.z + (m_TargetRot.z - m_GravityStartRot.z) * eased;
-		}
-	}
-
-	int animSlot = GetTriggeredAnimationSlot();
-	unsigned int animCount = GetAnimationCount();
-
-	if (animSlot >= 0 && (unsigned int)animSlot < animCount)
-	{
-		if (PlayAnimationByIndex((unsigned int)animSlot, true))
-		{
-			UpdateAnimation(dt);
 		}
 	}
 
@@ -280,8 +283,7 @@ void Player::Update()
 
 		// 押した瞬間（KeyTrigger）：Enemy・Hold(最初の一撃) 判定
 		JUDGE result = m_pNoteManager->Judge(m_LaneIndex, m_GravityFace);
-		if (result != JUDGE_NONE)
-			m_pStatusManager->OnJudge(result);
+		processJudge(result, false);
 
 		if (result == JUDGE_HIT)
 		{
@@ -302,8 +304,7 @@ void Player::Update()
 		// 押している間（KeyDown、トリガーの瞬間も含む）：
 		// HoldNote 継続判定 / RopeHoldNote の活性化・継続判定
 		JUDGE result = m_pNoteManager->JudgeHold(m_LaneIndex, m_GravityFace);
-		if (result != JUDGE_NONE)
-			m_pStatusManager->OnJudgeHold(result);
+		processJudge(result, true);
 
 		if (result == JUDGE_HIT)
 		{
@@ -314,13 +315,12 @@ void Player::Update()
 	{
 		// ボタンを離した瞬間：RopeHoldNote の途中離し判定
 		JUDGE result = m_pNoteManager->OnButtonRelease(m_LaneIndex, m_GravityFace);
-		if (result != JUDGE_NONE)
-			m_pStatusManager->OnJudge(result);
+		processJudge(result, false);
 	}
 
 	// RopeHoldNote 完了など、非同期で積まれた判定を処理
 	while (m_pNoteManager->HasPendingJudge())
-		m_pStatusManager->OnJudge(m_pNoteManager->PopPendingJudge());
+		processJudge(m_pNoteManager->PopPendingJudge(), false);
 
 	// Orb: スコア・コンボは変化させずHP回復/取り逃し数のみ反映
 	while (m_pNoteManager->HasPendingOrbEvent())
@@ -348,9 +348,24 @@ void Player::Draw()
 	// プレイヤーを描く直前に3点照明を適用する。
 	// PBRシェーダー(S_PBR)のみが参照するため、Playerだけがこの照明で描かれる。
 	m_ThreePointLight.Apply(m_Position, m_Rotation);
+	const float flashInterval = (D_PARAMS.damageFlashInterval > 0.0f)
+		? D_PARAMS.damageFlashInterval
+		: dt;
+	const bool useDamageColor = m_DamageFlashRemaining > 0.0f &&
+		(static_cast<int>(m_DamageFlashElapsed / flashInterval) % 2 == 0);
+	if (useDamageColor)
+	{
+		const float* color = D_PARAMS.damageFlashColor;
+		SetMaterialOverrideColor({ color[0], color[1], color[2], color[3] });
+	}
+	else
+	{
+		ResetMaterialOverride();
+	}
 
 	UpdateBoneMatrices();
 	AnimSprite3D::Draw();
+	ResetMaterialOverride();
 
 	if (m_pEffectSlash && m_IsEffectSlashActive)
 	{
@@ -419,9 +434,7 @@ void Player::ChangeGravity(int targetFace)
 	m_TargetRot = CalcFaceTargetRot(targetFace);
 
 	// 回転を最短経路で補間するため差分を[-180, 180]に正規化
-	float diff = m_TargetRot.z - m_GravityStartRot.z;
-	while (diff > 180.0f)  diff -= 360.0f;
-	while (diff < -180.0f) diff += 360.0f;
+	float diff = NormalizeAngleDelta(m_TargetRot.z - m_GravityStartRot.z);
 	m_TargetRot.z = m_GravityStartRot.z + diff;
 
 	m_GravityTimer = 0.0f;

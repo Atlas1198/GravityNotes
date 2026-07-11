@@ -12,12 +12,42 @@
 #include "scoresummaryloader.h"
 #include "scene.h"
 #include "MultiLineFontRenderer.h"
+//#include "keyboard.h"
 #include <sstream>
 #include <iomanip>
 #include "imgui/imgui.h"
 #include <string>
+#include <fstream>
 
 using namespace DirectX;
+
+// UTF-8からワイド文字列への変換
+static std::wstring Utf8ToWide(const std::string& utf8Str)
+{
+	if (utf8Str.empty()) return L"";
+	int size_needed = MultiByteToWideChar(CP_UTF8, 0, utf8Str.c_str(), -1, nullptr, 0);
+	if (size_needed <= 0) return L"";
+	std::wstring wstr(size_needed - 1, 0);
+	MultiByteToWideChar(CP_UTF8, 0, utf8Str.c_str(), -1, &wstr[0], size_needed);
+	return wstr;
+}
+
+// ファイル存在確認ヘルパー
+static bool FileExists(const std::string& path)
+{
+	std::ifstream f(path.c_str());
+	return f.good();
+}
+
+// サムネイル画像のパス解決（存在しない場合はデフォルト）
+static std::wstring GetThumbnailPath(const std::string& thumbnail)
+{
+	std::string path = "asset\\score\\" + thumbnail;
+	if (thumbnail.empty() || !FileExists(path)) {
+		path = "asset\\texture\\notfound_thumbnail.png";
+	}
+	return Utf8ToWide(path);
+}
 
 enum ResultRank
 {
@@ -42,9 +72,19 @@ struct ShowResult
 // ①インスタンス、ポインタ用意
 static Sprite2D* g_pResultBG = nullptr;
 static Sprite2D* g_pResultBackUI = nullptr;
+static Sprite2D* g_pThumbnailSprite = nullptr;
 static ClickFont* g_pChangeSceneText = nullptr;
 static ScoreSummary g_ScoreSummary;
 static ShowResult g_ShowResult;
+
+// SE用サウンドデータ
+static SoundData* g_pSEScoreSubtitle = nullptr;
+static SoundData* g_pSEScoreUp = nullptr;
+static SoundData* g_pSEScoreUpZyan = nullptr;
+static SoundData* g_pSEHyoukaTyuin = nullptr;
+static float g_SEScoreUpZyanOffset = 0.0f;
+static SoundData* g_pResultBGM = nullptr;
+static float g_ResultBGMVolumeScale = 0.2f;
 
 static FontRenderer* g_pMusicTexts[4] = { nullptr };
 static MultiLineFontRenderer* g_pAuthorFont = nullptr;
@@ -142,6 +182,16 @@ void Result_Initialize(void)
 		{ 1.0f, 1.0f, 1.0f, 1.0f },
 		BLENDSTATE_ALFA,
 		L"asset\\texture\\Result_Back_UI.png"
+	);
+
+	std::wstring thumbPath = GetThumbnailPath(g_ScoreSummary.thumbnail);
+	g_pThumbnailSprite = new Sprite2D(
+		{ 180.0f, 180.0f },
+		{ 150.0f, 150.0f },
+		0.0f,
+		{ 1.0f, 1.0f, 1.0f, 1.0f },
+		BLENDSTATE_ALFA,
+		thumbPath.c_str()
 	);
 
 	g_pNextSceneTexture = new Sprite2D(
@@ -268,27 +318,98 @@ void Result_Initialize(void)
 	g_CountUpTimer = 0.0f;
 	g_ResultSceneTimer = 0.0f;
 
+	// SEの読み込み
+	g_pSEScoreSubtitle = LoadMP3("asset/sound/se/score_subtitle.mp3");
+	g_pSEScoreUp       = LoadMP3("asset/sound/se/scoreup.mp3");
+	g_pSEScoreUpZyan   = LoadMP3("asset/sound/se/scoreup_zyan.mp3");
+	g_pSEHyoukaTyuin   = LoadMP3("asset/sound/se/hyouka_tyui-n.mp3");
+
+	// BGMの読み込みと再生
+	if (!g_ScoreSummary.music.empty())
+	{
+		std::string bgmPath = "asset/score/" + g_ScoreSummary.music;
+		g_pResultBGM = LoadMP3(bgmPath);
+		if (g_pResultBGM)
+		{
+			g_ResultBGMVolumeScale = 0.2f;
+			PlaySound(g_pResultBGM, true, g_ResultBGMVolumeScale);
+		}
+	}
+
 	UnLockMouse();//マウスアンロック
 }
 
 void Result_Update(void)
 {
+	// シーン移動時（フェードアウト中）にBGM音量をフェードアウトさせる
+	if (GetFadeState() == FADE_OUT && g_pResultBGM && g_pResultBGM->pSourceVoice)
+	{
+		g_ResultBGMVolumeScale -= 0.01f;
+		if (g_ResultBGMVolumeScale < 0.0f)
+		{
+			g_ResultBGMVolumeScale = 0.0f;
+		}
+		// ボリュームの動的適用
+		float baseVolume = g_pResultBGM->isBGM ? SOUND_BGM_VOLUME : SOUND_SE_VOLUME;
+		float currentVolume = baseVolume * g_ResultBGMVolumeScale;
+		if (currentVolume < 0.0f) currentVolume = 0.0f;
+		if (currentVolume > 1.0f) currentVolume = 1.0f;
+		g_pResultBGM->pSourceVoice->SetVolume(currentVolume);
+	}
+
+	// フェード処理中は更新を行わない
+	if (GetFadeState() != FADE_NONE)
+	{
+		return;
+	}
+
 	//③処理
 	g_pChangeSceneText->Update();
 
 	// デバッグ用: Rキーでアニメーションをリスタート（直接インクルード削除に伴いコメントアウト）
-	/*if (Keyboard_IsKeyDownTrigger(KK_R))
+	//if (Keyboard_IsKeyDownTrigger(KK_R))
+	//{
+	//	// 既存のタイマーリセット（g_CountUpTimerは廃止してもOK）
+	//	g_ResultSceneTimer = 0.0f;
+
+	//	// 初期座標リセット
+	//	for (int i = 0; i < MAX_ROWS; ++i) {
+	//		g_ResultRows[i].currentX = 100.0f; // startX
+	//		g_ResultRows[i].valueStr = ""; // 表示リセット
+	//	}
+	//}
+
+
+	// 各種演出SEの再生判定 (g_ResultSceneTimer 加算前)
+	for (int i = 0; i < MAX_ROWS; ++i)
 	{
-		// 既存のタイマーリセット（g_CountUpTimerは廃止してもOK）
-		g_ResultSceneTimer = 0.0f;
-
-		// 初期座標リセット
-		for (int i = 0; i < MAX_ROWS; ++i) {
-			g_ResultRows[i].currentX = 100.0f; // startX
-			g_ResultRows[i].valueStr = ""; // 表示リセット
+		float labelStartTime = i * ROW_DELAY;
+		if (g_ResultSceneTimer == labelStartTime)
+		{
+			PlaySound(g_pSEScoreSubtitle);
 		}
-	}*/
+	}
 
+	float firstValueStartTime = (MAX_ROWS * ROW_DELAY) + VALUE_START_DELAY;
+	if (g_ResultSceneTimer == firstValueStartTime)
+	{
+		PlaySound(g_pSEScoreUp, false);
+	}
+
+	//// 各行の確定タイミングで scoreup_zyan を再生
+	//for (int i = 0; i < MAX_ROWS; ++i)
+	//{
+	//	float valueEndTime = (MAX_ROWS * ROW_DELAY) + VALUE_START_DELAY + (i * ROW_DELAY) + COUNT_UP_MAX_TIME + g_SEScoreUpZyanOffset;
+	//	if (g_ResultSceneTimer == valueEndTime)
+	//	{
+	//		PlaySound(g_SpSEScoreUpZyan);
+	//	}
+	//}
+
+	if (g_ResultSceneTimer == RANK_ANIM_START_TIME)
+	{
+		PlaySound(g_pSEHyoukaTyuin);
+	}
 
 	g_ResultSceneTimer += 1.0f;
 
@@ -368,6 +489,7 @@ void Result_Draw(void)
 	//④描画
 	g_pResultBG->Draw();
 	g_pResultBackUI->Draw();
+	if (g_pThumbnailSprite) g_pThumbnailSprite->Draw();
 	g_pRankTextre->Draw();
 	g_pNextSceneTexture->Draw();
 	g_pChangeSceneText->Draw();
@@ -406,6 +528,7 @@ void Result_Finalize(void)
 	//⑤解放
 	SAFE_DELETE(g_pResultBG);
 	SAFE_DELETE(g_pResultBackUI);
+	SAFE_DELETE(g_pThumbnailSprite);
 	SAFE_DELETE(g_pChangeSceneText);
 	for (int i = 0; i < 4; ++i) {
 		SAFE_DELETE(g_pMusicTexts[i]);
@@ -415,9 +538,24 @@ void Result_Finalize(void)
 	SAFE_DELETE(g_pLabelFont);
 	SAFE_DELETE(g_pValueFont);
 	SAFE_DELETE(g_pAuthorFont);
-	SAFE_DELETE(g_pRankTextre);
 	SAFE_DELETE(g_pNextSceneTexture);
 
+	// SEの解放
+	UnloadSound(g_pSEScoreSubtitle);
+	g_pSEScoreSubtitle = nullptr;
+	UnloadSound(g_pSEScoreUp);
+	g_pSEScoreUp = nullptr;
+	UnloadSound(g_pSEScoreUpZyan);
+	g_pSEScoreUpZyan = nullptr;
+	UnloadSound(g_pSEHyoukaTyuin);
+	g_pSEHyoukaTyuin = nullptr;
+
+	if (g_pResultBGM)
+	{
+		StopSound(g_pResultBGM);
+		UnloadSound(g_pResultBGM);
+		g_pResultBGM = nullptr;
+	}
 }
 
 void Result_DebugUIDraw(void)
@@ -433,6 +571,9 @@ void Result_DebugUIDraw(void)
 				g_pChangeSceneText->SetPos({ pos[0], pos[1] });
 			}
 		}
+	}
+	if (ImGui::CollapsingHeader("SE Settings")) {
+		ImGui::DragFloat("ScoreUpZyan Offset (Frames)", &g_SEScoreUpZyanOffset, 1.0f, -600.0f, 600.0f, "%.0f");
 	}
 	ImGui::End();
 }

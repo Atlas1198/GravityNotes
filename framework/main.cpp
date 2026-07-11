@@ -238,18 +238,18 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 
 				if(pad<0) pad = Gamepad_FindConnectedPlayer();
 
-				// ウィンドウ操作（論理ステップ内で判定：keycopy後に正しいトリガーを参照できる）
-				// Alt+Enterで全画面切り替え
-				if (Keyboard_IsKeyDown(KK_LEFTALT) || Keyboard_IsKeyDown(KK_RIGHTALT))
-				{
-					if (Keyboard_IsKeyDownTrigger(KK_ENTER))
-					{
-						// 全画面切り替え処理
-						static bool isFullScreen = false;
-						isFullScreen = !isFullScreen;
-						IDXGISwapChain* pSwapChain = nullptr;
-					}
-				}
+				//// ウィンドウ操作（論理ステップ内で判定：keycopy後に正しいトリガーを参照できる）
+				//// Alt+Enterで全画面切り替え
+				//if (Keyboard_IsKeyDown(KK_LEFTALT) || Keyboard_IsKeyDown(KK_RIGHTALT))
+				//{
+				//	if (Keyboard_IsKeyDownTrigger(KK_ENTER))
+				//	{
+				//		// 全画面切り替え処理
+				//		static bool isFullScreen = false;
+				//		isFullScreen = !isFullScreen;
+				//		IDXGISwapChain* pSwapChain = nullptr;
+				//	}
+				//}
 
 				// F11キーでボーダレスウィンドウ切り替え
 				if (Keyboard_IsKeyDownTrigger(KK_F11))
