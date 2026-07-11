@@ -168,6 +168,7 @@
     <ClCompile Include="debugscene\debugrigplayer.cpp" />
     <ClCompile Include="debug_ui.cpp" />
     <ClCompile Include="enemy_note.cpp" />
+    <ClCompile Include="enemy_defeat_effect.cpp" />
     <ClCompile Include="field.cpp" />
     <ClCompile Include="framework\anim_sprite3d.cpp" />
     <ClCompile Include="framework\billboard.cpp" />
@@ -210,6 +211,7 @@
     <ClCompile Include="note_base.cpp" />
     <ClCompile Include="note_manager.cpp" />
     <ClCompile Include="orb_note.cpp" />
+    <ClCompile Include="particle_manager.cpp" />
     <ClCompile Include="player.cpp" />
     <ClCompile Include="three_point_light.cpp" />
     <ClCompile Include="result.cpp" />
@@ -238,6 +240,7 @@
     <ClInclude Include="debug_ui.h" />
     <ClInclude Include="define.h" />
     <ClInclude Include="enemy_note.h" />
+    <ClInclude Include="enemy_defeat_effect.h" />
     <ClInclude Include="field.h" />
     <ClInclude Include="framework\anim_sprite3d.h" />
     <ClInclude Include="framework\billboard.h" />
@@ -288,6 +291,7 @@
     <ClInclude Include="note_base.h" />
     <ClInclude Include="note_manager.h" />
     <ClInclude Include="orb_note.h" />
+    <ClInclude Include="particle_manager.h" />
     <ClInclude Include="player.h" />
     <ClInclude Include="three_point_light.h" />
     <ClInclude Include="rainbow_note.h" />

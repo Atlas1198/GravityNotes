@@ -8,6 +8,7 @@
 #include "hold_note.h"
 #include "rainbow_note.h"
 #include "debug_params.h"
+#include "enemy_defeat_effect.h"
 
 static const float HIT_ZONE_Z     = 3.0f;
 static const float PASSIVE_ZONE_Z = 0.5f; // Orb・Barrier の自動判定Z
@@ -48,21 +49,25 @@ int NoteManager::WallToFace(ScoreWall wall) const
 JUDGE NoteManager::JudgeByDistance(NoteBase* note, float targetZ)
 {
 	float dist = fabsf(note->GetPosZ() - targetZ);
-	if (dist < PERFECT_WINDOW)
-	{
-		note->OnHit();
-		return JUDGE_PERFECT;
-	}
-	if (dist < GOOD_WINDOW)
-	{
-		note->OnHit();
-		return JUDGE_GOOD;
-	}
-	return JUDGE_NONE;
+	JUDGE result = JUDGE_NONE;
+	if (dist < PERFECT_WINDOW) result = JUDGE_PERFECT;
+	else if (dist < GOOD_WINDOW) result = JUDGE_GOOD;
+	if (result == JUDGE_NONE) return result;
+
+	// エネミーが消える前の座標を使って撃破パーティクルを生成する。
+	if (m_pEnemyDefeatEffect && dynamic_cast<EnemyNote*>(note))
+		m_pEnemyDefeatEffect->Spawn(note->GetPos(), note->GetFace());
+
+	note->OnHit();
+	return result;
 }
 
 void NoteManager::Init(const std::string& scoreFilePath)
 {
+	// 撃破エフェクトはNoteManagerが生成から解放まで所有する。
+	if (!m_pEnemyDefeatEffect)
+		m_pEnemyDefeatEffect = new EnemyDefeatEffect();
+
 	m_NoteSpeed      = 10.0f;
 	m_SpawnZ         = 80.0f;
 	m_ElapsedTime    = -3.0f;
@@ -296,12 +301,19 @@ void NoteManager::Update(int playerLane, int playerFace)
 			m_RainbowSePlaying = false;
 		}
 	}
+
+	// ノーツが消えた後も、残っている粒子は寿命まで更新する。
+	if (m_pEnemyDefeatEffect)
+		m_pEnemyDefeatEffect->Update(dt);
 }
 
 void NoteManager::Draw()
 {
 	for (NoteBase* note : m_Notes)
 		note->Draw();
+	// ノーツより後に描き、撃破エフェクトを手前へ見せる。
+	if (m_pEnemyDefeatEffect)
+		m_pEnemyDefeatEffect->Draw();
 }
 
 void NoteManager::DrawShadowMapForFace(int face, const XMMATRIX& lightView, const XMMATRIX& lightProjection)
@@ -339,6 +351,8 @@ void NoteManager::Finalize()
 	for (NoteBase* note : m_Notes)
 		delete note;
 	m_Notes.clear();
+	delete m_pEnemyDefeatEffect;
+	m_pEnemyDefeatEffect = nullptr;
 	RopeHoldNote::FinalizeSharedResources();
 }
 
