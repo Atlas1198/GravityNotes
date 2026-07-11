@@ -80,7 +80,7 @@ void NoteManager::Init(const std::string& scoreFilePath)
 
 	m_ScoreData = LoadScore(scoreFilePath);
 
-	std::string bgmPath = "asset\\sound\\bgm\\" + m_ScoreData.music;
+	std::string bgmPath = "asset/score/" + m_ScoreData.music;
 	m_pBgmData = LoadMP3(bgmPath);
 	m_pOrbGetsSe = LoadMP3("asset/sound/se/orbgets.wav");
 	m_pRainbowSe = LoadMP3("asset/sound/se/Rainbow.wav");

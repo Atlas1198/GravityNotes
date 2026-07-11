@@ -1,4 +1,4 @@
-#include "enemy_defeat_effect.h"
+﻿#include "enemy_defeat_effect.h"
 
 #include <cmath>
 
