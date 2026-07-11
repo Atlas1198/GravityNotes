@@ -18,6 +18,7 @@ static Sprite2D* g_pTitleSprite = nullptr;
 static ClickFont* g_pChangeSceneText = nullptr;
 static ClickFont* g_pDebugSceneText = nullptr;
 static Movie* g_pTitleMovie;
+static Movie* g_pLogoMovieBB;
 
 
 void Title_Initialize(void)
@@ -28,7 +29,7 @@ void Title_Initialize(void)
 		0.0f,														//回転（度）
 		{ 1.0f,1.0f,1.0f, 1.0f },
 		BLENDSTATE_NONE,
-		L"asset\\movie\\titlemovie_roop.mp4"
+		L"asset\\movie\\title_nologo.mp4"
 	);
 
 	g_pChangeSceneText = new ClickFont(
