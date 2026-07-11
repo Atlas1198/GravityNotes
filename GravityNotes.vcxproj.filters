@@ -145,6 +145,9 @@
     <ClCompile Include="orb_note.cpp">
       <Filter>SCENE_GAME\cpp</Filter>
     </ClCompile>
+    <ClCompile Include="orb_collect_effect.cpp">
+      <Filter>SCENE_GAME\cpp</Filter>
+    </ClCompile>
     <ClCompile Include="particle_manager.cpp">
       <Filter>SCENE_GAME\cpp</Filter>
     </ClCompile>
@@ -354,6 +357,9 @@
     <ClInclude Include="orb_note.h">
       <Filter>SCENE_GAME\h</Filter>
     </ClInclude>
+    <ClInclude Include="orb_collect_effect.h">
+      <Filter>SCENE_GAME\h</Filter>
+    </ClInclude>
     <ClInclude Include="particle_manager.h">
       <Filter>SCENE_GAME\h</Filter>
     </ClInclude>
@@ -490,6 +496,8 @@
     <FxCompile Include="shader\OutlineVS.hlsl">
       <Filter>フレームワーク\シェーダー</Filter>
     </FxCompile>
+    <FxCompile Include="shader\BillboardShadowMapPS.hlsl" />
+    <FxCompile Include="shader\BillboardShadowMapVS.hlsl" />
     <FxCompile Include="shader\ShadowMapPS.hlsl">
       <Filter>フレームワーク\シェーダー</Filter>
     </FxCompile>

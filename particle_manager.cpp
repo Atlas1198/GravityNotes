@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include "billboard.h"
+#include "camera.h"
 
 using namespace DirectX;
 
@@ -15,6 +16,7 @@ ParticleManager::ParticleManager(const char* texturePath, std::size_t maxParticl
 	  m_MaxParticles(maxParticles)
 {
 	m_Particles.reserve(maxParticles);
+	m_DrawOrder.reserve(maxParticles);
 	m_pBillboard->SetBillboardMode(true);
 	m_pBillboard->SetWallFadeEnabled(false);
 }
@@ -68,15 +70,30 @@ void ParticleManager::Update(float deltaTime)
 
 void ParticleManager::Draw()
 {
-	// 1枚のBillboardを使い回し、粒子ごとのGPUリソース生成を避ける。
+	m_DrawOrder.clear();
 	for (const Particle& particle : m_Particles)
-	{
-		const float progress = (std::min)(particle.age / particle.lifetime, 1.0f);
-		const float size = particle.startSize + (particle.endSize - particle.startSize) * progress;
+		m_DrawOrder.push_back(&particle);
 
-		m_pBillboard->SetPos(particle.position);
+	const XMMATRIX view = GetCamera()->GetView();
+	std::stable_sort(
+		m_DrawOrder.begin(),
+		m_DrawOrder.end(),
+		[&view](const Particle* lhs, const Particle* rhs)
+		{
+			XMVECTOR lhsViewPos = XMVector3TransformCoord(XMLoadFloat3(&lhs->position), view);
+			XMVECTOR rhsViewPos = XMVector3TransformCoord(XMLoadFloat3(&rhs->position), view);
+			return XMVectorGetZ(lhsViewPos) > XMVectorGetZ(rhsViewPos);
+		});
+
+	// 奥から手前へ描きつつ、1枚のBillboardを全粒子で使い回す。
+	for (const Particle* particle : m_DrawOrder)
+	{
+		const float progress = (std::min)(particle->age / particle->lifetime, 1.0f);
+		const float size = particle->startSize + (particle->endSize - particle->startSize) * progress;
+
+		m_pBillboard->SetPos(particle->position);
 		m_pBillboard->SetSize({ size, size });
-		m_pBillboard->SetRotation({ 0.0f, 0.0f, particle.rotation });
+		m_pBillboard->SetRotation({ 0.0f, 0.0f, particle->rotation });
 		m_pBillboard->Draw();
 	}
 }

@@ -7,6 +7,7 @@
 
 class RopeHoldNote;
 class EnemyDefeatEffect;
+class OrbCollectEffect;
 
 enum JUDGE {
 	JUDGE_NONE = -1,
@@ -45,6 +46,7 @@ private:
 	bool      m_BgmStarted = false;
 	bool      m_RainbowSePlaying = false;
 	EnemyDefeatEffect* m_pEnemyDefeatEffect = nullptr;
+	OrbCollectEffect* m_pOrbCollectEffect = nullptr;
 
 	std::queue<JUDGE> m_PendingJudges;
 	std::queue<ORB_EVENT> m_PendingOrbEvents;
@@ -66,7 +68,7 @@ public:
 	void  Init(const std::string& scoreFilePath);
 	void  Update(int playerLane, int playerFace);
 	void  Draw();
-	// 指定した面(0=FLOOR,1=LEFT_WALL,2=CEILING,3=RIGHT_WALL)にいるEnemyノーツの影を描く。
+	// 指定した面(0=FLOOR,1=LEFT_WALL,2=CEILING,3=RIGHT_WALL)にいるEnemy/Orbの影を描く。
 	void  DrawShadowMapForFace(int face, const XMMATRIX& lightView, const XMMATRIX& lightProjection);
 	void  Finalize();
 	float GetNoteSpeed() const { return m_NoteSpeed; }

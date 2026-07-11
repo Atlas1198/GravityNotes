@@ -38,6 +38,7 @@ protected:
 
 private:
 	std::vector<Particle> m_Particles;
+	std::vector<const Particle*> m_DrawOrder;
 	Billboard* m_pBillboard;
 	std::size_t m_MaxParticles;
 };
