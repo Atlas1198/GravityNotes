@@ -31,16 +31,6 @@ float NoteManager::BeatToSpawnTime(float beat) const
 	return hitTime - travelTime;
 }
 
-float NoteManager::BeatToSeconds(float beat) const
-{
-	return beat * 60.0f / m_ScoreData.bpm;
-}
-
-float NoteManager::BeatToZ(float beat) const
-{
-	return (BeatToSeconds(beat) - m_ElapsedTime) * m_NoteSpeed + HIT_ZONE_Z;
-}
-
 int NoteManager::WallToFace(ScoreWall wall) const
 {
 	switch (wall)
