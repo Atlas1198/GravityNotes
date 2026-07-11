@@ -85,6 +85,13 @@ void OrbNote::DrawShadowMap(const XMMATRIX& lightView, const XMMATRIX& lightProj
 	}
 }
 
+float OrbNote::GetDrawDepth(const XMMATRIX& view) const
+{
+	XMFLOAT3 drawPos = GetOffsetPos();
+	XMVECTOR viewPos = XMVector3TransformCoord(XMLoadFloat3(&drawPos), view);
+	return XMVectorGetZ(viewPos);
+}
+
 XMFLOAT3 OrbNote::GetOffsetPos() const
 {
 	XMFLOAT3 pos = GetPos();

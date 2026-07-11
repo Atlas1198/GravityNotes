@@ -19,4 +19,5 @@ public:
 	void Update() override;
 	void Draw() override;
 	void DrawShadowMap(const XMMATRIX& lightView, const XMMATRIX& lightProjection) override;
+	float GetDrawDepth(const XMMATRIX& view) const;
 };

@@ -9,6 +9,8 @@
 #include "rainbow_note.h"
 #include "debug_params.h"
 #include "enemy_defeat_effect.h"
+#include "camera.h"
+#include <algorithm>
 
 static const float HIT_ZONE_Z     = 3.0f;
 static const float PASSIVE_ZONE_Z = 0.5f; // Orb・Barrier の自動判定Z
@@ -316,8 +318,29 @@ void NoteManager::Update(int playerLane, int playerFace)
 
 void NoteManager::Draw()
 {
+	std::vector<OrbNote*> sortedOrbs;
+	sortedOrbs.reserve(m_Notes.size());
+
+	// 不透明ノーツを先に描き、透過Orbは深度ソート用に分ける。
 	for (NoteBase* note : m_Notes)
-		note->Draw();
+	{
+		if (OrbNote* orb = dynamic_cast<OrbNote*>(note))
+			sortedOrbs.push_back(orb);
+		else
+			note->Draw();
+	}
+
+	const XMMATRIX view = GetCamera()->GetView();
+	std::stable_sort(
+		sortedOrbs.begin(),
+		sortedOrbs.end(),
+		[&view](const OrbNote* lhs, const OrbNote* rhs)
+		{
+			return lhs->GetDrawDepth(view) > rhs->GetDrawDepth(view);
+		});
+	for (OrbNote* orb : sortedOrbs)
+		orb->Draw();
+
 	// ノーツより後に描き、撃破エフェクトを手前へ見せる。
 	if (m_pEnemyDefeatEffect)
 		m_pEnemyDefeatEffect->Draw();
