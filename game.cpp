@@ -258,8 +258,8 @@ void Game_Finalize(void)
 	SAFE_DELETE(g_pSelectedJsonText);
 	SAFE_DELETE(g_pChangeSceneText);
 
-	SAFE_DELETE(g_pField);
-	SAFE_DELETE(g_pPlayer);
+	if (g_pField)         { g_pField->Finalize();         SAFE_DELETE(g_pField); }
+	if (g_pPlayer)        { g_pPlayer->Finalize();        SAFE_DELETE(g_pPlayer); }
 	if (g_pNoteManager)   { g_pNoteManager->Finalize();   SAFE_DELETE(g_pNoteManager); }
 	if (g_pStatusManager) { g_pStatusManager->Finalize(); SAFE_DELETE(g_pStatusManager); }
 	if (g_pGameUI)        { g_pGameUI->Finalize();        SAFE_DELETE(g_pGameUI); }

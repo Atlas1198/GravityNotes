@@ -9,6 +9,16 @@
 #include "rainbow_note.h"
 #include "sound.h"
 
+namespace
+{
+	float NormalizeAngleDelta(float angle)
+	{
+		while (angle > 180.0f) angle -= 360.0f;
+		while (angle < -180.0f) angle += 360.0f;
+		return angle;
+	}
+}
+
 void Player::Init(NoteManager* nm, StatusManager* sm)
 {
 	m_Scale = { 0.017f,0.017f,0.017f };
@@ -67,30 +77,6 @@ void Player::Init(NoteManager* nm, StatusManager* sm)
 	m_pKaihiSe = LoadMP3("asset/sound/se/kaihi.wav");
 }
 
-//仮置き
-static int GetTriggeredAnimationSlot()
-{
-	/*static const Keyboard_Keys keys[] = {
-		KK_D5,
-		KK_D6,
-		KK_D7,
-		KK_D8,
-		KK_D9,
-		KK_D0,
-	};
-
-	for (int i = 0; i < (int)ARRAYSIZE(keys); i++)
-	{
-		if (Keyboard_IsKeyDownTrigger(keys[i]))
-		{
-			return i;
-		}
-	}*/
-
-	return -1;
-}
-
-
 void Player::Update()
 {
 	// pad変数とGetGamePad()は不要になったため削除しました
@@ -117,9 +103,7 @@ void Player::Update()
 		// 開始面から終了面へ回転を補間
 		float rotStart = CalcFaceTargetRot(startFace).z;
 		float rotEnd   = CalcFaceTargetRot(endFace).z;
-		float diff = rotEnd - rotStart;
-		while (diff >  180.0f) diff -= 360.0f;
-		while (diff < -180.0f) diff += 360.0f;
+		float diff = NormalizeAngleDelta(rotEnd - rotStart);
 		m_Rotation.z = rotStart + diff * t;
 	}
 	else
@@ -184,17 +168,6 @@ void Player::Update()
 			m_Position.x = m_GravityStartPos.x + (m_TargetPos.x - m_GravityStartPos.x) * eased;
 			m_Position.y = m_GravityStartPos.y + (m_TargetPos.y - m_GravityStartPos.y) * eased;
 			m_Rotation.z = m_GravityStartRot.z + (m_TargetRot.z - m_GravityStartRot.z) * eased;
-		}
-	}
-
-	int animSlot = GetTriggeredAnimationSlot();
-	unsigned int animCount = GetAnimationCount();
-
-	if (animSlot >= 0 && (unsigned int)animSlot < animCount)
-	{
-		if (PlayAnimationByIndex((unsigned int)animSlot, true))
-		{
-			UpdateAnimation(dt);
 		}
 	}
 
@@ -419,9 +392,7 @@ void Player::ChangeGravity(int targetFace)
 	m_TargetRot = CalcFaceTargetRot(targetFace);
 
 	// 回転を最短経路で補間するため差分を[-180, 180]に正規化
-	float diff = m_TargetRot.z - m_GravityStartRot.z;
-	while (diff > 180.0f)  diff -= 360.0f;
-	while (diff < -180.0f) diff += 360.0f;
+	float diff = NormalizeAngleDelta(m_TargetRot.z - m_GravityStartRot.z);
 	m_TargetRot.z = m_GravityStartRot.z + diff;
 
 	m_GravityTimer = 0.0f;

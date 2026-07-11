@@ -13,6 +13,8 @@ void StatusManager::Init(int maxHP)
 	m_Misses    = 0;
 	m_OrbGets   = 0;
 	m_OrbLosses = 0;
+	m_LastJudge   = JUDGE_NONE;
+	m_HasNewJudge = false;
 }
 
 void StatusManager::Finalize()
@@ -21,6 +23,9 @@ void StatusManager::Finalize()
 
 void StatusManager::OnJudge(JUDGE result)
 {
+	if (result == JUDGE_NONE)
+		return;
+
 	m_LastJudge   = result;
 	m_HasNewJudge = true;
 	if (result == JUDGE_MISS)

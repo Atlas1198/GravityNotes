@@ -18,9 +18,19 @@ static const float ROPE_ACTIVATE_WINDOW = 0.5f; // レインボーはプレイ�
 // beat を「そのノーツをスポーンすべき時刻（秒）」に変換
 float NoteManager::BeatToSpawnTime(float beat) const
 {
-	float hitTime    = beat * 60.0f / m_ScoreData.bpm;
+	float hitTime    = BeatToSeconds(beat);
 	float travelTime = (m_SpawnZ - HIT_ZONE_Z) / m_NoteSpeed;
 	return hitTime - travelTime;
+}
+
+float NoteManager::BeatToSeconds(float beat) const
+{
+	return beat * 60.0f / m_ScoreData.bpm;
+}
+
+float NoteManager::BeatToZ(float beat) const
+{
+	return (BeatToSeconds(beat) - m_ElapsedTime) * m_NoteSpeed + HIT_ZONE_Z;
 }
 
 int NoteManager::WallToFace(ScoreWall wall) const
@@ -33,6 +43,22 @@ int NoteManager::WallToFace(ScoreWall wall) const
 	case ScoreWall::Right: return 3; // FACE_RIGHT_WALL
 	default:               return 0;
 	}
+}
+
+JUDGE NoteManager::JudgeByDistance(NoteBase* note, float targetZ)
+{
+	float dist = fabsf(note->GetPosZ() - targetZ);
+	if (dist < PERFECT_WINDOW)
+	{
+		note->OnHit();
+		return JUDGE_PERFECT;
+	}
+	if (dist < GOOD_WINDOW)
+	{
+		note->OnHit();
+		return JUDGE_GOOD;
+	}
+	return JUDGE_NONE;
 }
 
 void NoteManager::Init(const std::string& scoreFilePath)
@@ -100,8 +126,7 @@ void NoteManager::Update(int playerLane, int playerFace)
 		int face = WallToFace(ev.wall);
 
 		// 現時刻でノーツが居るべきZ座標を計算（遅延スポーン時は手前に補正）
-		float hitTime = ev.beat * 60.0f / m_ScoreData.bpm;
-		float initZ   = (hitTime - m_ElapsedTime) * m_NoteSpeed + HIT_ZONE_Z;
+		float initZ = BeatToZ(ev.beat);
 
 		// JSON lane (0=左, 1=中央, 2=右) → ゲーム lane (-1=左, 0=中央, 1=右) に変換
 		int gameLane = ev.lane - 1;
@@ -131,8 +156,7 @@ void NoteManager::Update(int playerLane, int playerFace)
 		}
 		case ScoreType::Hold:
 		{
-			float endHitTime = ev.endBeat * 60.0f / m_ScoreData.bpm;
-			float endZ       = (endHitTime - m_ElapsedTime) * m_NoteSpeed + HIT_ZONE_Z;
+			float endZ = BeatToZ(ev.endBeat);
 
 			HoldNote* note = new HoldNote();
 			note->Init(ev.lane, ev.endLane, face, initZ, endZ, m_NoteSpeed, m_ScoreData.bpm);
@@ -141,8 +165,7 @@ void NoteManager::Update(int playerLane, int playerFace)
 		}
 		case ScoreType::RopeHold:
 		{
-			float endHitTime  = ev.endBeat * 60.0f / m_ScoreData.bpm;
-			float endZ        = (endHitTime - m_ElapsedTime) * m_NoteSpeed + HIT_ZONE_Z;
+			float endZ        = BeatToZ(ev.endBeat);
 			int   endFace     = WallToFace(ev.endWall);
 			int   gameEndLane = ev.endLane - 1;
 
@@ -161,20 +184,6 @@ void NoteManager::Update(int playerLane, int playerFace)
 	for (int i = (int)m_Notes.size() - 1; i >= 0; i--)
 	{
 		m_Notes[i]->Update();
-
-		if (RopeHoldNote* rope = dynamic_cast<RopeHoldNote*>(m_Notes[i]))
-		{
-			if (rope->GetState() == RopeHoldNote::State::HOLDING)
-			{
-				unsigned __int64 samples = 0;
-				if (m_pBgmData && m_pBgmData->pSourceVoice)
-				{
-					XAUDIO2_VOICE_STATE state = {};
-					m_pBgmData->pSourceVoice->GetState(&state);
-					samples = state.SamplesPlayed;
-				}
-			}
-		}
 
 		if (!m_Notes[i]->IsHit())
 		{
@@ -330,6 +339,7 @@ void NoteManager::Finalize()
 	for (NoteBase* note : m_Notes)
 		delete note;
 	m_Notes.clear();
+	RopeHoldNote::FinalizeSharedResources();
 }
 
 JUDGE NoteManager::Judge(int lane, int face)
@@ -356,15 +366,7 @@ JUDGE NoteManager::Judge(int lane, int face)
 
 	if (bestNote)
 	{
-		JUDGE j = JUDGE_NONE;
-		if (bestDist < PERFECT_WINDOW) { bestNote->OnHit(); j = JUDGE_PERFECT; }
-		else if (bestDist < GOOD_WINDOW)    { bestNote->OnHit(); j = JUDGE_GOOD; }
-
-		if (j != JUDGE_NONE)
-		{
-			return j;
-		}
-		return JUDGE_NONE;
+		return JudgeByDistance(bestNote, HIT_ZONE_Z);
 	}
 
 	// HoldNote（連撃）の最初の一撃はKeyTriggerで取る
@@ -376,9 +378,8 @@ JUDGE NoteManager::Judge(int lane, int face)
 		EnemyNote* child = hold->GetNearestActiveChild(lane, face);
 		if (!child) continue;
 
-		float dist = fabsf(child->GetPosZ() - HIT_ZONE_Z);
-		if (dist < PERFECT_WINDOW) { child->OnHit(); return JUDGE_PERFECT; }
-		if (dist < GOOD_WINDOW)    { child->OnHit(); return JUDGE_GOOD; }
+		JUDGE j = JudgeByDistance(child, HIT_ZONE_Z);
+		if (j != JUDGE_NONE) return j;
 	}
 
 	return JUDGE_NONE;
@@ -418,9 +419,8 @@ JUDGE NoteManager::JudgeHold(int lane, int face)
 		EnemyNote* child = hold->GetNearestActiveChild(lane, face);
 		if (!child) continue;
 
-		float dist = fabsf(child->GetPosZ() - HIT_ZONE_Z);
-		if (dist < PERFECT_WINDOW) { child->OnHit(); return JUDGE_PERFECT; }
-		if (dist < GOOD_WINDOW)    { child->OnHit(); return JUDGE_GOOD; }
+		JUDGE j = JudgeByDistance(child, HIT_ZONE_Z);
+		if (j != JUDGE_NONE) return j;
 	}
 	return JUDGE_NONE; // HoldNote が存在しない／範囲外のときは何もしない
 }
@@ -457,6 +457,11 @@ bool NoteManager::IsFinished() const
 
 void NoteManager::StartBgmFadeOut(float durationSec)
 {
+	if (durationSec <= 0.0f)
+	{
+		durationSec = dt;
+	}
+
 	m_IsFadingOut = true;
 	m_FadeOutDuration = durationSec;
 	m_FadeOutTimer = 0.0f;

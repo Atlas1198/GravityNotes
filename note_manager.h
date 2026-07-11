@@ -51,7 +51,10 @@ private:
 	bool  m_IsFadingOut = false;
 
 	float BeatToSpawnTime(float beat) const;
+	float BeatToSeconds(float beat) const;
+	float BeatToZ(float beat) const;
 	int   WallToFace(ScoreWall wall)  const;
+	JUDGE JudgeByDistance(NoteBase* note, float targetZ);
 
 public:
 	void  Init(const std::string& scoreFilePath);
