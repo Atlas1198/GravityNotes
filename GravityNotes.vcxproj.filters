@@ -442,6 +442,12 @@
     <FxCompile Include="shader\UnlitTextureVS.hlsl">
       <Filter>フレームワーク\シェーダー</Filter>
     </FxCompile>
+    <FxCompile Include="shader\ChromaKeyPS.hlsl">
+      <Filter>フレームワーク\シェーダー</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\ChromaKeyVS.hlsl">
+      <Filter>フレームワーク\シェーダー</Filter>
+    </FxCompile>
     <FxCompile Include="shader\VertexDirectionalLightingPS.hlsl">
       <Filter>フレームワーク\シェーダー</Filter>
     </FxCompile>
