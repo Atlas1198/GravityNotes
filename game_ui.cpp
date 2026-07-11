@@ -75,7 +75,7 @@ void GameUI::Init()
         BLENDSTATE_NONE,
         L"asset\\texture\\fade.png"
     );
-    // Hit / Miss スプライト（初期は非表示、タイマーで制御）
+    // Hit / Miss / Kaihi スプライト（初期は非表示、タイマーで制御）
     m_pHitSprite = new Sprite2D(
         { JUDGE_X, JUDGE_Y }, { JUDGE_W, JUDGE_H }, 0.0f,
         { 1.0f, 1.0f, 1.0f, 1.0f }, BLENDSTATE_ALFA,
@@ -85,6 +85,11 @@ void GameUI::Init()
         { JUDGE_X, JUDGE_Y }, { JUDGE_W, JUDGE_H }, 0.0f,
         { 1.0f, 1.0f, 1.0f, 1.0f }, BLENDSTATE_ALFA,
         L"asset\\texture\\Ingame_Rank_miss_UI.png"
+    );
+    m_pKaihiSprite = new Sprite2D(
+        { JUDGE_X, JUDGE_Y }, { JUDGE_W, JUDGE_H }, 0.0f,
+        { 1.0f, 1.0f, 1.0f, 1.0f }, BLENDSTATE_ALFA,
+        L"asset\\texture\\Ingame_Rank_just_UI.png"
     );
 
     // HP テキスト
@@ -253,8 +258,8 @@ void GameUI::UpdateComboDigits(int combo)
 void GameUI::NotifyJudge(JUDGE judge)
 {
     if (judge == JUDGE_NONE) return;
-    m_ShowHit    = (judge != JUDGE_MISS);
-    m_JudgeTimer = JUDGE_DISPLAY_SEC;
+    m_CurrentJudge = judge;
+    m_JudgeTimer   = JUDGE_DISPLAY_SEC;
 }
 
 void GameUI::UpdateHP(int hp, int maxHP)
@@ -275,11 +280,12 @@ void GameUI::Draw()
     m_pHPBarFg->Draw();
     m_pHPText->Draw();
 
-    // Hit / Miss
+    // Hit / Miss / Kaihi
     if (m_JudgeTimer > 0.0f)
     {
-        if (m_ShowHit) m_pHitSprite->Draw();
-        else           m_pMissSprite->Draw();
+        if (m_CurrentJudge == JUDGE_KAIHI) m_pKaihiSprite->Draw();
+        else if (m_CurrentJudge == JUDGE_MISS) m_pMissSprite->Draw();
+        else m_pHitSprite->Draw();
     }
 
     // コンボ
@@ -329,6 +335,7 @@ void GameUI::Finalize()
     delete m_pHPText;    m_pHPText    = nullptr;
     delete m_pHitSprite; m_pHitSprite = nullptr;
     delete m_pMissSprite;m_pMissSprite= nullptr;
+    delete m_pKaihiSprite;m_pKaihiSprite= nullptr;
 
     delete m_pFadeOverlay;   m_pFadeOverlay   = nullptr;
     delete m_pClearSprite;   m_pClearSprite   = nullptr;

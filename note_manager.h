@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <vector>
 #include <queue>
+#include <set>
 #include "note_base.h"
 #include "scoreloader.h"
 
@@ -11,7 +12,9 @@ enum JUDGE {
 	JUDGE_NONE = -1,
 	JUDGE_PERFECT,
 	JUDGE_GOOD,
-	JUDGE_MISS
+	JUDGE_MISS,
+	JUDGE_KAIHI,
+	JUDGE_SILENT_COMBO
 };
 
 enum ORB_EVENT {
@@ -46,6 +49,7 @@ private:
 	std::queue<JUDGE> m_PendingJudges;
 	std::queue<ORB_EVENT> m_PendingOrbEvents;
 	std::queue<BARRIER_EVENT> m_PendingBarrierEvents;
+	std::set<float> m_ProcessedBarrierBeats;
 
 	float m_FadeOutDuration = 0.0f;
 	float m_FadeOutTimer = 0.0f;
