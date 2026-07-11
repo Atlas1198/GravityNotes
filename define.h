@@ -6,8 +6,8 @@
 
 #define _CRT_SECURE_NO_WARNINGS
 
-#define CLASS_NAME L"DirectX_Framework"
-#define WINDOW_CAPTION L"DirectX_Framework"
+#define CLASS_NAME L"GravityNote"
+#define WINDOW_CAPTION L"GravityNote"
 #define SCREEN_WIDTH (1280.0f)	// UI要素の配置に使う（いままで通り）
 #define SCREEN_HEIGHT (720.0f)	// UI要素の配置に使う（いままで通り）
 #define DRAW_SCREEN_WIDTH  (3840.0f)   // （最終的な描画解像度）　実際の配置には使わない！！！
