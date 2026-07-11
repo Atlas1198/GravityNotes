@@ -76,7 +76,7 @@ void Title_Update(void)
 	g_pTitleMovie->Update();
 
 	g_LogoFrameCount++;
-	if (g_LogoFrameCount >= 60)
+	if (g_LogoFrameCount >= 80)
 	{
 		if (g_pLogoMovieBB)
 		{
