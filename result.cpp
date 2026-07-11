@@ -415,7 +415,6 @@ void Result_Finalize(void)
 	SAFE_DELETE(g_pLabelFont);
 	SAFE_DELETE(g_pValueFont);
 	SAFE_DELETE(g_pAuthorFont);
-	SAFE_DELETE(g_pRankTextre);
 	SAFE_DELETE(g_pNextSceneTexture);
 
 }

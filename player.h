@@ -46,6 +46,8 @@ private:
 	SplitBilBoard* m_pEffectSlash;
 	bool           m_IsEffectSlashActive;
 	bool           m_IsOverridePlaying;
+	float          m_DamageFlashRemaining;
+	float          m_DamageFlashElapsed;
 	ThreePointLight m_ThreePointLight;   // キャラクター用3点照明
 
 	SoundData*     m_pSwordSe = nullptr;

@@ -6,6 +6,7 @@
 #include "scoreloader.h"
 
 class RopeHoldNote;
+class EnemyDefeatEffect;
 
 enum JUDGE {
 	JUDGE_NONE = -1,
@@ -43,6 +44,7 @@ private:
 	SoundData* m_pRainbowSe = nullptr;
 	bool      m_BgmStarted = false;
 	bool      m_RainbowSePlaying = false;
+	EnemyDefeatEffect* m_pEnemyDefeatEffect = nullptr;
 
 	std::queue<JUDGE> m_PendingJudges;
 	std::queue<ORB_EVENT> m_PendingOrbEvents;
@@ -55,7 +57,10 @@ private:
 	bool  m_IsFadingOut = false;
 
 	float BeatToSpawnTime(float beat) const;
+	float BeatToSeconds(float beat) const;
+	float BeatToZ(float beat) const;
 	int   WallToFace(ScoreWall wall)  const;
+	JUDGE JudgeByDistance(NoteBase* note, float targetZ);
 
 public:
 	void  Init(const std::string& scoreFilePath);

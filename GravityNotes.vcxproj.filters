@@ -136,10 +136,16 @@
     <ClCompile Include="enemy_note.cpp">
       <Filter>SCENE_GAME\cpp</Filter>
     </ClCompile>
+    <ClCompile Include="enemy_defeat_effect.cpp">
+      <Filter>SCENE_GAME\cpp</Filter>
+    </ClCompile>
     <ClCompile Include="barrier_note.cpp">
       <Filter>SCENE_GAME\cpp</Filter>
     </ClCompile>
     <ClCompile Include="orb_note.cpp">
+      <Filter>SCENE_GAME\cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="particle_manager.cpp">
       <Filter>SCENE_GAME\cpp</Filter>
     </ClCompile>
     <ClCompile Include="light_game.cpp">
@@ -339,10 +345,16 @@
     <ClInclude Include="enemy_note.h">
       <Filter>SCENE_GAME\h</Filter>
     </ClInclude>
+    <ClInclude Include="enemy_defeat_effect.h">
+      <Filter>SCENE_GAME\h</Filter>
+    </ClInclude>
     <ClInclude Include="barrier_note.h">
       <Filter>SCENE_GAME\h</Filter>
     </ClInclude>
     <ClInclude Include="orb_note.h">
+      <Filter>SCENE_GAME\h</Filter>
+    </ClInclude>
+    <ClInclude Include="particle_manager.h">
       <Filter>SCENE_GAME\h</Filter>
     </ClInclude>
     <ClInclude Include="light_game.h">
