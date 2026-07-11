@@ -18,4 +18,5 @@ public:
 	void Init(int lane, int face, float spawnZ, float speed);
 	void Update() override;
 	void Draw() override;
+	void DrawShadowMap(const XMMATRIX& lightView, const XMMATRIX& lightProjection) override;
 };

@@ -484,6 +484,8 @@
     <FxCompile Include="shader\OutlineVS.hlsl">
       <Filter>フレームワーク\シェーダー</Filter>
     </FxCompile>
+    <FxCompile Include="shader\BillboardShadowMapPS.hlsl" />
+    <FxCompile Include="shader\BillboardShadowMapVS.hlsl" />
     <FxCompile Include="shader\ShadowMapPS.hlsl">
       <Filter>フレームワーク\シェーダー</Filter>
     </FxCompile>

@@ -176,7 +176,7 @@ void Game_Draw(void)
 
 	// --- 影パス（4面ShadowMap作成）---
 	// トンネルの4面それぞれを、その面の内側からライトで照らして影を焼く。
-	// キャスターは Player(自分の重力面へ) と Enemy ノーツ(各自の面へ)。受け手は Field。
+	// キャスターは Player(自分の重力面へ) と Enemy/Orbノーツ(各自の面へ)。受け手は Field。
 	{
 		XMFLOAT3 pPos = g_pPlayer->GetPos();
 		int playerFace = g_pPlayer->GetGravityFace();
@@ -222,7 +222,7 @@ void Game_Draw(void)
 				g_pPlayer->DrawShadowMap(faceView[f], faceProj[f]);
 			SetCullState(CULLSTATE_NONE);
 
-			// Enemyスライス(4-7)：その面にいる Enemy ノーツの影
+			// ノーツスライス(4-7)：その面にいる Enemy/Orb ノーツの影
 			BeginFaceShadowMap(f + NUM_SHADOW_FACES);
 			SetCullState(CULLSTATE_BACK);
 			g_pNoteManager->DrawShadowMapForFace(f, faceView[f], faceProj[f]);
