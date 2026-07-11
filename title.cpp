@@ -20,6 +20,7 @@ static ClickFont* g_pDebugSceneText = nullptr;
 static Movie* g_pTitleMovie;
 static Movie* g_pLogoMovieBB;
 static int g_LogoFrameCount = 0;
+static SoundData* g_pTitleBGM = nullptr;
 
 
 void Title_Initialize(void)
@@ -66,6 +67,12 @@ void Title_Initialize(void)
 	);
 
 	UnLockMouse();//マウスアンロック
+
+	g_pTitleBGM = LoadMP3("asset/sound/se/VSQSE_1189_wave_35.mp3");
+	if (g_pTitleBGM)
+	{
+		PlaySound(g_pTitleBGM, true);
+	}
 }
 
 
@@ -123,4 +130,11 @@ void Title_Finalize(void)
 	SAFE_DELETE(g_pLogoMovieBB);
 	SAFE_DELETE(g_pChangeSceneText);
 	SAFE_DELETE(g_pDebugSceneText);
+
+	if (g_pTitleBGM)
+	{
+		StopSound(g_pTitleBGM);
+		UnloadSound(g_pTitleBGM);
+		g_pTitleBGM = nullptr;
+	}
 }
