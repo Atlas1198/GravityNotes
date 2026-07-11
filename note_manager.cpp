@@ -9,6 +9,7 @@
 #include "rainbow_note.h"
 #include "debug_params.h"
 #include "enemy_defeat_effect.h"
+#include "orb_collect_effect.h"
 #include "camera.h"
 #include <algorithm>
 
@@ -69,6 +70,8 @@ void NoteManager::Init(const std::string& scoreFilePath)
 	// 撃破エフェクトはNoteManagerが生成から解放まで所有する。
 	if (!m_pEnemyDefeatEffect)
 		m_pEnemyDefeatEffect = new EnemyDefeatEffect();
+	if (!m_pOrbCollectEffect)
+		m_pOrbCollectEffect = new OrbCollectEffect();
 
 	m_NoteSpeed      = 10.0f;
 	m_SpawnZ         = 80.0f;
@@ -205,6 +208,9 @@ void NoteManager::Update(int playerLane, int playerFace)
 					if (m_Notes[i]->GetLaneIndex() == playerLane &&
 						m_Notes[i]->GetFace()      == playerFace)
 					{
+						// Orbが消える前の表示座標から取得パーティクルを生成する。
+						if (m_pOrbCollectEffect)
+							m_pOrbCollectEffect->Spawn(orb->GetEffectPosition(), orb->GetFace());
 						orb->OnHit();
 						m_PendingOrbEvents.push(ORB_EVENT_HIT);
 						if (m_pOrbGetsSe != nullptr)
@@ -314,6 +320,8 @@ void NoteManager::Update(int playerLane, int playerFace)
 	// ノーツが消えた後も、残っている粒子は寿命まで更新する。
 	if (m_pEnemyDefeatEffect)
 		m_pEnemyDefeatEffect->Update(dt);
+	if (m_pOrbCollectEffect)
+		m_pOrbCollectEffect->Update(dt);
 }
 
 void NoteManager::Draw()
@@ -344,6 +352,8 @@ void NoteManager::Draw()
 	// ノーツより後に描き、撃破エフェクトを手前へ見せる。
 	if (m_pEnemyDefeatEffect)
 		m_pEnemyDefeatEffect->Draw();
+	if (m_pOrbCollectEffect)
+		m_pOrbCollectEffect->Draw();
 }
 
 void NoteManager::DrawShadowMapForFace(int face, const XMMATRIX& lightView, const XMMATRIX& lightProjection)
@@ -383,6 +393,8 @@ void NoteManager::Finalize()
 	m_Notes.clear();
 	delete m_pEnemyDefeatEffect;
 	m_pEnemyDefeatEffect = nullptr;
+	delete m_pOrbCollectEffect;
+	m_pOrbCollectEffect = nullptr;
 	RopeHoldNote::FinalizeSharedResources();
 }
 

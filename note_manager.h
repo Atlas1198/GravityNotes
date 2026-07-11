@@ -7,6 +7,7 @@
 
 class RopeHoldNote;
 class EnemyDefeatEffect;
+class OrbCollectEffect;
 
 enum JUDGE {
 	JUDGE_NONE = -1,
@@ -45,6 +46,7 @@ private:
 	bool      m_BgmStarted = false;
 	bool      m_RainbowSePlaying = false;
 	EnemyDefeatEffect* m_pEnemyDefeatEffect = nullptr;
+	OrbCollectEffect* m_pOrbCollectEffect = nullptr;
 
 	std::queue<JUDGE> m_PendingJudges;
 	std::queue<ORB_EVENT> m_PendingOrbEvents;

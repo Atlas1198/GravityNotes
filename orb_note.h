@@ -20,4 +20,5 @@ public:
 	void Draw() override;
 	void DrawShadowMap(const XMMATRIX& lightView, const XMMATRIX& lightProjection) override;
 	float GetDrawDepth(const XMMATRIX& view) const;
+	XMFLOAT3 GetEffectPosition() const { return GetOffsetPos(); }
 };

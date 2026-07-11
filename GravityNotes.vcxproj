@@ -211,6 +211,7 @@
     <ClCompile Include="note_base.cpp" />
     <ClCompile Include="note_manager.cpp" />
     <ClCompile Include="orb_note.cpp" />
+    <ClCompile Include="orb_collect_effect.cpp" />
     <ClCompile Include="particle_manager.cpp" />
     <ClCompile Include="player.cpp" />
     <ClCompile Include="three_point_light.cpp" />
@@ -291,6 +292,7 @@
     <ClInclude Include="note_base.h" />
     <ClInclude Include="note_manager.h" />
     <ClInclude Include="orb_note.h" />
+    <ClInclude Include="orb_collect_effect.h" />
     <ClInclude Include="particle_manager.h" />
     <ClInclude Include="player.h" />
     <ClInclude Include="three_point_light.h" />
