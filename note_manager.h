@@ -9,8 +9,7 @@ class RopeHoldNote;
 
 enum JUDGE {
 	JUDGE_NONE = -1,
-	JUDGE_PERFECT,
-	JUDGE_GOOD,
+	JUDGE_HIT,
 	JUDGE_MISS,
 	JUDGE_KAIHI,
 	JUDGE_SILENT_COMBO
@@ -55,6 +54,8 @@ private:
 	bool  m_IsFadingOut = false;
 
 	float BeatToSpawnTime(float beat) const;
+	// beatを、offset補正込みの「曲再生位置における実時刻（秒）」に変換する
+	float BeatToAudioTime(float beat) const;
 	int   WallToFace(ScoreWall wall)  const;
 
 public:

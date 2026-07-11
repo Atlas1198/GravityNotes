@@ -9,25 +9,25 @@
 	"events": [
 		{
 			"beat": 0.0,
-			"type": "Barrier",
+			"type": "Orb",
 			"wall": "Down",
 			"lane": 1
 		},
 		{
 			"beat": 2.0,
-			"type": "Barrier",
+			"type": "Orb",
 			"wall": "Down",
 			"lane": 0
 		},
 		{
 			"beat": 2.0,
-			"type": "Barrier",
+			"type": "Orb",
 			"wall": "Down",
 			"lane": 2
 		},
 		{
 			"beat": 4.0,
-			"type": "Barrier",
+			"type": "Orb",
 			"wall": "Down",
 			"lane": 1
 		},

@@ -73,6 +73,11 @@ struct ScoreData
 {
 	float bpm;
 	std::string music;
+	// 音楽ファイルの実際の音の出だしと譜面上のbeat=0のタイミングのズレを補正する値（秒）。
+	// 例: 曲の先頭に0.2秒の無音があるなら offset=0.2 とすることで、
+	//     ノーツの通過タイミングと実際に聴こえる音を一致させる。
+	// JSONに"offset"キーが無い場合は0.0（補正なし）として扱う。
+	float offset;
 	std::vector<ScoreEvent> events;
 };
 
@@ -94,6 +99,7 @@ inline ScoreData LoadScore(const std::string& filePath)
 		ScoreData scoreData;
 		scoreData.bpm = jsonData["bpm"].get<float>();
 		scoreData.music = jsonData["music"].get<std::string>();
+		scoreData.offset = jsonData.value("offset", 0.0f);
 
 		// イベント配列をパース
 		if (jsonData.contains("events"))

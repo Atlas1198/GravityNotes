@@ -42,7 +42,7 @@ void StatusManager::OnJudge(JUDGE result)
 		return;
 	}
 
-	// HIT（PERFECT / GOOD 共通）
+	// HIT
 	float multiplier = 1.0f + m_Combo * D_PARAMS.comboMultiplier;
 	m_Score += static_cast<int>(D_PARAMS.baseScore * multiplier);
 	m_Combo++;

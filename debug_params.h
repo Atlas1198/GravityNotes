@@ -19,7 +19,7 @@ struct DebugParams
 
     // オーブ
     int   orbHealAmount     = 30;     // オーブ取得時のHP回復量
-    float orbJudgeWindow    = 0.5f;   // オーブの早期HIT判定を開始するZ距離（PASSIVE_ZONE_Zより手前側のみ。Miss確定ラインはPASSIVE_ZONE_Z固定）
+    float orbJudgeWindow    = -1.0f;   // オーブの早期HIT判定を開始する追加Z距離（HIT_ZONE_Zに加算。値を大きくするほどプレイヤーから遠い位置で取得判定になり、見た目の取得位置が胴側に上がる）
 
     static DebugParams& Get()
     {

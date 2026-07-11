@@ -283,7 +283,7 @@ void Player::Update()
 		if (result != JUDGE_NONE)
 			m_pStatusManager->OnJudge(result);
 
-		if (result == JUDGE_PERFECT || result == JUDGE_GOOD)
+		if (result == JUDGE_HIT)
 		{
 			if (m_pEnemyHitSe) PlaySound(m_pEnemyHitSe, false);
 		}
@@ -305,7 +305,7 @@ void Player::Update()
 		if (result != JUDGE_NONE)
 			m_pStatusManager->OnJudgeHold(result);
 
-		if (result == JUDGE_PERFECT || result == JUDGE_GOOD)
+		if (result == JUDGE_HIT)
 		{
 			if (m_pEnemyHitSe) PlaySound(m_pEnemyHitSe, false);
 		}
