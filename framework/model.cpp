@@ -459,7 +459,7 @@ XMMATRIX AiMatrixToXMMatrix(const aiMatrix4x4& mat)
 }
 
 // ノードを再帰的に描画する内部関数
-void RenderNode(MODEL* model, aiNode* node, XMMATRIX parentTransform, const XMFLOAT4& color, bool useColorReplace = false)
+void RenderNode(MODEL* model, aiNode* node, XMMATRIX parentTransform, const XMFLOAT4& color, bool useColorReplace = false, ID3D11ShaderResourceView* customTexture = nullptr)
 {
 	// このノードのローカル変換行列と親の変換を組み合わせ
 	XMMATRIX currentTransform = AiMatrixToXMMatrix(node->mTransformation) * parentTransform;
@@ -510,8 +510,8 @@ void RenderNode(MODEL* model, aiNode* node, XMMATRIX parentTransform, const XMFL
 		// ただし既存の ModelDraw が WVP を設定しているため、ここでは単純化
 		// 本来は RenderNodeAnimation と同様に WVP を再計算すべきだが、互換性のために最小限の変更に留める
 
-		// テクスチャをシェーダーに設定(プリキャッシュされた値を使用)
-		ID3D11ShaderResourceView* textureToSet = model->MeshMaterials[meshIndex].textureView;
+		// テクスチャをシェーダーに設定(プリキャッシュされた値を使用。カスタムテクスチャがあればそれを使用)
+		ID3D11ShaderResourceView* textureToSet = customTexture ? customTexture : model->MeshMaterials[meshIndex].textureView;
 		GetDeviceContext()->PSSetShaderResources(0, 1, &textureToSet);
 		ID3D11ShaderResourceView* normalTextureToSet = model->MeshMaterials[meshIndex].normalTextureView;
 		GetDeviceContext()->PSSetShaderResources(2, 1, &normalTextureToSet);
@@ -544,7 +544,7 @@ void RenderNode(MODEL* model, aiNode* node, XMMATRIX parentTransform, const XMFL
 	// 子ノードを再帰実行
 	for (unsigned int i = 0; i < node->mNumChildren; i++)
 	{
-		RenderNode(model, node->mChildren[i], currentTransform, color, useColorReplace);
+		RenderNode(model, node->mChildren[i], currentTransform, color, useColorReplace, customTexture);
 	}
 }
 
@@ -1373,7 +1373,7 @@ void ModelRelease(MODEL* model)
 	}
 }
 
-void ModelDraw(MODEL* model, XMFLOAT3 pos, XMFLOAT3 rot, XMFLOAT3 scale, const XMFLOAT4& color, bool useColorReplace, SHADERTYPE shadertype)
+void ModelDraw(MODEL* model, XMFLOAT3 pos, XMFLOAT3 rot, XMFLOAT3 scale, const XMFLOAT4& color, bool useColorReplace, SHADERTYPE shadertype, ID3D11ShaderResourceView* customTexture)
 {
 	if (!model) return;
 
@@ -1410,7 +1410,7 @@ void ModelDraw(MODEL* model, XMFLOAT3 pos, XMFLOAT3 rot, XMFLOAT3 scale, const X
 	}
 
 	XMMATRIX identity = XMMatrixIdentity();
-	RenderNode(model, model->AiScene->mRootNode, identity, finalColor, useColorReplace);
+	RenderNode(model, model->AiScene->mRootNode, identity, finalColor, useColorReplace, customTexture);
 }
 
 void ModelDrawShadowMap(MODEL* model, XMFLOAT3 pos, XMFLOAT3 rot, XMFLOAT3 scale, XMMATRIX lightView, XMMATRIX lightProjection)

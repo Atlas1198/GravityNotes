@@ -97,7 +97,7 @@ XMMATRIX AiMatrixToXMMatrix(const aiMatrix4x4& mat);
 
 MODEL* ModelLoad(const char* FileName);
 void ModelRelease(MODEL* model);
-void ModelDraw(MODEL* model, XMFLOAT3 pos, XMFLOAT3 rot, XMFLOAT3 scale, const XMFLOAT4& color = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), bool useColorReplace = false, SHADERTYPE shadertype = S_PHONG);
+void ModelDraw(MODEL* model, XMFLOAT3 pos, XMFLOAT3 rot, XMFLOAT3 scale, const XMFLOAT4& color = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), bool useColorReplace = false, SHADERTYPE shadertype = S_PHONG, ID3D11ShaderResourceView* customTexture = nullptr);
 void ModelDrawShadowMap(MODEL* model, XMFLOAT3 pos, XMFLOAT3 rot, XMFLOAT3 scale, XMMATRIX lightView, XMMATRIX lightProjection);
 
 // スキニング(アニメ)モデルをShadowMapへ描く。ボーン行列でアニメ姿勢のまま影を落とす。

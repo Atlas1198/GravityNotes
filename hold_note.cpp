@@ -56,8 +56,12 @@ void HoldNote::Init(int lane, int endLane, int face, float initZ, float endZ, fl
 		float childZ = initZ + (float)i * zStep;
 
 		EnemyNote* child = new EnemyNote();
-		// 一体目だけ色違いモデルを使用
-		child->Init(snapLane, face, childZ, speed, (i == 0) ? "asset/model/GargoyleVariation.fbx" : nullptr);
+		// 一体目も共通モデルを使用し、テクスチャのみを差し替える
+		child->Init(snapLane, face, childZ, speed, nullptr);
+		if (i == 0)
+		{
+			child->SetCustomTexture("asset/texture/Gargoyle_red.png");
+		}
 
 		// 一体目だけ少し大きく、それ以外は少し小さく表示する
 		float scaleMult = (i == 0) ? HOLD_FIRST_CHILD_SCALE_MULT : HOLD_CHILD_SCALE_MULT;

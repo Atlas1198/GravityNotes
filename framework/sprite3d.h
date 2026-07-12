@@ -21,17 +21,18 @@ protected:
 	XMFLOAT4 m_OriginalColor;
 	bool m_UseOriginalColor;
 	SHADERTYPE m_ShaderType;
+	ID3D11ShaderResourceView* m_CustomTexture; // カスタムテクスチャ
 public:
 	Sprite3D() : Transform3D(XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(1.0f, 1.0f, 1.0f)), m_Model(nullptr), m_GlbModel(nullptr), m_IsGlb(false),
 		  m_ModelSize(0.0f, 0.0f, 0.0f), m_Color(1.0f, 1.0f, 1.0f, 1.0f),
-		  m_OriginalColor(1.0f, 1.0f, 1.0f, 1.0f), m_UseOriginalColor(true), m_ShaderType(S_UNLIT)
+		  m_OriginalColor(1.0f, 1.0f, 1.0f, 1.0f), m_UseOriginalColor(true), m_ShaderType(S_UNLIT), m_CustomTexture(nullptr)
 	{
 	}
 
 	Sprite3D(const XMFLOAT3& pos, const XMFLOAT3& scale, const XMFLOAT3& rot, const char* pass, SHADERTYPE st)
 		: Transform3D(pos, rot, scale), m_Model(nullptr), m_GlbModel(nullptr), m_IsGlb(false),
 		  m_Color(1.0f, 1.0f, 1.0f, 1.0f),
-		  m_OriginalColor(1.0f, 1.0f, 1.0f, 1.0f), m_UseOriginalColor(true), m_ShaderType(st)
+		  m_OriginalColor(1.0f, 1.0f, 1.0f, 1.0f), m_UseOriginalColor(true), m_ShaderType(st), m_CustomTexture(nullptr)
 	{
 		// 拡張子で読み込みを分岐
 		if (IsGlbFile(pass))
@@ -119,7 +120,8 @@ public:
 					GetScale(),
 					drawColor,
 					shouldApplyColorReplace,
-					m_ShaderType
+					m_ShaderType,
+					m_CustomTexture
 				);
 			}
 			else
@@ -164,6 +166,28 @@ public:
 	void ResetColor(void)
 	{
 		m_UseOriginalColor = true;
+	}
+
+	// カスタムテクスチャをパスから設定する
+	void SetCustomTexture(const char* texturePath)
+	{
+		if (texturePath)
+		{
+			int len = (int)strlen(texturePath);
+			std::wstring wpath(len, L'\0');
+			MultiByteToWideChar(CP_ACP, 0, texturePath, len, &wpath[0], len);
+			m_CustomTexture = LoadTexture(wpath.c_str());
+		}
+		else
+		{
+			m_CustomTexture = nullptr;
+		}
+	}
+
+	// カスタムテクスチャを直接設定する
+	void SetCustomTexture(ID3D11ShaderResourceView* texture)
+	{
+		m_CustomTexture = texture;
 	}
 
 	// 色を変更するメソッド（R, G, B, A 個別指定）
