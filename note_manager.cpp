@@ -15,26 +15,20 @@
 
 static const float HIT_ZONE_Z     = 3.0f;
 static const float PASSIVE_ZONE_Z = 0.5f; // Orb・Barrier の自動判定Z
-static const float PERFECT_WINDOW = 1.0f;
-static const float GOOD_WINDOW    = 2.5f;
+static const float HIT_WINDOW     = 2.5f;
 static const float ROPE_ACTIVATE_WINDOW = 0.5f; // レインボーはプレイヤーの足元でのみ活性化（PASSIVE_ZONE_Z基準）
 
 // beat を「そのノーツをスポーンすべき時刻（秒）」に変換
+float NoteManager::BeatToAudioTime(float beat) const
+{
+	return beat * 60.0f / m_ScoreData.bpm + m_ScoreData.offset;
+}
+
 float NoteManager::BeatToSpawnTime(float beat) const
 {
-	float hitTime    = BeatToSeconds(beat);
+	float hitTime    = BeatToAudioTime(beat);
 	float travelTime = (m_SpawnZ - HIT_ZONE_Z) / m_NoteSpeed;
 	return hitTime - travelTime;
-}
-
-float NoteManager::BeatToSeconds(float beat) const
-{
-	return beat * 60.0f / m_ScoreData.bpm;
-}
-
-float NoteManager::BeatToZ(float beat) const
-{
-	return (BeatToSeconds(beat) - m_ElapsedTime) * m_NoteSpeed + HIT_ZONE_Z;
 }
 
 int NoteManager::WallToFace(ScoreWall wall) const
@@ -52,17 +46,14 @@ int NoteManager::WallToFace(ScoreWall wall) const
 JUDGE NoteManager::JudgeByDistance(NoteBase* note, float targetZ)
 {
 	float dist = fabsf(note->GetPosZ() - targetZ);
-	JUDGE result = JUDGE_NONE;
-	if (dist < PERFECT_WINDOW) result = JUDGE_PERFECT;
-	else if (dist < GOOD_WINDOW) result = JUDGE_GOOD;
-	if (result == JUDGE_NONE) return result;
+	if (dist >= HIT_WINDOW) return JUDGE_NONE;
 
 	// エネミーが消える前の座標を使って撃破パーティクルを生成する。
 	if (m_pEnemyDefeatEffect && dynamic_cast<EnemyNote*>(note))
 		m_pEnemyDefeatEffect->Spawn(note->GetPos(), note->GetFace());
 
 	note->OnHit();
-	return result;
+	return JUDGE_HIT;
 }
 
 void NoteManager::Init(const std::string& scoreFilePath)
@@ -136,7 +127,8 @@ void NoteManager::Update(int playerLane, int playerFace)
 		int face = WallToFace(ev.wall);
 
 		// 現時刻でノーツが居るべきZ座標を計算（遅延スポーン時は手前に補正）
-		float initZ = BeatToZ(ev.beat);
+		float hitTime = BeatToAudioTime(ev.beat);
+		float initZ   = (hitTime - m_ElapsedTime) * m_NoteSpeed + HIT_ZONE_Z;
 
 		// JSON lane (0=左, 1=中央, 2=右) → ゲーム lane (-1=左, 0=中央, 1=右) に変換
 		int gameLane = ev.lane - 1;
@@ -166,7 +158,8 @@ void NoteManager::Update(int playerLane, int playerFace)
 		}
 		case ScoreType::Hold:
 		{
-			float endZ = BeatToZ(ev.endBeat);
+			float endHitTime = BeatToAudioTime(ev.endBeat);
+			float endZ       = (endHitTime - m_ElapsedTime) * m_NoteSpeed + HIT_ZONE_Z;
 
 			HoldNote* note = new HoldNote();
 			note->Init(ev.lane, ev.endLane, face, initZ, endZ, m_NoteSpeed, m_ScoreData.bpm);
@@ -175,7 +168,8 @@ void NoteManager::Update(int playerLane, int playerFace)
 		}
 		case ScoreType::RopeHold:
 		{
-			float endZ        = BeatToZ(ev.endBeat);
+			float endHitTime  = BeatToAudioTime(ev.endBeat);
+			float endZ        = (endHitTime - m_ElapsedTime) * m_NoteSpeed + HIT_ZONE_Z;
 			int   endFace     = WallToFace(ev.endWall);
 			int   gameEndLane = ev.endLane - 1;
 
@@ -199,11 +193,12 @@ void NoteManager::Update(int playerLane, int playerFace)
 		{
 			float z = m_Notes[i]->GetPosZ();
 
-			// Orb: PASSIVE_ZONE_Zよりwindow分手前からlane・faceの一致判定を開始する（早期HIT用の猶予）。
-			// ただしMiss確定ラインはPASSIVE_ZONE_Zのまま変えない（プレイヤーの足元まで表示され続けるのを防ぐ）
+			// Orb: HIT_ZONE_Zよりorb JudgeWindow分手前（Z値が大きい＝プレイヤーから遠い）からHIT判定を開始する。
+			// プレイヤーの足元(z=0付近)まで引き寄せず、胴あたりの高さで消えているように見せるための猶予。
+			// Miss確定ラインは HIT_ZONE_Z - HIT_WINDOW のまま変えない（近すぎるところまで表示され続けるのを防ぐ）
 			if (OrbNote* orb = dynamic_cast<OrbNote*>(m_Notes[i]))
 			{
-				if (z <= HIT_ZONE_Z)
+				if (z <= HIT_ZONE_Z + D_PARAMS.orbJudgeWindow)
 				{
 					if (m_Notes[i]->GetLaneIndex() == playerLane &&
 						m_Notes[i]->GetFace()      == playerFace)
@@ -218,17 +213,17 @@ void NoteManager::Update(int playerLane, int playerFace)
 							PlaySound(m_pOrbGetsSe, false);
 						}
 					}
-					else if (z < HIT_ZONE_Z - GOOD_WINDOW)
+					else if (z < HIT_ZONE_Z - HIT_WINDOW)
 					{
 						orb->OnMiss();
 						m_PendingOrbEvents.push(ORB_EVENT_MISS);
 					}
 				}
 			}
-			// Barrier: タイミングはEnemyノーツと一緒（z < HIT_ZONE_Z - GOOD_WINDOW）
+			// Barrier: タイミングはEnemyノーツと一緒（z < HIT_ZONE_Z - HIT_WINDOW）
 			else if (BarrierNote* barrier = dynamic_cast<BarrierNote*>(m_Notes[i]))
 			{
-				if (z < HIT_ZONE_Z - GOOD_WINDOW)
+				if (z < HIT_ZONE_Z - HIT_WINDOW)
 				{
 					float beat = barrier->GetBeat();
 					if (m_Notes[i]->GetLaneIndex() == playerLane &&
@@ -254,7 +249,7 @@ void NoteManager::Update(int playerLane, int playerFace)
 			// HoldNote・RopeHoldNote は自身で Miss 処理するのでスキップ
 			else if (!dynamic_cast<HoldNote*>(m_Notes[i]) &&
 			         !dynamic_cast<RopeHoldNote*>(m_Notes[i]) &&
-			         z < HIT_ZONE_Z - GOOD_WINDOW)
+			         z < HIT_ZONE_Z - HIT_WINDOW)
 			{
 				m_Notes[i]->OnMiss();
 				m_PendingJudges.push(JUDGE_MISS); // StatusManager に伝える
@@ -267,7 +262,7 @@ void NoteManager::Update(int playerLane, int playerFace)
 			if (RopeHoldNote* rope = dynamic_cast<RopeHoldNote*>(m_Notes[i]))
 			{
 				if (rope->GetState() == RopeHoldNote::State::COMPLETE)
-					m_PendingJudges.push(JUDGE_PERFECT);
+					m_PendingJudges.push(JUDGE_HIT);
 			}
 			delete m_Notes[i];
 			m_Notes.erase(m_Notes.begin() + i);
@@ -407,7 +402,7 @@ JUDGE NoteManager::Judge(int lane, int face)
 	for (NoteBase* note : m_Notes)
 	{
 		if (!note->IsActive() || note->IsHit()) continue;
-		if (note->GetLaneIndex() != lane || note->GetFace() != face) continue;
+		if (!IsSameOrCornerPosition(note->GetLaneIndex(), note->GetFace(), lane, face)) continue;
 		if (dynamic_cast<OrbNote*>(note) || dynamic_cast<BarrierNote*>(note)) continue;
 		if (dynamic_cast<RopeHoldNote*>(note)) continue; // ロープホールドは別扱い
 		if (dynamic_cast<HoldNote*>(note)) continue;     // Hold本体は非対象（子ノートで判定）
@@ -501,7 +496,7 @@ JUDGE NoteManager::OnButtonRelease(int lane, int face)
 
 		float progress = rope->GetHoldProgress();
 		rope->Release();
-		return (progress >= 0.5f) ? JUDGE_GOOD : JUDGE_MISS;
+		return (progress >= 0.5f) ? JUDGE_HIT : JUDGE_MISS;
 	}
 	return JUDGE_NONE;
 }
@@ -536,10 +531,11 @@ bool NoteManager::CheckAndHitBarrier(int fromLane, int fromFace, int toLane, int
 	{
 		BarrierNote* barrier = dynamic_cast<BarrierNote*>(note);
 		if (!barrier || !barrier->IsActive() || barrier->IsHit()) continue;
-		if (barrier->GetLaneIndex() != fromLane || barrier->GetFace() != fromFace) continue;
+		// 回避成功判定のみ角ペアを許容（被弾判定は完全一致のまま）
+		if (!IsSameOrCornerPosition(barrier->GetLaneIndex(), barrier->GetFace(), fromLane, fromFace)) continue;
 
 		float dist = fabsf(barrier->GetPosZ() - HIT_ZONE_Z);
-		if (dist < GOOD_WINDOW)
+		if (dist < HIT_WINDOW)
 		{
 			barrier->OnHit();
 			float beat = barrier->GetBeat();
@@ -561,7 +557,7 @@ bool NoteManager::CheckAndHitBarrier(int fromLane, int fromFace, int toLane, int
 		if (barrier->GetLaneIndex() != toLane || barrier->GetFace() != toFace) continue;
 
 		float dist = fabsf(barrier->GetPosZ() - HIT_ZONE_Z);
-		if (dist < GOOD_WINDOW)
+		if (dist < HIT_WINDOW)
 		{
 			barrier->OnMiss();
 			m_PendingJudges.push(JUDGE_MISS);
