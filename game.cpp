@@ -11,6 +11,8 @@
 #include "model.h"
 #include "debugcamera.h"
 #include "debug_ui.h"
+#include "debug_params.h"
+#include "../framework/imgui/imgui.h"
 #include "sound.h"
 #include "ClickFont.h"
 #include "scene.h"
@@ -265,4 +267,66 @@ void Game_Finalize(void)
 	if (g_pGameUI)        { g_pGameUI->Finalize();        SAFE_DELETE(g_pGameUI); }
 	GameLight::Finalize();
 	GameCamera::Finalize();
+}
+
+void Game_DebugUIDraw(void)
+{
+#ifdef _DEBUG
+	ImGui::Begin("LD Parameters");
+
+	auto& p = D_PARAMS;
+
+	ImGui::SeparatorText("Notes");
+	if (ImGui::SliderFloat("Speed",        &p.noteSpeed,        1.0f,  60.0f, "%.1f u/s"))
+		p.noteSpeed = roundf(p.noteSpeed * 10.0f) / 10.0f;
+	if (ImGui::SliderFloat("Hit Distance", &p.hitDistance,      0.5f,  10.0f, "%.2f u"))
+		p.hitDistance = roundf(p.hitDistance * 100.0f) / 100.0f;
+
+	ImGui::SeparatorText("Player");
+	if (ImGui::SliderFloat("Lane Width",   &p.laneWidth,        0.5f,  5.0f,  "%.2f u"))
+		p.laneWidth = roundf(p.laneWidth * 100.0f) / 100.0f;
+	if (ImGui::SliderFloat("Gravity Time", &p.gravityTransTime, 0.05f, 1.0f,  "%.2f s"))
+		p.gravityTransTime = roundf(p.gravityTransTime * 100.0f) / 100.0f;
+
+	ImGui::SeparatorText("Camera Offsets");
+	const char* faceNames[] = { "Floor (Down)", "Left Wall", "Ceiling (Up)", "Right Wall" };
+	for (int i = 0; i < 4; i++)
+	{
+		if (ImGui::TreeNode(faceNames[i]))
+		{
+			if (ImGui::SliderFloat("Yaw Offset", &p.cameraOffsets[i].yaw, -90.0f, 90.0f, "%.1f deg"))
+				p.cameraOffsets[i].yaw = roundf(p.cameraOffsets[i].yaw * 10.0f) / 10.0f;
+			if (ImGui::SliderFloat("Pitch Offset", &p.cameraOffsets[i].pitch, -90.0f, 90.0f, "%.1f deg"))
+				p.cameraOffsets[i].pitch = roundf(p.cameraOffsets[i].pitch * 10.0f) / 10.0f;
+			if (ImGui::SliderFloat("Pos X Offset", &p.cameraOffsets[i].posX, -10.0f, 10.0f, "%.1f u"))
+				p.cameraOffsets[i].posX = roundf(p.cameraOffsets[i].posX * 10.0f) / 10.0f;
+			if (ImGui::SliderFloat("Pos Y Offset", &p.cameraOffsets[i].posY, -10.0f, 10.0f, "%.1f u"))
+				p.cameraOffsets[i].posY = roundf(p.cameraOffsets[i].posY * 10.0f) / 10.0f;
+			if (ImGui::SliderFloat("Pos Z Offset", &p.cameraOffsets[i].posZ, -10.0f, 10.0f, "%.1f u"))
+				p.cameraOffsets[i].posZ = roundf(p.cameraOffsets[i].posZ * 10.0f) / 10.0f;
+			if (ImGui::Button("Reset"))
+			{
+				p.cameraOffsets[i].yaw = 0.0f;
+				p.cameraOffsets[i].pitch = 0.0f;
+				p.cameraOffsets[i].posX = 0.0f;
+				p.cameraOffsets[i].posY = 0.0f;
+				p.cameraOffsets[i].posZ = 0.0f;
+			}
+			ImGui::TreePop();
+		}
+	}
+
+	ImGui::SeparatorText("Configuration");
+	if (ImGui::Button("Save Settings"))
+	{
+		p.Save();
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Load Settings"))
+	{
+		p.Load();
+	}
+
+	ImGui::End();
+#endif
 }
