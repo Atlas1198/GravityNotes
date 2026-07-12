@@ -145,15 +145,15 @@ void Result_Initialize(void)
 	{
 		g_ShowResult.rank = RR_AH;
 	}
-	else if (g_ShowResult.score >= 950000)
+	else if (g_ShowResult.score >= 900000)
 	{
 		g_ShowResult.rank = RR_S;
 	}
-	else if (g_ShowResult.score == 900000)
+	else if (g_ShowResult.score >= 800000)
 	{
 		g_ShowResult.rank = RR_A;
 	}
-	else if (g_ShowResult.score == 800000)
+	else if (g_ShowResult.score >= 700000)
 	{
 		g_ShowResult.rank = RR_B;
 	}
