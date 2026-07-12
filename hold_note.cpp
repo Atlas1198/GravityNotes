@@ -62,6 +62,10 @@ void HoldNote::Init(int lane, int endLane, int face, float initZ, float endZ, fl
 		{
 			child->SetCustomTexture("asset/texture/Gargoyle_red.png");
 		}
+		else
+		{
+			child->SetCustomTexture("asset/texture/Gargoyle_white.png");
+		}
 
 		// 一体目だけ少し大きく、それ以外は少し小さく表示する
 		float scaleMult = (i == 0) ? HOLD_FIRST_CHILD_SCALE_MULT : HOLD_CHILD_SCALE_MULT;
