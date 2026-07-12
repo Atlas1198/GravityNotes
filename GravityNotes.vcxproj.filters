@@ -166,9 +166,6 @@
     <ClCompile Include="hold_note.cpp">
       <Filter>SCENE_GAME\cpp</Filter>
     </ClCompile>
-    <ClCompile Include="rope_hold_note.cpp">
-      <Filter>SCENE_GAME\cpp</Filter>
-    </ClCompile>
     <ClCompile Include="debug_ui.cpp">
       <Filter>SCENE_GAME</Filter>
     </ClCompile>
@@ -378,9 +375,6 @@
     <ClInclude Include="hold_note.h">
       <Filter>SCENE_GAME\h</Filter>
     </ClInclude>
-    <ClInclude Include="rope_hold_note.h">
-      <Filter>SCENE_GAME\h</Filter>
-    </ClInclude>
     <ClInclude Include="debug_params.h">
       <Filter>SCENE_GAME</Filter>
     </ClInclude>
@@ -496,8 +490,6 @@
     <FxCompile Include="shader\OutlineVS.hlsl">
       <Filter>フレームワーク\シェーダー</Filter>
     </FxCompile>
-    <FxCompile Include="shader\BillboardShadowMapPS.hlsl" />
-    <FxCompile Include="shader\BillboardShadowMapVS.hlsl" />
     <FxCompile Include="shader\ShadowMapPS.hlsl">
       <Filter>フレームワーク\シェーダー</Filter>
     </FxCompile>
@@ -529,6 +521,12 @@
       <Filter>フレームワーク\シェーダー</Filter>
     </FxCompile>
     <FxCompile Include="shader\PBRShaderPS.hlsl">
+      <Filter>フレームワーク\シェーダー</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\BillboardShadowMapPS.hlsl">
+      <Filter>フレームワーク\シェーダー</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\BillboardShadowMapVS.hlsl">
       <Filter>フレームワーク\シェーダー</Filter>
     </FxCompile>
   </ItemGroup>
