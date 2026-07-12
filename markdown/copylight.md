@@ -29,7 +29,7 @@ orbgets.wav：インゲームオーブ取得音 /
 決定ボタンを押す43 - https://soundeffect-lab.info/sound/button/ を加工
 
 Rainbow.wav：インゲーム虹長押し音 /
-**不明** を加工
+きらきら輝く2 - https://soundeffect-lab.info/sound/anime/ を加工
 
 scoreup.mp3：リザルト数値カウントアップ音 /
 電子ルーレット回転中 - https://soundeffect-lab.info/sound/button/
@@ -38,7 +38,7 @@ score_subtitle.mp3：リザルトサブタイトル表示音 /
 パッ - https://soundeffect-lab.info/sound/anime/
 
 StageClear.mp3：ゲーム失敗時「StageClear」演出音 /
-**不明**
+可愛く輝く1 - https://soundeffect-lab.info/sound/anime/
 
 sword.mp3：インゲーム剣素振り音 /
 ナイフを投げる - https://soundeffect-lab.info/sound/battle/battle2.html
