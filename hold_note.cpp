@@ -12,7 +12,11 @@ static const float HOLD_BEAT_INTERVAL = 0.25f;
 
 // NoteManager 側の定数と揃えること
 static const float HOLD_HIT_ZONE_Z  = 3.0f;
-static const float HOLD_GOOD_WINDOW = 2.5f;
+static const float HOLD_HIT_WINDOW  = 2.5f;
+
+// 子ノートの大きさ（EnemyNote::Init() で設定される基準スケールに対する倍率）
+static const float HOLD_FIRST_CHILD_SCALE_MULT = 1.1f;  // 一体目は少し大きく
+static const float HOLD_CHILD_SCALE_MULT       = 0.8f; // それ以外は少し小さく
 
 HoldNote::~HoldNote()
 {
@@ -52,7 +56,14 @@ void HoldNote::Init(int lane, int endLane, int face, float initZ, float endZ, fl
 		float childZ = initZ + (float)i * zStep;
 
 		EnemyNote* child = new EnemyNote();
-		child->Init(snapLane, face, childZ, speed);
+		// 一体目だけ色違いモデルを使用
+		child->Init(snapLane, face, childZ, speed, (i == 0) ? "asset/model/GargoyleVariation.fbx" : nullptr);
+
+		// 一体目だけ少し大きく、それ以外は少し小さく表示する
+		float scaleMult = (i == 0) ? HOLD_FIRST_CHILD_SCALE_MULT : HOLD_CHILD_SCALE_MULT;
+		XMFLOAT3 baseScale = child->GetScale();
+		child->SetSize({ baseScale.x * scaleMult, baseScale.y * scaleMult, baseScale.z * scaleMult });
+
 		m_ChildNotes.push_back(child);
 	}
 }
@@ -68,7 +79,7 @@ void HoldNote::Update()
 		child->Update();
 
 		// 判定窓を通過したら押し逃しMiss
-		if (!child->IsHit() && child->GetPosZ() < HOLD_HIT_ZONE_Z - HOLD_GOOD_WINDOW)
+		if (!child->IsHit() && child->GetPosZ() < HOLD_HIT_ZONE_Z - HOLD_HIT_WINDOW)
 			child->OnMiss();
 
 		if (child->IsActive())
@@ -97,7 +108,7 @@ EnemyNote* HoldNote::GetNearestActiveChild(int lane, int face) const
 	for (EnemyNote* child : m_ChildNotes)
 	{
 		if (!child->IsActive() || child->IsHit()) continue;
-		if (child->GetLaneIndex() != lane || child->GetFace() != face) continue;
+		if (!IsSameOrCornerPosition(child->GetLaneIndex(), child->GetFace(), lane, face)) continue;
 
 		float dist = fabsf(child->GetPosZ() - HOLD_HIT_ZONE_Z);
 		if (dist < minDist)

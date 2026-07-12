@@ -285,7 +285,7 @@ void Player::Update()
 		JUDGE result = m_pNoteManager->Judge(m_LaneIndex, m_GravityFace);
 		processJudge(result, false);
 
-		if (result == JUDGE_PERFECT || result == JUDGE_GOOD)
+		if (result == JUDGE_HIT)
 		{
 			if (m_pEnemyHitSe) PlaySound(m_pEnemyHitSe, false);
 		}
@@ -306,7 +306,7 @@ void Player::Update()
 		JUDGE result = m_pNoteManager->JudgeHold(m_LaneIndex, m_GravityFace);
 		processJudge(result, true);
 
-		if (result == JUDGE_PERFECT || result == JUDGE_GOOD)
+		if (result == JUDGE_HIT)
 		{
 			if (m_pEnemyHitSe) PlaySound(m_pEnemyHitSe, false);
 		}
