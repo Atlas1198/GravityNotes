@@ -1,4 +1,4 @@
-﻿#include "define.h"
+#include "define.h"
 #include "game.h"
 #include "note_manager.h"
 #include "sound.h"
@@ -81,6 +81,43 @@ void NoteManager::Init(const std::string& scoreFilePath)
 	m_pOrbGetsSe = LoadMP3("asset/sound/se/orbgets.wav");
 	m_pRainbowSe = LoadMP3("asset/sound/se/Rainbow.wav");
 	m_RainbowSePlaying = false;
+
+	// プールの初期化
+	for (int i = 0; i < MAX_ROPE_POOL; ++i)
+	{
+		m_RopePool[i] = new RopeHoldNote();
+		m_RopePoolInUse[i] = false;
+	}
+}
+
+RopeHoldNote* NoteManager::AcquireRope()
+{
+	for (int i = 0; i < MAX_ROPE_POOL; ++i)
+	{
+		if (!m_RopePoolInUse[i])
+		{
+			m_RopePoolInUse[i] = true;
+			return m_RopePool[i];
+		}
+	}
+	// 万が一プールが足りない場合は警告を出して新規生成(保険)
+	hal::dout << "[Warning] Rope pool exhausted! Dynamically allocating one." << std::endl;
+	return new RopeHoldNote();
+}
+
+void NoteManager::ReleaseRope(RopeHoldNote* rope)
+{
+	if (!rope) return;
+	for (int i = 0; i < MAX_ROPE_POOL; ++i)
+	{
+		if (m_RopePool[i] == rope)
+		{
+			m_RopePoolInUse[i] = false;
+			return;
+		}
+	}
+	// プール外から動的確保されたものの場合は delete
+	delete rope;
 }
 
 void NoteManager::Update(int playerLane, int playerFace)
@@ -173,7 +210,7 @@ void NoteManager::Update(int playerLane, int playerFace)
 			int   endFace     = WallToFace(ev.endWall);
 			int   gameEndLane = ev.endLane - 1;
 
-			RopeHoldNote* note = new RopeHoldNote();
+			RopeHoldNote* note = AcquireRope();
 			note->Init(gameLane, gameEndLane, face, endFace, initZ, endZ, m_NoteSpeed);
 			m_Notes.push_back(note);
 			break;
@@ -263,8 +300,12 @@ void NoteManager::Update(int playerLane, int playerFace)
 			{
 				if (rope->GetState() == RopeHoldNote::State::COMPLETE)
 					m_PendingJudges.push(JUDGE_HIT);
+				ReleaseRope(rope);
 			}
-			delete m_Notes[i];
+			else
+			{
+				delete m_Notes[i];
+			}
 			m_Notes.erase(m_Notes.begin() + i);
 		}
 	}
@@ -384,8 +425,29 @@ void NoteManager::Finalize()
 	m_RainbowSePlaying = false;
 
 	for (NoteBase* note : m_Notes)
-		delete note;
+	{
+		if (RopeHoldNote* rope = dynamic_cast<RopeHoldNote*>(note))
+		{
+			ReleaseRope(rope);
+		}
+		else
+		{
+			delete note;
+		}
+	}
 	m_Notes.clear();
+
+	// プール内のインスタンス自体の解放
+	for (int i = 0; i < MAX_ROPE_POOL; ++i)
+	{
+		if (m_RopePool[i])
+		{
+			delete m_RopePool[i];
+			m_RopePool[i] = nullptr;
+		}
+		m_RopePoolInUse[i] = false;
+	}
+
 	delete m_pEnemyDefeatEffect;
 	m_pEnemyDefeatEffect = nullptr;
 	delete m_pOrbCollectEffect;

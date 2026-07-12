@@ -1,4 +1,4 @@
-﻿#include "game.h"
+#include "game.h"
 #include "define.h"
 #include "sprite2d.h"
 #include "texture.h"

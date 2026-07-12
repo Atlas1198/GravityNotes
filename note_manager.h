@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <vector>
 #include <queue>
 #include <set>
@@ -56,6 +56,13 @@ private:
 	float m_FadeOutTimer = 0.0f;
 	float m_FadeOutStartVolume = 1.0f;
 	bool  m_IsFadingOut = false;
+
+	static constexpr int MAX_ROPE_POOL = 4;
+	RopeHoldNote* m_RopePool[MAX_ROPE_POOL] = {};
+	bool          m_RopePoolInUse[MAX_ROPE_POOL] = {};
+
+	RopeHoldNote* AcquireRope();
+	void          ReleaseRope(RopeHoldNote* rope);
 
 	float BeatToSpawnTime(float beat) const;
 	// beatを、offset補正込みの「曲再生位置における実時刻（秒）」に変換する
