@@ -1,4 +1,4 @@
-﻿#include "stageselect.h"
+#include "stageselect.h"
 #include "sprite2d.h"
 #include "texture.h"
 #include "input_manager.h"
