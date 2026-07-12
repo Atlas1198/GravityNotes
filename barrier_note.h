@@ -10,4 +10,7 @@ public:
 
 	void Init(int lane, int face, float spawnZ, float speed, float beat);
 	float GetBeat() const { return m_Beat; }
+
+	void OnHit() override;
+	void OnMiss() override;
 };
