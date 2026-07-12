@@ -80,9 +80,7 @@ static ShowResult g_ShowResult;
 // SE用サウンドデータ
 static SoundData* g_pSEScoreSubtitle = nullptr;
 static SoundData* g_pSEScoreUp = nullptr;
-static SoundData* g_pSEScoreUpZyan = nullptr;
 static SoundData* g_pSEHyoukaTyuin = nullptr;
-static float g_SEScoreUpZyanOffset = 0.0f;
 static SoundData* g_pResultBGM = nullptr;
 static float g_ResultBGMVolumeScale = 0.2f;
 
@@ -321,7 +319,6 @@ void Result_Initialize(void)
 	// SEの読み込み
 	g_pSEScoreSubtitle = LoadMP3("asset/sound/se/score_subtitle.mp3");
 	g_pSEScoreUp       = LoadMP3("asset/sound/se/scoreup.mp3");
-	g_pSEScoreUpZyan   = LoadMP3("asset/sound/se/scoreup_zyan.mp3");
 	g_pSEHyoukaTyuin   = LoadMP3("asset/sound/se/hyouka_tyui-n.mp3");
 
 	// BGMの読み込みと再生
@@ -395,16 +392,6 @@ void Result_Update(void)
 	{
 		PlaySound(g_pSEScoreUp, false);
 	}
-
-	//// 各行の確定タイミングで scoreup_zyan を再生
-	//for (int i = 0; i < MAX_ROWS; ++i)
-	//{
-	//	float valueEndTime = (MAX_ROWS * ROW_DELAY) + VALUE_START_DELAY + (i * ROW_DELAY) + COUNT_UP_MAX_TIME + g_SEScoreUpZyanOffset;
-	//	if (g_ResultSceneTimer == valueEndTime)
-	//	{
-	//		PlaySound(g_SpSEScoreUpZyan);
-	//	}
-	//}
 
 	if (g_ResultSceneTimer == RANK_ANIM_START_TIME)
 	{
@@ -545,8 +532,6 @@ void Result_Finalize(void)
 	g_pSEScoreSubtitle = nullptr;
 	UnloadSound(g_pSEScoreUp);
 	g_pSEScoreUp = nullptr;
-	UnloadSound(g_pSEScoreUpZyan);
-	g_pSEScoreUpZyan = nullptr;
 	UnloadSound(g_pSEHyoukaTyuin);
 	g_pSEHyoukaTyuin = nullptr;
 
@@ -560,20 +545,5 @@ void Result_Finalize(void)
 
 void Result_DebugUIDraw(void)
 {
-	ImGui::Begin("Result Scene Editor");
-	if (ImGui::CollapsingHeader("Music Texts")) {
 
-	}
-	if (ImGui::CollapsingHeader("Change Scene Text")) {
-		if (g_pChangeSceneText) {
-			float pos[2] = { g_pChangeSceneText->GetPosX(), g_pChangeSceneText->GetPosY() };
-			if (ImGui::DragFloat2("Position##ChangeSceneText", pos, 1.0f)) {
-				g_pChangeSceneText->SetPos({ pos[0], pos[1] });
-			}
-		}
-	}
-	if (ImGui::CollapsingHeader("SE Settings")) {
-		ImGui::DragFloat("ScoreUpZyan Offset (Frames)", &g_SEScoreUpZyanOffset, 1.0f, -600.0f, 600.0f, "%.0f");
-	}
-	ImGui::End();
 }
