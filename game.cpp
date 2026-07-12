@@ -48,10 +48,28 @@ static StatusManager* g_pStatusManager = nullptr;
 static bool           g_IsMouseCursorVisible = false;
 static GameUI*        g_pGameUI        = nullptr;
 
+// プリロード対象のモデルポインタ保持
+static const char* g_PreloadModelPaths[] = {
+	"asset/model/knight_02.fbx",
+	"asset/model/field_allnormal.fbx",
+	"asset/model/field_hasiranashi.fbx",
+	"asset/model/Gargoyle.fbx",
+	"asset/model/barrier.fbx"
+};
+static const int G_PRELOAD_MODEL_COUNT = sizeof(g_PreloadModelPaths) / sizeof(g_PreloadModelPaths[0]);
+static MODEL* g_pPreloadedModels[G_PRELOAD_MODEL_COUNT] = { nullptr };
+
+
 void Game_Initialize(void)
 {
 	//int pad = Gamepad_FindConnectedPlayer();
 	//if (pad < 0)return;//デバック時必要なし
+
+	// 主要モデルのプリロード
+	for (int i = 0; i < G_PRELOAD_MODEL_COUNT; i++)
+	{
+		g_pPreloadedModels[i] = ModelLoad(g_PreloadModelPaths[i]);
+	}
 
   // 各状態の初期化
 	g_GameState   = GameState::PLAYING;
@@ -267,6 +285,16 @@ void Game_Finalize(void)
 	if (g_pGameUI)        { g_pGameUI->Finalize();        SAFE_DELETE(g_pGameUI); }
 	GameLight::Finalize();
 	GameCamera::Finalize();
+
+	// プリロードモデルの解放
+	for (int i = 0; i < G_PRELOAD_MODEL_COUNT; i++)
+	{
+		if (g_pPreloadedModels[i])
+		{
+			ModelRelease(g_pPreloadedModels[i]);
+			g_pPreloadedModels[i] = nullptr;
+		}
+	}
 }
 
 void Game_DebugUIDraw(void)
