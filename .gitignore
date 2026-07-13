@@ -372,3 +372,6 @@ FodyWeavers.xsd
 *tool/selfeditor_path.txt
 json/
 music/
+
+# Generated version header
+version.h

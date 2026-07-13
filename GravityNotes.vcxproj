@@ -696,7 +696,18 @@
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)shader\%(Filename).cso</ObjectFileOutput>
     </FxCompile>
   </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="GravityNotes.rc" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <Target Name="GenerateVersionHeader" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <VersionFilePath>$(ProjectDir).github\version.txt</VersionFilePath>
+      <HeaderFilePath>$(ProjectDir)version.h</HeaderFilePath>
+    </PropertyGroup>
+    <Exec Command="powershell -ExecutionPolicy Bypass -Command &quot;if (Test-Path '$(VersionFilePath)') { $v = (Get-Content '$(VersionFilePath)' -Raw).Trim() } else { $v = 'unknown' }; $content = '#pragma once' + [Environment]::NewLine + '#define VERSION_STR L\&quot;v' + $v + '\&quot;' + [Environment]::NewLine; [System.IO.File]::WriteAllText('$(HeaderFilePath)', $content, (New-Object System.Text.UTF8Encoding($true)))&quot;" />
+  </Target>
 </Project>
+

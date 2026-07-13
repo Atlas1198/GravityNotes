@@ -108,6 +108,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	wc.lpfnWndProc = WndProc;//初期化
 	wc.lpszClassName = CLASS_NAME;//仕様書の名前
 	wc.hInstance = hInstance;//このアプリのこと
+	wc.hIcon = LoadIcon(hInstance, L"IDI_ICON1");
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);//cursorの種類
 	wc.hbrBackground = (HBRUSH)(COLOR_BACKGROUND);//背景色
 	RegisterClass(&wc);//構構体をwindowsにセット
