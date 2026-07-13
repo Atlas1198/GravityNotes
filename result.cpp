@@ -67,6 +67,7 @@ struct ShowResult
 	int misses;
 	int orbgets;
 	int orblosses;
+	int fullCombo;
 };
 
 // ①インスタンス、ポインタ用意
@@ -123,13 +124,14 @@ void Result_Initialize(void)
 	g_ScoreSummary = LoadSingleScoreSummary(GetPlayJson());
 
 	////リザルトデータを実体化させてコピー　上書き禁止
+	g_ShowResult.fullCombo = GetResult()->fullCombo;
 	g_ShowResult.maxCombo = GetResult()->maxCombo;
 	g_ShowResult.hits = GetResult()->hits;
 	g_ShowResult.misses = GetResult()->misses;
 	g_ShowResult.orbgets = GetResult()->orbgets;
 	g_ShowResult.orblosses = GetResult()->orblosses;
 
-	int totalNotes = g_ShowResult.hits + g_ShowResult.misses;
+	int totalNotes = g_ShowResult.fullCombo;
 	if (totalNotes > 0)
 	{
 		g_ShowResult.score = static_cast<int>((static_cast<double>(g_ShowResult.hits) / totalNotes) * 1000000);

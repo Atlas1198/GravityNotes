@@ -82,6 +82,7 @@ public:
 	float GetNoteSpeed() const { return m_NoteSpeed; }
 	float GetBPM() const { return m_ScoreData.bpm; }
 	float GetElapsedTime() const { return m_ElapsedTime; }
+	const ScoreData& GetScoreData() const { return m_ScoreData; }
 
 	JUDGE Judge(int lane, int face);
 	JUDGE JudgeHold(int lane, int face);

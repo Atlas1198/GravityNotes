@@ -1,6 +1,7 @@
 ﻿#include "game.h"
 #include "orb_note.h"
 #include "split_bilboard.h"
+#include <cstdlib>
 
 namespace
 {
@@ -27,7 +28,7 @@ void OrbNote::Init(int lane, int face, float spawnZ, float speed)
 	// fbxモデルは使用しないため modelPath は渡さない
 	NoteBase::Init(lane, face, spawnZ, speed, nullptr);
 
-	m_AnimTimer = 0.0f;
+	m_AnimTimer = (static_cast<float>(rand()) / RAND_MAX) * (1.0f / ORB_ANIM_FPS);
 
 	if (!m_pBillboard)
 	{
@@ -42,7 +43,7 @@ void OrbNote::Init(int lane, int face, float spawnZ, float speed)
 		m_pBillboard->SetWallFadeEnabled(false);
 	}
 	m_pBillboard->SetPos(GetOffsetPos());
-	m_pBillboard->SetTextureIndex(0);
+	m_pBillboard->SetTextureIndex(rand() % ORB_USABLE_FRAMES);
 }
 
 void OrbNote::Update()

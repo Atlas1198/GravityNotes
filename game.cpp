@@ -124,7 +124,15 @@ void Game_Update(void)
 		g_FinishTimer += dt;
 		if (g_FinishTimer >= 3.0f)
 		{
-			SetResult(g_pStatusManager->GetResult());
+			SendResult r = g_pStatusManager->GetResult();
+			r.fullCombo = g_pNoteManager->GetScoreData().fullCombo;
+			// 途中でゲームオーバー等によりノーツをすべて処理しきれずに終了した場合、
+			// 処理しきれなかった分のノーツはすべてミスとする
+			if (r.hits + r.misses < r.fullCombo)
+			{
+				r.misses = r.fullCombo - r.hits;
+			}
+			SetResult(r);
 			SetSceneFade(SCENE_RESULT);
 		}
 	}
