@@ -36,6 +36,7 @@ void Player::Init(NoteManager* nm, StatusManager* sm)
 	m_IsGravityMoving = false;
 	m_GravityTimer = 0.0f;
 	m_GravityDuration = 0.3f;
+	m_WasHoldingRope = false;
 
 	m_Position = { 0.0f,-2.5f,0.0f };
 	m_StartPos = m_Position;
@@ -90,6 +91,7 @@ void Player::Reset()
 
 	m_IsGravityMoving = false;
 	m_GravityTimer = 0.0f;
+	m_WasHoldingRope = false;
 
 	m_Position = { 0.0f,-2.5f,0.0f };
 	m_StartPos = m_Position;
@@ -166,6 +168,26 @@ void Player::Update()
 	}
 	else
 	{
+		if (m_WasHoldingRope)
+		{
+			m_TargetFace      = m_GravityFace;
+			m_LaneIndex       = LANE_CENTER;
+			m_TargetLaneIndex = LANE_CENTER;
+
+			m_GravityStartPos = m_Position;
+			m_GravityStartRot = m_Rotation;
+			m_TargetPos       = CalcFaceTargetPos(m_GravityFace, m_LaneIndex);
+			m_TargetRot       = CalcFaceTargetRot(m_GravityFace);
+
+			// 回転を最短経路で補間するため差分を[-180, 180]に正規化
+			float diff = NormalizeAngleDelta(m_TargetRot.z - m_GravityStartRot.z);
+			m_TargetRot.z = m_GravityStartRot.z + diff;
+
+			m_GravityTimer    = 0.0f;
+			m_IsGravityMoving = true;
+			m_IsMoving        = false; // 通常移動はキャンセル
+		}
+
 		//lane移動入力
 		if (m_GravityFace == FACE::FACE_FLOOR || m_GravityFace == FACE::FACE_CEILING)
 		{
@@ -227,6 +249,7 @@ void Player::Update()
 			m_Position.y = m_GravityStartPos.y + (m_TargetPos.y - m_GravityStartPos.y) * eased;
 			m_Rotation.z = m_GravityStartRot.z + (m_TargetRot.z - m_GravityStartRot.z) * eased;
 		}
+
 	}
 
 	UpdateAnimation(dt);
@@ -372,6 +395,8 @@ void Player::Update()
 			if (m_pKaihiSe) PlaySound(m_pKaihiSe, false);
 		}
 	}
+
+	m_WasHoldingRope = (holdingRope != nullptr);
 }
 
 void Player::Draw()

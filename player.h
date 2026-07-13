@@ -40,6 +40,7 @@ private:
 	float m_GravityDuration;
 	XMFLOAT3 m_GravityStartPos;
 	XMFLOAT3 m_GravityStartRot;
+	bool m_WasHoldingRope; // 前フレームでレインボーを保持していたか
 
 	NoteManager*   m_pNoteManager;
 	StatusManager* m_pStatusManager;
