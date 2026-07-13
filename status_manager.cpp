@@ -39,9 +39,12 @@ void StatusManager::OnJudge(JUDGE result)
 
 	m_LastJudge   = result;
 	m_HasNewJudge = true;
-	if (result == JUDGE_MISS)
+	if (result == JUDGE_MISS || result == JUDGE_PASS_MISS)
 	{
-		m_HP-=30;
+		if (result == JUDGE_MISS)
+		{
+			m_HP-=30;
+		}
 		m_Combo = 0;
 		m_Misses++;
 		return;

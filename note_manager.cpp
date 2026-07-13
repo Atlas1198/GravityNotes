@@ -331,7 +331,7 @@ void NoteManager::Update(int playerLane, int playerFace)
 			         z < HIT_ZONE_Z - HIT_WINDOW)
 			{
 				m_Notes[i]->OnMiss();
-				m_PendingJudges.push(JUDGE_MISS); // StatusManager に伝える
+				m_PendingJudges.push(JUDGE_PASS_MISS); // StatusManager に伝える
 			}
 		}
 

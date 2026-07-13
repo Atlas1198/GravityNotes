@@ -366,7 +366,7 @@ void GameUI::Draw()
     if (m_JudgeTimer > 0.0f)
     {
         if (m_CurrentJudge == JUDGE_KAIHI) m_pKaihiSprite->Draw();
-        else if (m_CurrentJudge == JUDGE_MISS) m_pMissSprite->Draw();
+        else if (m_CurrentJudge == JUDGE_MISS || m_CurrentJudge == JUDGE_PASS_MISS) m_pMissSprite->Draw();
         else m_pHitSprite->Draw();
     }
 
