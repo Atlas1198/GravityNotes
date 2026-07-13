@@ -1,4 +1,5 @@
 ﻿#include "define.h"
+#include "debug_ostream.h"
 #include "game.h"
 #include "note_manager.h"
 #include "options_manager.h"
@@ -158,6 +159,8 @@ void NoteManager::Update(int playerLane, int playerFace)
 		m_pBgmData->pSourceVoice->SetVolume(volume);
 	}
 
+	static bool justStartedBGM = false;
+
 	if (!m_BgmStarted)
 	{
 		m_ElapsedTime += dt;
@@ -168,13 +171,25 @@ void NoteManager::Update(int playerLane, int playerFace)
 				PlaySound(m_pBgmData, false, 1.0f, m_BgmStartTime);
 			}
 			m_BgmStarted = true;
+			justStartedBGM = true;
 		}
 	}
 	else
 	{
 		if (m_pBgmData != nullptr)
 		{
-			m_ElapsedTime = (float)GetPlaybackPositionSec(m_pBgmData);
+			// XAudio2の再生開始直後(数ミリ秒)はSamplesPlayedが更新されず
+			// GetPlaybackPositionSecが0を返すレースコンディションがあるため、
+			// 再生開始した直後の1フレームだけはdtで時間を進める
+			if (justStartedBGM)
+			{
+				m_ElapsedTime += dt;
+				justStartedBGM = false;
+			}
+			else
+			{
+				m_ElapsedTime = (float)GetPlaybackPositionSec(m_pBgmData);
+			}
 		}
 		else
 		{
