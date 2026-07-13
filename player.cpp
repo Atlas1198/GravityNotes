@@ -257,8 +257,8 @@ void Player::Update()
 	}
 
 	//ノーツヒット入力
-	bool isPressed  = !m_IsGravityMoving && Input_IsActionTrigger(INPUT_ACTION_ATTACK);
-	bool isHolding  = !m_IsGravityMoving && Input_IsActionDown(INPUT_ACTION_ATTACK);
+	bool isPressed  = Input_IsActionTrigger(INPUT_ACTION_ATTACK);
+	bool isHolding  = Input_IsActionDown(INPUT_ACTION_ATTACK);
 
 	if (isPressed)
 	{
@@ -310,7 +310,8 @@ void Player::Update()
 		}
 
 		// 押した瞬間（KeyTrigger）：Enemy・Hold(最初の一撃) 判定
-		JUDGE result = m_pNoteManager->Judge(m_LaneIndex, m_GravityFace);
+		int judgeFace = m_IsGravityMoving ? m_TargetFace : m_GravityFace;
+		JUDGE result = m_pNoteManager->Judge(m_LaneIndex, judgeFace);
 		processJudge(result, false);
 
 		if (result == JUDGE_HIT)
@@ -331,7 +332,8 @@ void Player::Update()
 	{
 		// 押している間（KeyDown、トリガーの瞬間も含む）：
 		// HoldNote 継続判定 / RopeHoldNote の活性化・継続判定
-		JUDGE result = m_pNoteManager->JudgeHold(m_LaneIndex, m_GravityFace);
+		int judgeFace = m_IsGravityMoving ? m_TargetFace : m_GravityFace;
+		JUDGE result = m_pNoteManager->JudgeHold(m_LaneIndex, judgeFace);
 		processJudge(result, true);
 
 		if (result == JUDGE_HIT)
@@ -342,7 +344,8 @@ void Player::Update()
 	else
 	{
 		// ボタンを離した瞬間：RopeHoldNote の途中離し判定
-		JUDGE result = m_pNoteManager->OnButtonRelease(m_LaneIndex, m_GravityFace);
+		int judgeFace = m_IsGravityMoving ? m_TargetFace : m_GravityFace;
+		JUDGE result = m_pNoteManager->OnButtonRelease(m_LaneIndex, judgeFace);
 		processJudge(result, false);
 	}
 
