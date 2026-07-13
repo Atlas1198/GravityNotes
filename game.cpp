@@ -140,7 +140,7 @@ void Game_Update(void)
 	//2D描画
 	{
 		//③処理
-		g_pGameUI->Update(g_pStatusManager);
+		g_pGameUI->Update(g_pStatusManager, g_pNoteManager->GetHoldingRope() != nullptr);
 		if (g_pStatusManager->HasNewJudge())
 			g_pGameUI->NotifyJudge(g_pStatusManager->ConsumeJudge());
 		//g_pChangeSceneText->Update();

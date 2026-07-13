@@ -21,7 +21,7 @@ class GameUI
 public:
     void Init();
     void Reset();
-    void Update(const StatusManager* pStatus);
+    void Update(const StatusManager* pStatus, bool isHoldingRainbow = false);
     void Draw();
     void Finalize();
     void NotifyJudge(JUDGE judge);
@@ -29,6 +29,11 @@ public:
     void ShowResultLogos();
 
 private:
+    // 風切りエフェクト
+    FadableSplitSprite* m_pWindCutSprite   = nullptr;
+    float               m_WindCutAnimTimer = 0.0f;
+    float               m_WindCutAlpha     = 0.0f;
+    bool                m_IsHoldingRainbow = false;
     // コンボ
     FadableSplitSprite* m_pComboDigits[COMBO_MAX_DIGITS] = {};
     FontRenderer* m_pComboLabel = nullptr;

@@ -147,6 +147,20 @@ void GameUI::Init()
     m_LogoAnimTimer  = 0.0f;
     m_LogoAnimDuration = 0.35f;
 
+    // 風切りエフェクトの初期化
+    m_pWindCutSprite = new FadableSplitSprite(
+        { SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f },
+        { (float)SCREEN_WIDTH, (float)SCREEN_HEIGHT },
+        0.0f,
+        { 1.0f, 1.0f, 1.0f, 1.0f },
+        BLENDSTATE_ALFA,
+        L"asset\\texture\\effect_windCut_ver01.png",
+        5, 6
+    );
+    m_WindCutAnimTimer = 0.0f;
+    m_WindCutAlpha     = 0.0f;
+    m_IsHoldingRainbow = false;
+
     // SEロード
     m_pStageClearSe = LoadMP3("asset/sound/se/StageClear.mp3");
     m_pGameOverSe   = LoadMP3("asset/sound/se/GameOver.mp3");
@@ -172,6 +186,10 @@ void GameUI::Reset()
     m_FadeTimer    = 0.0f;
     m_LogoAnimTimer    = 0.0f;
 
+    m_WindCutAnimTimer = 0.0f;
+    m_WindCutAlpha     = 0.0f;
+    m_IsHoldingRainbow = false;
+
     if (m_pStageClearSe != nullptr) {
         StopSound(m_pStageClearSe);
     }
@@ -183,8 +201,36 @@ void GameUI::Reset()
     }
 }
 
-void GameUI::Update(const StatusManager* pStatus)
+void GameUI::Update(const StatusManager* pStatus, bool isHoldingRainbow)
 {
+    m_IsHoldingRainbow = isHoldingRainbow;
+
+    if (m_IsHoldingRainbow)
+    {
+        m_WindCutAlpha += (1.0f / 0.24f) / FPS; // 約0.24秒でフェードイン
+        if (m_WindCutAlpha > 1.0f) m_WindCutAlpha = 1.0f;
+    }
+    else
+    {
+        m_WindCutAlpha -= (1.0f / 0.30f) / FPS; // 約0.30秒でフェードアウト
+        if (m_WindCutAlpha < 0.0f) m_WindCutAlpha = 0.0f;
+    }
+
+    if (m_WindCutAlpha > 0.0f)
+    {
+        m_WindCutAnimTimer += 1.0f / FPS;
+        int textureNumber = static_cast<int>(m_WindCutAnimTimer * 30.0f) % 30;
+        if (m_pWindCutSprite)
+        {
+            m_pWindCutSprite->SetTextureNumber(textureNumber);
+            m_pWindCutSprite->SetColor({ 1.0f, 1.0f, 1.0f, m_WindCutAlpha });
+        }
+    }
+    else
+    {
+        m_WindCutAnimTimer = 0.0f;
+    }
+
     int combo = pStatus->GetCombo();
     if (combo != m_LastCombo)
     {
@@ -305,6 +351,12 @@ void GameUI::UpdateHP(int hp, int maxHP)
 
 void GameUI::Draw()
 {
+    // 風切りエフェクト（背景側としてUIの背後に描画する）
+    if (m_WindCutAlpha > 0.0f && m_pWindCutSprite)
+    {
+        m_pWindCutSprite->Draw();
+    }
+
     // HP
     m_pHPBarBg->Draw();
     m_pHPBarFg->Draw();
@@ -371,6 +423,8 @@ void GameUI::Finalize()
     delete m_pClearSprite;   m_pClearSprite   = nullptr;
     delete m_pAllHitSprite;  m_pAllHitSprite  = nullptr;
     delete m_pGameOverSprite;m_pGameOverSprite= nullptr;
+
+    delete m_pWindCutSprite; m_pWindCutSprite = nullptr;
 
     // SE解放
     UnloadSound(m_pStageClearSe);  m_pStageClearSe  = nullptr;
