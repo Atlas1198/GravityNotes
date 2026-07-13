@@ -80,6 +80,34 @@ void Player::Init(NoteManager* nm, StatusManager* sm)
 	m_pKaihiSe = LoadMP3("asset/sound/se/kaihi.wav");
 }
 
+void Player::Reset()
+{
+	m_GravityFace = FACE::FACE_FLOOR;
+	m_LaneIndex = LANE_CENTER;
+	m_TargetLaneIndex = LANE_CENTER;
+	m_IsMoving = false;
+	m_MoveTimer = 0.0f;
+
+	m_IsGravityMoving = false;
+	m_GravityTimer = 0.0f;
+
+	m_Position = { 0.0f,-2.5f,0.0f };
+	m_StartPos = m_Position;
+	m_TargetPos = m_Position;
+	m_Rotation = { 0.0f,180.0f,0.0f };
+	m_GravityStartPos = m_Position;
+	m_GravityStartRot = m_Rotation;
+
+	m_IsEffectSlashActive = false;
+	m_IsOverridePlaying = false;
+	m_DamageFlashRemaining = 0.0f;
+	m_DamageFlashElapsed = 0.0f;
+	if (m_pEffectSlash)
+	{
+		m_pEffectSlash->SetAnimationEnabled(false);
+	}
+}
+
 void Player::Update()
 {
 	// pad変数とGetGamePad()は不要になったため削除しました

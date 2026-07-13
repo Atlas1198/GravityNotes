@@ -657,3 +657,71 @@ bool NoteManager::CheckAndHitBarrier(int fromLane, int fromFace, int toLane, int
 	}
 	return false;
 }
+
+void NoteManager::ResetPlayPosition()
+{
+	// 1. アクティブなノーツの削除
+	for (NoteBase* note : m_Notes)
+	{
+		if (RopeHoldNote* rope = dynamic_cast<RopeHoldNote*>(note))
+		{
+			ReleaseRope(rope);
+		}
+		else
+		{
+			delete note;
+		}
+	}
+	m_Notes.clear();
+
+	// プール使用状況のリセット
+	for (int i = 0; i < MAX_ROPE_POOL; ++i)
+	{
+		m_RopePoolInUse[i] = false;
+	}
+
+	// 2. ペンディングキューや処理済みバリアビートのクリア
+	while (!m_PendingJudges.empty()) m_PendingJudges.pop();
+	while (!m_PendingOrbEvents.empty()) m_PendingOrbEvents.pop();
+	while (!m_PendingBarrierEvents.empty()) m_PendingBarrierEvents.pop();
+	m_ProcessedBarrierBeats.clear();
+
+	// 3. 音声の停止
+	if (m_pBgmData != nullptr) {
+		StopSound(m_pBgmData);
+	}
+	if (m_pRainbowSe != nullptr) {
+		StopSound(m_pRainbowSe);
+	}
+	m_RainbowSePlaying = false;
+	m_IsFadingOut = false;
+	m_FadeOutTimer = 0.0f;
+
+	// 4. 開始小節位置から再生開始時間を再計算
+	m_BgmStarted = false;
+	int startMeasure = Options_GetStartMeasure();
+	if (startMeasure > 1)
+	{
+		float startBeat = (startMeasure - 1) * 4.0f;
+		m_BgmStartTime = BeatToAudioTime(startBeat);
+		m_ElapsedTime  = m_BgmStartTime - 3.0f;
+	}
+	else
+	{
+		m_BgmStartTime = 0.0f;
+		m_ElapsedTime  = -3.0f;
+	}
+
+	// 5. 次回イベントインデックスのリセット
+	m_NextEventIndex = 0;
+	while (m_NextEventIndex < (int)m_ScoreData.events.size())
+	{
+		const ScoreEvent& ev = m_ScoreData.events[m_NextEventIndex];
+		float hitTime = BeatToAudioTime(ev.beat);
+		if (hitTime >= m_BgmStartTime)
+		{
+			break;
+		}
+		m_NextEventIndex++;
+	}
+}

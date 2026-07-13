@@ -153,6 +153,36 @@ void GameUI::Init()
     m_pAllHitSe     = LoadMP3("asset/sound/se/AllHit.mp3");
 }
 
+void GameUI::Reset()
+{
+    m_LastCombo   = -1;
+    UpdateComboDigits(0);
+
+    m_LastHP   = -1;
+    UpdateHP(1000, 1000);
+
+    m_JudgeTimer   = 0.0f;
+    m_CurrentJudge = JUDGE_NONE;
+
+    m_ShowEndOverlay = false;
+    m_ShowLogos      = false;
+    m_IsDead         = false;
+    m_IsAllHit       = false;
+
+    m_FadeTimer    = 0.0f;
+    m_LogoAnimTimer    = 0.0f;
+
+    if (m_pStageClearSe != nullptr) {
+        StopSound(m_pStageClearSe);
+    }
+    if (m_pGameOverSe != nullptr) {
+        StopSound(m_pGameOverSe);
+    }
+    if (m_pAllHitSe != nullptr) {
+        StopSound(m_pAllHitSe);
+    }
+}
+
 void GameUI::Update(const StatusManager* pStatus)
 {
     int combo = pStatus->GetCombo();

@@ -24,6 +24,7 @@
 #include "light_game.h"
 #include "status_manager.h"
 #include "game_ui.h"
+#include "options_manager.h"
 
 using namespace DirectX;
 
@@ -184,9 +185,16 @@ void Game_Update(void)
 		}
 	}
 
-	if (Input_IsActionTrigger(INPUT_ACTION_DEBUG_RESULT)) {
-		SetResult(g_pStatusManager->GetResult());
-		SetSceneFade(SCENE_RESULT);
+	if (Input_IsActionTrigger(INPUT_ACTION_DEBUG_F1)) {
+		Options_Initialize(); // options.ymlを再ロード
+
+		g_pNoteManager->ResetPlayPosition();
+		g_pPlayer->Reset();
+		g_pStatusManager->Init();
+		g_pGameUI->Reset();
+
+		g_GameState   = GameState::PLAYING;
+		g_FinishTimer = 0.0f;
 	}
 }
 

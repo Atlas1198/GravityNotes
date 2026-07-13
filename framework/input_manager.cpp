@@ -136,7 +136,7 @@ bool Input_IsActionDown(Input_Action action)
         return Keyboard_IsKeyDown(KK_LEFT) || Input_GetLookVector().x < -kMoveStickThreshold;
     case INPUT_ACTION_GRAVITY_RIGHT:
         return Keyboard_IsKeyDown(KK_RIGHT) || Input_GetLookVector().x > kMoveStickThreshold;
-    case INPUT_ACTION_DEBUG_RESULT:
+    case INPUT_ACTION_DEBUG_F1:
         return Keyboard_IsKeyDown(KK_F1);
     default:
         return false;
@@ -197,7 +197,7 @@ bool Input_IsActionTrigger(Input_Action action)
         return Keyboard_IsKeyDownTrigger(KK_LEFT) || g_RStickTriggerLeft;
     case INPUT_ACTION_GRAVITY_RIGHT:
         return Keyboard_IsKeyDownTrigger(KK_RIGHT) || g_RStickTriggerRight;
-    case INPUT_ACTION_DEBUG_RESULT:
+    case INPUT_ACTION_DEBUG_F1:
         return Keyboard_IsKeyDownTrigger(KK_F1);
     default:
         return false;

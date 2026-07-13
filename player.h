@@ -61,6 +61,7 @@ public:
 			"asset/model/knight_02.fbx", S_PBR)
 	{}
 	void Init(NoteManager* nm, StatusManager* sm);
+	void Reset();
 	void Update();
 	void Draw();
 	void Finalize();
