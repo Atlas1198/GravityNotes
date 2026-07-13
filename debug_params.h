@@ -31,7 +31,7 @@ namespace ReleaseConfig
     constexpr int   baseScore = 100;
     constexpr float comboMultiplier = 0.1f;
     constexpr int   orbHealAmount = 30;
-    constexpr float orbJudgeWindow = -1.0f;
+    constexpr float orbJudgeWindow = -0.5f;
 
     // 各面のカメラオフセット（Yaw, Pitch, PosX, PosY, PosZ）
     constexpr CameraFaceOffset cameraOffsets[4] = {
@@ -61,7 +61,7 @@ struct DebugParams
 
     // オーブ
     int   orbHealAmount     = 30;     // オーブ取得時のHP回復量
-    float orbJudgeWindow    = -1.0f;   // オーブの早期HIT判定を開始する追加Z距離（HIT_ZONE_Zに加算。値を大きくするほどプレイヤーから遠い位置で取得判定になり、見た目の取得位置が胴側に上がる）
+    float orbJudgeWindow    = -0.5f;   // オーブの早期HIT判定を開始する追加Z距離（HIT_ZONE_Zに加算。値を大きくするほどプレイヤーから遠い位置で取得判定になり、見た目の取得位置が胴側に上がる）
 
     // カメラの面ごとオフセット
     CameraFaceOffset cameraOffsets[4] = {

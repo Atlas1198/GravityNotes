@@ -14,5 +14,5 @@
     "laneWidth": 2.0,
     "noteSpeed": 15.0,
     "orbHealAmount": 30,
-    "orbJudgeWindow": -1.0
+    "orbJudgeWindow": -0.5
 }
