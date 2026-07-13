@@ -72,6 +72,9 @@ void Game_Initialize(void)
 		g_pPreloadedModels[i] = ModelLoad(g_PreloadModelPaths[i]);
 	}
 
+	// 虹ノーツ用テクスチャのプリロード（スタッター防止）
+	LoadTexture(L"asset/texture/30ver.png");
+
   // 各状態の初期化
 	g_GameState   = GameState::PLAYING;
 	g_FinishTimer = 0.0f;
