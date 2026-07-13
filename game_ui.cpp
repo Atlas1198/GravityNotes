@@ -7,11 +7,11 @@
 //コンボ表示
 static constexpr float DIGIT_W        = 45.0f;   // 1桁の幅
 static constexpr float DIGIT_H        = 60.0f;   // 1桁の高さ
-static constexpr float DIGIT_SPACING  = 40.0f;   // 桁間隔
-static constexpr float DIGIT_ANCHOR_X = 130.0f;   // 1桁目（一の位）の固定X座標
-static constexpr float COMBO_CENTER_Y = 50.0f;  // 数字のY座標
+static constexpr float DIGIT_SPACING  = 35.0f;   // 桁間隔
+static constexpr float DIGIT_ANCHOR_X = 150.0f;   // 1桁目（一の位）の固定X座標
+static constexpr float COMBO_CENTER_Y = 45.0f;  // 数字のY座標
 static constexpr float LABEL_X        = DIGIT_ANCHOR_X + DIGIT_W * 0.5f + 8.0f;
-static constexpr float LABEL_Y        = COMBO_CENTER_Y + DIGIT_H * 0.5f;
+static constexpr float LABEL_Y        = COMBO_CENTER_Y;
 
 // Hit / Miss 表示
 static constexpr float JUDGE_X           = SCREEN_WIDTH  * 0.5f;   // 表示中心X
@@ -21,8 +21,8 @@ static constexpr float JUDGE_H           = 150.0f;                 // スプラ�
 static constexpr float JUDGE_DISPLAY_SEC = 0.6f;                   // 表示秒数
 
 // HP バー
-static constexpr float HP_BAR_LEFT  = SCREEN_WIDTH  * 0.80f;  // バー左端X
-static constexpr float HP_BAR_Y     = SCREEN_HEIGHT * 0.05f;  // バー中心Y
+static constexpr float HP_BAR_LEFT  = SCREEN_WIDTH  * 0.78f;  // バー左端X
+static constexpr float HP_BAR_Y     = SCREEN_HEIGHT * 0.06f;  // バー中心Y
 static constexpr float HP_BAR_MAX_W = 250.0f;                 // バー最大幅
 static constexpr float HP_BAR_H     = 24.0f;                  // バー高さ
 static constexpr float HP_TEXT_X    = HP_BAR_LEFT;            // テキスト左端X
