@@ -5,10 +5,10 @@
 
 // --- 仮置き定数（後で調整してください） ---
 //コンボ表示
-static constexpr float DIGIT_W        = 60.0f;   // 1桁の幅
-static constexpr float DIGIT_H        = 80.0f;   // 1桁の高さ
-static constexpr float DIGIT_SPACING  = 55.0f;   // 桁間隔
-static constexpr float DIGIT_ANCHOR_X = 100.0f;   // 1桁目（一の位）の固定X座標
+static constexpr float DIGIT_W        = 45.0f;   // 1桁の幅
+static constexpr float DIGIT_H        = 60.0f;   // 1桁の高さ
+static constexpr float DIGIT_SPACING  = 40.0f;   // 桁間隔
+static constexpr float DIGIT_ANCHOR_X = 130.0f;   // 1桁目（一の位）の固定X座標
 static constexpr float COMBO_CENTER_Y = 50.0f;  // 数字のY座標
 static constexpr float LABEL_X        = DIGIT_ANCHOR_X + DIGIT_W * 0.5f + 8.0f;
 static constexpr float LABEL_Y        = COMBO_CENTER_Y + DIGIT_H * 0.5f;
