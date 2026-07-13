@@ -81,6 +81,24 @@ struct ScoreData
 	std::vector<ScoreEvent> events;
 };
 
+// 音楽ファイルのパス解決を行うインライン関数
+inline std::string ResolveMusicPath(const std::string& musicFile)
+{
+	if (musicFile.empty()) return "";
+	// 1. asset/score/ をチェック
+	std::string path1 = "asset/score/" + musicFile;
+	std::ifstream f1(path1);
+	if (f1.good()) return path1;
+	
+	// 2. music/ をチェック
+	std::string path2 = "music/" + musicFile;
+	std::ifstream f2(path2);
+	if (f2.good()) return path2;
+	
+	// 見つからなければデフォルトで asset/score/ を返す
+	return path1;
+}
+
 // JSONファイルからスコアデータを読み込む
 inline ScoreData LoadScore(const std::string& filePath)
 {

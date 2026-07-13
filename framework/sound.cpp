@@ -368,7 +368,7 @@ void UpdateSoundCache() {
 }
 
 // 再生
-void PlaySound(SoundData* data, bool loop, float volumeScale) {
+void PlaySound(SoundData* data, bool loop, float volumeScale, float startSec) {
     if (!data || !data->pSourceVoice) return;
 
     data->loop = loop;
@@ -384,6 +384,17 @@ void PlaySound(SoundData* data, bool loop, float volumeScale) {
     buffer.Flags = XAUDIO2_END_OF_STREAM;
     if (loop) {
         buffer.LoopCount = XAUDIO2_LOOP_INFINITE;
+    }
+
+    data->seekSec = 0.0;
+
+    if (startSec > 0.0f && data->pWfx) {
+        UINT32 startSample = static_cast<UINT32>(startSec * data->pWfx->nSamplesPerSec);
+        UINT32 totalSamples = data->bufferSize / (data->pWfx->nBlockAlign ? data->pWfx->nBlockAlign : 1);
+        if (startSample < totalSamples) {
+            buffer.PlayBegin = startSample;
+            data->seekSec = static_cast<double>(startSample) / data->pWfx->nSamplesPerSec;
+        }
     }
 
     XAUDIO2_VOICE_STATE voiceState = {};
@@ -408,7 +419,12 @@ double GetPlaybackPositionSec(const SoundData* data)
     if (!data || !data->pSourceVoice || !data->pWfx) return 0.0;
     XAUDIO2_VOICE_STATE state = {};
     data->pSourceVoice->GetState(&state);
-    return static_cast<double>(state.SamplesPlayed - data->startSamples) / data->pWfx->nSamplesPerSec;
+    
+    double elapsed = 0.0;
+    if (state.SamplesPlayed >= data->startSamples) {
+        elapsed = static_cast<double>(state.SamplesPlayed - data->startSamples) / data->pWfx->nSamplesPerSec;
+    }
+    return elapsed + data->seekSec;
 }
 
 // マスターボリューム設定

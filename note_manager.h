@@ -43,6 +43,7 @@ private:
 	SoundData* m_pOrbGetsSe = nullptr;
 	SoundData* m_pRainbowSe = nullptr;
 	bool      m_BgmStarted = false;
+	float     m_BgmStartTime = 0.0f;
 	bool      m_RainbowSePlaying = false;
 	EnemyDefeatEffect* m_pEnemyDefeatEffect = nullptr;
 	OrbCollectEffect* m_pOrbCollectEffect = nullptr;

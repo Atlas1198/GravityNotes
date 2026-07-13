@@ -120,7 +120,7 @@ static void UpdateBgmFromSelection()
 	}
 
 	const ScoreSummary& summary = g_ScoreSummaries[g_SelectedScoreIndex];
-	std::string soundPath = "asset/score/" + summary.music;
+	std::string soundPath = ResolveMusicPath(summary.music);
 
 	// 選択された曲が現在再生中の曲と同じ場合はそのまま
 	if (g_LoadedBgmPath == soundPath) return;
@@ -213,7 +213,7 @@ void StageSelect_Initialize(void)
 	// BGMのプリロードを行う（選曲切り替え時のフリーズを防止するため、キャッシュシステムに事前に登録しておく）
 	for (const auto& summary : g_ScoreSummaries) {
 		if (!summary.music.empty()) {
-			std::string soundPath = "asset/score/" + summary.music;
+			std::string soundPath = ResolveMusicPath(summary.music);
 			LoadMP3(soundPath);
 		}
 	}

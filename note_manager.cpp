@@ -1,6 +1,7 @@
 ﻿#include "define.h"
 #include "game.h"
 #include "note_manager.h"
+#include "options_manager.h"
 #include "sound.h"
 #include "enemy_note.h"
 #include "orb_note.h"
@@ -66,9 +67,8 @@ void NoteManager::Init(const std::string& scoreFilePath)
 
 	m_NoteSpeed      = 10.0f;
 	m_SpawnZ         = 80.0f;
-	m_ElapsedTime    = -3.0f;
-	m_NextEventIndex = 0;
 	m_BgmStarted     = false;
+	m_BgmStartTime   = 0.0f;
 	m_IsFadingOut    = false;
 	m_FadeOutDuration = 0.0f;
 	m_FadeOutTimer   = 0.0f;
@@ -76,7 +76,34 @@ void NoteManager::Init(const std::string& scoreFilePath)
 
 	m_ScoreData = LoadScore(scoreFilePath);
 
-	std::string bgmPath = "asset/score/" + m_ScoreData.music;
+	// 開始小節位置から再生開始時間を計算（1小節スタート）
+	int startMeasure = Options_GetStartMeasure();
+	if (startMeasure > 1)
+	{
+		float startBeat = (startMeasure - 1) * 4.0f;
+		m_BgmStartTime = BeatToAudioTime(startBeat);
+		m_ElapsedTime  = m_BgmStartTime - 3.0f;
+	}
+	else
+	{
+		m_BgmStartTime = 0.0f;
+		m_ElapsedTime  = -3.0f;
+	}
+
+	// 過去の（プレイ開始時点ですでに通り過ぎているべき）イベントをスキップ
+	m_NextEventIndex = 0;
+	while (m_NextEventIndex < (int)m_ScoreData.events.size())
+	{
+		const ScoreEvent& ev = m_ScoreData.events[m_NextEventIndex];
+		float hitTime = BeatToAudioTime(ev.beat);
+		if (hitTime >= m_BgmStartTime)
+		{
+			break;
+		}
+		m_NextEventIndex++;
+	}
+
+	std::string bgmPath = ResolveMusicPath(m_ScoreData.music);
 	m_pBgmData = LoadMP3(bgmPath);
 	m_pOrbGetsSe = LoadMP3("asset/sound/se/orbgets.wav");
 	m_pRainbowSe = LoadMP3("asset/sound/se/Rainbow.wav");
@@ -134,11 +161,11 @@ void NoteManager::Update(int playerLane, int playerFace)
 	if (!m_BgmStarted)
 	{
 		m_ElapsedTime += dt;
-		if (m_ElapsedTime >= 0.0f)
+		if (m_ElapsedTime >= m_BgmStartTime)
 		{
 			if (m_pBgmData != nullptr)
 			{
-				PlaySound(m_pBgmData, false);
+				PlaySound(m_pBgmData, false, 1.0f, m_BgmStartTime);
 			}
 			m_BgmStarted = true;
 		}

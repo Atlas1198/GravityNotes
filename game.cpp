@@ -87,7 +87,7 @@ void Game_Initialize(void)
 
 	g_pNoteManager = new NoteManager();
 
-	g_pNoteManager->Init("asset/score/" + GetPlayJson());
+	g_pNoteManager->Init(GetPlayJson());
 	//g_pNoteManager->Init("asset/score/shiningstar.json");
 
 	g_pPlayer = new Player();

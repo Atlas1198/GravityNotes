@@ -30,7 +30,9 @@
 #include "../framework/imgui/imgui.h"
 #include "../framework/imgui/imgui_impl_win32.h"
 #include "../framework/imgui/imgui_impl_dx11.h"
+#include "../options_manager.h"
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam,
+
 	LPARAM lParam);
 
 
@@ -188,6 +190,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	Sprite_Initialize();
 	Fade_Initialize();
 	Gamepad_Initialize();
+	Options_Initialize();
 
 	Init();
 

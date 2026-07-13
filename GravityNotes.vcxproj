@@ -218,6 +218,7 @@
     <ClCompile Include="result.cpp" />
     <ClCompile Include="rainbow_note.cpp" />
     <ClCompile Include="scene.cpp" />
+    <ClCompile Include="options_manager.cpp" />
     <ClCompile Include="stageselect.cpp" />
     <ClCompile Include="shader\renderer.cpp" />
     <ClCompile Include="status_manager.cpp" />
@@ -298,6 +299,7 @@
     <ClInclude Include="three_point_light.h" />
     <ClInclude Include="rainbow_note.h" />
     <ClInclude Include="scene.h" />
+    <ClInclude Include="options_manager.h" />
     <ClInclude Include="result.h" />
     <ClInclude Include="scoreloader.h" />
     <ClInclude Include="scoresummaryloader.h" />
