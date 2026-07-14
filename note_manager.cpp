@@ -218,7 +218,17 @@ void NoteManager::Update(int playerLane, int playerFace)
 			}
 			else
 			{
-				m_ElapsedTime = (float)GetPlaybackPositionSec(m_pBgmData);
+				static int syncCounter = 0;
+				syncCounter++;
+				if (syncCounter >= 10)
+				{
+					m_ElapsedTime = (float)GetPlaybackPositionSec(m_pBgmData);
+					syncCounter = 0;
+				}
+				else
+				{
+					m_ElapsedTime += dt;
+				}
 			}
 		}
 		else
