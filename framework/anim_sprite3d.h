@@ -78,6 +78,7 @@ protected:
 	OverrideAnimationState m_OverrideAnimState; // 部分アニメーションオーバーライド用
 	BoneMatrices m_BoneMatrices;
 	int m_BoneCount = 0;
+	bool m_BoneMatricesUpdated = false;
 
 	// Assimp用ボーンマッピング
 	std::vector<aiBone*> m_AiBones;
@@ -89,7 +90,7 @@ protected:
 
 public:
 	AnimSprite3D(const XMFLOAT3& pos, const XMFLOAT3& scale, const XMFLOAT3& rot, const char* pass, SHADERTYPE st)
-		: Sprite3D(pos, scale, rot, pass, st)
+		: Sprite3D(pos, scale, rot, pass, st), m_BoneMatricesUpdated(false)
 	{
 		// Sprite3D のコンストラクタでモデルが読み込まれた後、ボーン情報を初期化
 		InitializeBones();

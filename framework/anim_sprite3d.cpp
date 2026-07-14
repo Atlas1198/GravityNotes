@@ -230,12 +230,24 @@ XMFLOAT3 AnimSprite3D::InterpolateVec3(const std::vector<KeyVec3>& keys, double 
 
 	// キーフレームを二分探索で見つける
 	size_t keyIndex = 0;
-	for (size_t i = 0; i + 1 < keys.size(); i++)
+	size_t low = 0;
+	size_t high = keys.size() - 2;
+	while (low <= high)
 	{
-		if (time >= keys[i].time && time < keys[i + 1].time)
+		size_t mid = low + (high - low) / 2;
+		if (time >= keys[mid].time && time < keys[mid + 1].time)
 		{
-			keyIndex = i;
+			keyIndex = mid;
 			break;
+		}
+		else if (time < keys[mid].time)
+		{
+			if (mid == 0) break;
+			high = mid - 1;
+		}
+		else
+		{
+			low = mid + 1;
 		}
 	}
 
@@ -284,12 +296,24 @@ XMFLOAT4 AnimSprite3D::InterpolateQuat(const std::vector<KeyQuat>& keys, double 
 
 	// キーフレームを二分探索で見つける
 	size_t keyIndex = 0;
-	for (size_t i = 0; i + 1 < keys.size(); i++)
+	size_t low = 0;
+	size_t high = keys.size() - 2;
+	while (low <= high)
 	{
-		if (time >= keys[i].time && time < keys[i + 1].time)
+		size_t mid = low + (high - low) / 2;
+		if (time >= keys[mid].time && time < keys[mid + 1].time)
 		{
-			keyIndex = i;
+			keyIndex = mid;
 			break;
+		}
+		else if (time < keys[mid].time)
+		{
+			if (mid == 0) break;
+			high = mid - 1;
+		}
+		else
+		{
+			low = mid + 1;
 		}
 	}
 
@@ -313,6 +337,8 @@ XMFLOAT4 AnimSprite3D::InterpolateQuat(const std::vector<KeyQuat>& keys, double 
 
 void AnimSprite3D::UpdateAnimation(float dt)
 {
+	m_BoneMatricesUpdated = false;
+
 	// ブレンド処理
 	if (m_BlendState.isBlending)
 	{
@@ -401,6 +427,9 @@ void AnimSprite3D::UpdateBoneMatrices()
 	if (!m_Model || !m_Model->AiScene || !m_Model->HasSkinning)
 		return;
 
+	if (m_BoneMatricesUpdated)
+		return;
+
 	// ブレンド中の場合は特別処理
 	if (m_BlendState.isBlending)
 	{
@@ -472,6 +501,7 @@ void AnimSprite3D::UpdateBoneMatrices()
 	);
 
 	m_BoneMatrices.boneCount = m_Model->TotalBoneCount;
+	m_BoneMatricesUpdated = true;
 }
 
 void AnimSprite3D::Draw(void)
