@@ -20,6 +20,35 @@ static const float PASSIVE_ZONE_Z = 0.5f; // Orb・Barrier の自動判定Z
 static const float HIT_WINDOW     = 2.5f;
 static const float ROPE_ACTIVATE_WINDOW = 0.5f; // レインボーはプレイヤーの足元でのみ活性化（PASSIVE_ZONE_Z基準）
 
+// startFace→endFaceの経由面リストを構築する。
+// face番号は 床(0)→左壁(1)→天井(2)→右壁(3)→床(0) の順で隣接しており、+1方向がCW、-1方向がCCW。
+// hasDirection=false の場合は従来互換の最短経路（2面差＝正面はCW側を採用）
+static std::vector<int> BuildRainbowFacePath(int startFace, int endFace, bool hasDirection, RotationDir direction)
+{
+	std::vector<int> path;
+	path.push_back(startFace);
+	if (startFace == endFace) return path;
+
+	int step;
+	if (hasDirection)
+	{
+		step = (direction == RotationDir::CW) ? 1 : -1;
+	}
+	else
+	{
+		int diffCW = ((endFace - startFace) % 4 + 4) % 4;
+		step = (diffCW <= 2) ? 1 : -1; // 対面（2面差）はCW側を既定とする
+	}
+
+	int face = startFace;
+	while (face != endFace)
+	{
+		face = ((face + step) % 4 + 4) % 4;
+		path.push_back(face);
+	}
+	return path;
+}
+
 // beat を「そのノーツをスポーンすべき時刻（秒）」に変換
 float NoteManager::BeatToAudioTime(float beat) const
 {
@@ -252,8 +281,10 @@ void NoteManager::Update(int playerLane, int playerFace)
 			int   endFace     = WallToFace(ev.endWall);
 			int   gameEndLane = ev.endLane - 1;
 
+			std::vector<int> facePath = BuildRainbowFacePath(face, endFace, ev.hasDirection, ev.direction);
+
 			RopeHoldNote* note = AcquireRope();
-			note->Init(gameLane, gameEndLane, face, endFace, initZ, endZ, m_NoteSpeed);
+			note->Init(gameLane, gameEndLane, facePath, initZ, endZ, m_NoteSpeed);
 			m_Notes.push_back(note);
 			break;
 		}
