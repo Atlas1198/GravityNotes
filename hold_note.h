@@ -15,6 +15,8 @@ public:
 	HoldNote() : NoteBase() {}
 	~HoldNote();
 
+	NoteType GetType() const override { return NoteType::Hold; }
+
 	// lane    : 始点レーン (0-2)
 	// endLane : 終点レーン (0-2)
 	// face    : 壁面 (FACE_*)

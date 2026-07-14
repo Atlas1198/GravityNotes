@@ -30,6 +30,8 @@ public:
 		  m_RopeLength(0.0f), m_HoldProgress(0.0f), m_State(State::IDLE),
 		  m_Texture(nullptr), m_LoopTime(2.0f), m_InitialSpawnZ(0.0f) {}
 
+	NoteType GetType() const override { return NoteType::RopeHold; }
+
 	static void FinalizeSharedResources();
 	void SetLoopTime(float t) { m_LoopTime = t; }
 
