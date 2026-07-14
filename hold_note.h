@@ -24,7 +24,7 @@ public:
 	// endZ    : 終点の初期Z座標
 	// speed   : ノーツ速度
 	// bpm     : 曲のBPM
-	void Init(int lane, int endLane, int face, float initZ, float endZ, float speed, float bpm);
+	void Init(int lane, int endLane, int face, float initZ, float endZ, float speed, float bpm, float beat, float endBeat);
 	void Update() override;
 	void Draw()   override;
 

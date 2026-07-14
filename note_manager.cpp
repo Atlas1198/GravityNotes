@@ -281,7 +281,7 @@ void NoteManager::Update(int playerLane, int playerFace)
 			float endZ       = (endHitTime - m_ElapsedTime) * m_NoteSpeed + HIT_ZONE_Z;
 
 			HoldNote* note = new HoldNote();
-			note->Init(ev.lane, ev.endLane, face, initZ, endZ, m_NoteSpeed, m_ScoreData.bpm);
+			note->Init(ev.lane, ev.endLane, face, initZ, endZ, m_NoteSpeed, m_ScoreData.bpm, ev.beat, ev.endBeat);
 			m_Notes.push_back(note);
 			break;
 		}
