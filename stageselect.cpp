@@ -36,6 +36,7 @@ static VinylState g_CurrentState = STATE_PLAYING; // 初期状態
 
 // 左側のレコードアルバムに対応するステージ数/曲数を管理
 static int g_MaxStages = 0;
+static int g_VisualStages = 0;                  // 表示用の仮想ディスク総数（最小公倍数で拡張）
 static int g_SelectedStage = 0;                  // 現在再生中のステージ
 static int g_NextStage = 0;                      // 次のステージ（遷移完了待ち）
 
@@ -71,6 +72,21 @@ static std::string g_LoadedBgmPath = "";          // 重複ロードを避ける
 // ==========================================
 // ヘルパー関数
 // ==========================================
+static int GetGCD(int a, int b)
+{
+	while (b != 0) {
+		int r = a % b;
+		a = b;
+		b = r;
+	}
+	return a;
+}
+
+static int GetLCM(int a, int b)
+{
+	if (a == 0 || b == 0) return 0;
+	return (a * b) / GetGCD(a, b);
+}
 
 // UTF-8からワイド文字列への変換
 static std::wstring Utf8ToWide(const std::string& utf8Str)
@@ -206,6 +222,7 @@ void StageSelect_Initialize(void)
 	// JSONシステムから楽曲リストをロード
 	g_ScoreSummaries = LoadScoreSummaries();
 	g_MaxStages = static_cast<int>(g_ScoreSummaries.size());
+	g_VisualStages = GetLCM(8, g_MaxStages);
 
 	const bool loaded = !g_ScoreSummaries.empty();
 	hal::dout << "[StageSelect] Score summary reload: "
@@ -248,12 +265,12 @@ void StageSelect_Initialize(void)
 	);
 
 	// 2. 左隅に縦に並ぶ小さなディスクの列を初期化
-	g_pStageDisks.resize(g_MaxStages, nullptr);
-	for (int i = 0; i < g_MaxStages; i++) {
+	g_pStageDisks.resize(g_VisualStages, nullptr);
+	for (int i = 0; i < g_VisualStages; i++) {
 		float posX = (SCREEN_WIDTH / 2.0f) - 550.0f;
 		float posY = 70.0f + (i * 130.0f); // 各ディスクを縦方向に等間隔で配置
 
-		std::wstring thumbPath = GetThumbnailPath(g_ScoreSummaries[i].thumbnail);
+		std::wstring thumbPath = GetThumbnailPath(g_ScoreSummaries[i % g_MaxStages].thumbnail);
 
 		g_pStageDisks[i] = new Sprite2D(
 			{ posX, posY },
@@ -532,16 +549,16 @@ void StageSelect_Update(void)
 	}
 
 	// --- パート 4: 左側の小さなディスク列の処理 ＆ マウスクリック ---
-	for (int i = 0; i < g_MaxStages; i++)
+	for (int i = 0; i < g_VisualStages; i++)
 	{
 		// 位置を計算するために、g_SelectedStageの代わりにg_ScrollOffsetを使用する
 		float offset = (float)i - g_ScrollOffset;
 
 		// float形式での円状のラッピング処理
 		float minOffset = -1.5f;
-		float maxOffset = (float)g_MaxStages - 1.5f;
-		while (offset < minOffset)          offset += (float)g_MaxStages;
-		while (offset >= maxOffset)         offset -= (float)g_MaxStages;
+		float maxOffset = (float)g_VisualStages - 1.5f;
+		while (offset < minOffset)          offset += (float)g_VisualStages;
+		while (offset >= maxOffset)         offset -= (float)g_VisualStages;
 
 		float posX = (SCREEN_WIDTH / 2.0f) - 550.0f;
 		float posY = anchorY + (offset * spacing);
@@ -549,14 +566,12 @@ void StageSelect_Update(void)
 		g_pStageDisks[i]->SetPos({ posX, posY });
 
 		// 選択中のディスク ＝ オフセットが0に最も近いディスク
-		if (i == g_SelectedStage) {
+		if ((i % g_MaxStages) == g_SelectedStage) {
 			g_pStageDisks[i]->SetRotation(g_VinylRotation * 2.0f);
 		}
 		else {
 			g_pStageDisks[i]->SetRotation(0.0f);
 		}
-
-
 	}
 
 	// --- パート 5: ゲーム開始の決定 (ENTER / SPACE) ---
@@ -592,7 +607,7 @@ void StageSelect_Draw(void)
 	if (g_pRecordFrame != nullptr) g_pRecordFrame->Draw();
 	g_pToneArm->Draw();   // 4. メインディスクの上に重なるようにトーンアームを描画
 	// 2. 左側のすべての小さなディスクを描画（画面外にあるものは描画をスキップ）
-	for (int i = 0; i < g_MaxStages; i++) {
+	for (int i = 0; i < g_VisualStages; i++) {
 		if (g_pStageDisks[i] != nullptr) {
 			float posY = g_pStageDisks[i]->GetPosY();
 			if (posY >= -60.0f && posY <= SCREEN_HEIGHT + 60.0f) {
@@ -629,7 +644,7 @@ void StageSelect_Finalize(void)
 	SAFE_DELETE(g_pToneArm);
 	SAFE_DELETE(g_pScoreInfoText);
 
-	for (int i = 0; i < g_MaxStages; i++) {
+	for (int i = 0; i < g_VisualStages; i++) {
 		SAFE_DELETE(g_pStageDisks[i]);
 	}
 	g_pStageDisks.clear();
