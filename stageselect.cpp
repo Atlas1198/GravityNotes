@@ -45,7 +45,7 @@ static Sprite2D* g_pBackground = nullptr;         // レコードプレーヤー
 static Sprite2D* g_pMainVinyl = nullptr;          // 中央のメイン回転ディスク
 static Sprite2D* g_pRecordFrame = nullptr;        // メインディスクのフレーム画像
 static Sprite2D* g_pToneArm = nullptr;            // トーンアーム（レコードの針）
-static std::vector<ClickSprite2D*> g_pStageDisks;  // 左側の小さなディスクの列
+static std::vector<Sprite2D*> g_pStageDisks;  // 左側の小さなディスクの列
 static Sprite2D* g_pStartGameBG = nullptr;         // ゲーム開始ボタン背景
 static ClickFont* g_pStartGameText = nullptr;      // ゲーム開始テキスト
 
@@ -247,7 +247,7 @@ void StageSelect_Initialize(void)
 
 		std::wstring thumbPath = GetThumbnailPath(g_ScoreSummaries[i].thumbnail);
 
-		g_pStageDisks[i] = new ClickSprite2D(
+		g_pStageDisks[i] = new Sprite2D(
 			{ posX, posY },
 			{ 110.0f, 110.0f },
 			0.0f,
@@ -521,14 +521,7 @@ void StageSelect_Update(void)
 			g_pStageDisks[i]->SetRotation(0.0f);
 		}
 
-		if (g_pStageDisks[i]->IsClick() && g_CurrentState == STATE_PLAYING && g_SelectedStage != i)
-		{
-			g_NextStage = i;
-			g_CurrentState = STATE_LIFTING_ARM;
-			if (g_pCurrentBgmData != nullptr) {
-				StopSound(g_pCurrentBgmData);
-			}
-		}
+
 	}
 
 	// --- パート 5: ゲーム開始の決定 (ENTER / SPACE) ---
