@@ -219,6 +219,9 @@ void StageSelect_Initialize(void)
 	}
 
 	g_SelectedStage = 0;
+	g_SelectedScoreIndex = 0;
+	g_ScrollOffset = 0.0f;
+	g_ScrollTarget = 0.0f;
 
 	g_pResultBG = new Sprite2D(
 		{ SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f },
