@@ -69,7 +69,10 @@ void Game_Initialize(void)
 	// 主要モデルのプリロード
 	for (int i = 0; i < G_PRELOAD_MODEL_COUNT; i++)
 	{
-		g_pPreloadedModels[i] = ModelLoad(g_PreloadModelPaths[i]);
+		if (!g_pPreloadedModels[i])
+		{
+			g_pPreloadedModels[i] = ModelLoad(g_PreloadModelPaths[i]);
+		}
 	}
 
 	// テクスチャのプリロード（スタッター防止）
@@ -203,14 +206,9 @@ void Game_Update(void)
 
 	if (Input_IsActionTrigger(INPUT_ACTION_DEBUG_F1)) {
 		Options_Initialize(); // options.ymlを再ロード
-
-		g_pNoteManager->ResetPlayPosition();
-		g_pPlayer->Reset();
-		g_pStatusManager->Init();
-		g_pGameUI->Reset();
-
-		g_GameState   = GameState::PLAYING;
-		g_FinishTimer = 0.0f;
+		SetKeepLoadedData(true);
+		SetScene(SCENE_GAME);
+		SetKeepLoadedData(false);
 	}
 }
 
@@ -310,13 +308,16 @@ void Game_Finalize(void)
 	GameLight::Finalize();
 	GameCamera::Finalize();
 
-	// プリロードモデルの解放
-	for (int i = 0; i < G_PRELOAD_MODEL_COUNT; i++)
+	if (!GetKeepLoadedData())
 	{
-		if (g_pPreloadedModels[i])
+		// プリロードモデルの解放
+		for (int i = 0; i < G_PRELOAD_MODEL_COUNT; i++)
 		{
-			ModelRelease(g_pPreloadedModels[i]);
-			g_pPreloadedModels[i] = nullptr;
+			if (g_pPreloadedModels[i])
+			{
+				ModelRelease(g_pPreloadedModels[i]);
+				g_pPreloadedModels[i] = nullptr;
+			}
 		}
 	}
 }

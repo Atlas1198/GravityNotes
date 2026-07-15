@@ -15,6 +15,10 @@
 #include "camera.h"
 #include <algorithm>
 
+static SoundData* s_pBgmData = nullptr;
+static SoundData* s_pOrbGetsSe = nullptr;
+static SoundData* s_pRainbowSe = nullptr;
+
 static const float HIT_ZONE_Z     = 3.0f;
 static const float PASSIVE_ZONE_Z = 0.5f; // Orb・Barrier の自動判定Z
 static const float HIT_WINDOW     = 2.5f;
@@ -135,9 +139,48 @@ void NoteManager::Init(const std::string& scoreFilePath)
 	}
 
 	std::string bgmPath = ResolveMusicPath(m_ScoreData.music);
-	m_pBgmData = LoadMP3(bgmPath);
-	m_pOrbGetsSe = LoadMP3("asset/sound/se/orbgets.wav");
-	m_pRainbowSe = LoadMP3("asset/sound/se/Rainbow.wav");
+	if (GetKeepLoadedData() && s_pBgmData != nullptr)
+	{
+		m_pBgmData = s_pBgmData;
+	}
+	else
+	{
+		if (s_pBgmData != nullptr)
+		{
+			UnloadSound(s_pBgmData);
+			s_pBgmData = nullptr;
+		}
+		m_pBgmData = LoadMP3(bgmPath);
+		s_pBgmData = m_pBgmData;
+	}
+	if (GetKeepLoadedData() && s_pOrbGetsSe != nullptr)
+	{
+		m_pOrbGetsSe = s_pOrbGetsSe;
+	}
+	else
+	{
+		if (s_pOrbGetsSe != nullptr)
+		{
+			UnloadSound(s_pOrbGetsSe);
+			s_pOrbGetsSe = nullptr;
+		}
+		m_pOrbGetsSe = LoadMP3("asset/sound/se/orbgets.wav");
+		s_pOrbGetsSe = m_pOrbGetsSe;
+	}
+	if (GetKeepLoadedData() && s_pRainbowSe != nullptr)
+	{
+		m_pRainbowSe = s_pRainbowSe;
+	}
+	else
+	{
+		if (s_pRainbowSe != nullptr)
+		{
+			UnloadSound(s_pRainbowSe);
+			s_pRainbowSe = nullptr;
+		}
+		m_pRainbowSe = LoadMP3("asset/sound/se/Rainbow.wav");
+		s_pRainbowSe = m_pRainbowSe;
+	}
 	m_RainbowSePlaying = false;
 
 	// プールの初期化
@@ -502,18 +545,36 @@ void NoteManager::DrawShadowMapForFace(int face, const XMMATRIX& lightView, cons
 
 void NoteManager::Finalize()
 {
-	if (m_pBgmData != nullptr) {
-		StopSound(m_pBgmData);
-		UnloadSound(m_pBgmData);
+	if (!GetKeepLoadedData())
+	{
+		if (m_pBgmData != nullptr) {
+			StopSound(m_pBgmData);
+			UnloadSound(m_pBgmData);
+			m_pBgmData = nullptr;
+		}
+		if (m_pOrbGetsSe != nullptr) {
+			UnloadSound(m_pOrbGetsSe);
+			m_pOrbGetsSe = nullptr;
+		}
+		if (m_pRainbowSe != nullptr) {
+			StopSound(m_pRainbowSe);
+			UnloadSound(m_pRainbowSe);
+			m_pRainbowSe = nullptr;
+		}
+		s_pBgmData = nullptr;
+		s_pOrbGetsSe = nullptr;
+		s_pRainbowSe = nullptr;
+	}
+	else
+	{
+		if (m_pBgmData != nullptr) {
+			StopSound(m_pBgmData);
+		}
+		if (m_pRainbowSe != nullptr) {
+			StopSound(m_pRainbowSe);
+		}
 		m_pBgmData = nullptr;
-	}
-	if (m_pOrbGetsSe != nullptr) {
-		UnloadSound(m_pOrbGetsSe);
 		m_pOrbGetsSe = nullptr;
-	}
-	if (m_pRainbowSe != nullptr) {
-		StopSound(m_pRainbowSe);
-		UnloadSound(m_pRainbowSe);
 		m_pRainbowSe = nullptr;
 	}
 	m_RainbowSePlaying = false;

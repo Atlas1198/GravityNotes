@@ -156,3 +156,15 @@ void SetResult(const SendResult& r) {
 const SendResult* GetResult() {
 	return &result;
 }
+
+static bool g_KeepLoadedData = false;
+
+void SetKeepLoadedData(bool keep)
+{
+	g_KeepLoadedData = keep;
+}
+
+bool GetKeepLoadedData(void)
+{
+	return g_KeepLoadedData;
+}
