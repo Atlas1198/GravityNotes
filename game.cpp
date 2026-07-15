@@ -72,8 +72,13 @@ void Game_Initialize(void)
 		g_pPreloadedModels[i] = ModelLoad(g_PreloadModelPaths[i]);
 	}
 
-	// 虹ノーツ用テクスチャのプリロード（スタッター防止）
+	// テクスチャのプリロード（スタッター防止）
 	LoadTexture(L"asset/texture/30ver.png");
+	LoadTexture(L"asset/texture/effect_slash_ver01.png");
+	LoadTexture(L"asset/texture/effect_windCut_ver01.png");
+	LoadTexture(L"asset/texture/enemy_defeat_particle.png");
+	LoadTexture(L"asset/texture/OrbAnimationSpriteSheetBlue.png");
+	LoadTexture(L"asset/texture/OrbAnimationSpriteSheetRed.png");
 
   // 各状態の初期化
 	g_GameState   = GameState::PLAYING;
