@@ -387,6 +387,8 @@ void NoteManager::Update(int playerLane, int playerFace)
 				RopeHoldNote* rope = static_cast<RopeHoldNote*>(m_Notes[i]);
 				if (rope->GetState() == RopeHoldNote::State::COMPLETE)
 					m_PendingJudges.push(JUDGE_HIT);
+				else if (rope->GetState() == RopeHoldNote::State::FAILED_START)
+					m_PendingJudges.push(JUDGE_PASS_MISS); // 始点で触れられなかった場合。Enemyの押し逃しと同様、コンボリセットのみでHPは減らさない
 				if (m_HoldingRope == rope)
 				{
 					m_HoldingRope = nullptr;
