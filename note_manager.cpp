@@ -602,7 +602,7 @@ JUDGE NoteManager::JudgeHold(int lane, int face)
 		if (note->GetType() != NoteType::RopeHold) continue;
 		RopeHoldNote* rope = static_cast<RopeHoldNote*>(note);
 		if (rope->GetState() != RopeHoldNote::State::IDLE) continue;
-		if (rope->GetLaneIndex() != lane || rope->GetFace() != face) continue;
+		if (rope->GetFace() != face) continue;
 
 		float dist = fabsf(rope->GetPosZ() - PASSIVE_ZONE_Z);
 		if (dist < ROPE_ACTIVATE_WINDOW)
