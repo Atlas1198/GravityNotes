@@ -208,10 +208,11 @@ void RopeHoldNote::Update()
 		return;
 	}
 
-	// IDLE: 判定窓を過ぎたら FAILED（始点を取れなかった場合、途中離しと同様に即座に非表示）
+	// IDLE: 判定窓を過ぎたら FAILED_START（始点を取れなかった場合、途中離しと同様に即座に非表示）
+	// FAILED（途中離し）とは区別し、NoteManager側でMiss判定を確実に発行できるようにする
 	if (m_State == State::IDLE && GetPosZ() < ROPE_HIT_ZONE_Z - ROPE_ACTIVE_RANGE)
 	{
-		m_State    = State::FAILED;
+		m_State    = State::FAILED_START;
 		m_IsActive = false;
 	}
 }

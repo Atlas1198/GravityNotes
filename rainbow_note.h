@@ -6,7 +6,7 @@
 class RopeHoldNote : public NoteBase
 {
 public:
-	enum class State { IDLE, HOLDING, COMPLETE, FAILED };
+	enum class State { IDLE, HOLDING, COMPLETE, FAILED, FAILED_START };
 
 private:
 	std::vector<int> m_FacePath; // 経由する面の並び（先頭=開始面、末尾=終了面）。90°ごとに1要素
