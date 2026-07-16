@@ -68,6 +68,7 @@ struct ShowResult
 	int orbgets;
 	int orblosses;
 	int fullCombo;
+	int fullOrb;
 };
 
 // ①インスタンス、ポインタ用意
@@ -125,6 +126,7 @@ void Result_Initialize(void)
 
 	////リザルトデータを実体化させてコピー　上書き禁止
 	g_ShowResult.fullCombo = GetResult()->fullCombo;
+	g_ShowResult.fullOrb = GetResult()->fullOrb;
 	g_ShowResult.maxCombo = GetResult()->maxCombo;
 	g_ShowResult.hits = GetResult()->hits;
 	g_ShowResult.misses = GetResult()->misses;
@@ -433,8 +435,7 @@ void Result_Update(void)
 				valueProgress = 1.0f;
 				if (i == 4) // オーブ数
 				{
-					int totalOrbs = g_ShowResult.orbgets + g_ShowResult.orblosses;
-					g_ResultRows[i].valueStr = std::to_string(g_ResultRows[i].targetValue) + "/" + std::to_string(totalOrbs);
+					g_ResultRows[i].valueStr = std::to_string(g_ResultRows[i].targetValue) + "/" + std::to_string(g_ShowResult.fullOrb);
 				}
 				else
 				{
@@ -448,8 +449,7 @@ void Result_Update(void)
 				int curVal = static_cast<int>(g_ResultRows[i].targetValue * easeProgress);
 				if (i == 4) // オーブ数
 				{
-					int totalOrbs = g_ShowResult.orbgets + g_ShowResult.orblosses;
-					g_ResultRows[i].valueStr = std::to_string(curVal) + "/" + std::to_string(totalOrbs);
+					g_ResultRows[i].valueStr = std::to_string(curVal) + "/" + std::to_string(g_ShowResult.fullOrb);
 				}
 				else
 				{

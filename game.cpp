@@ -43,12 +43,12 @@ static float          g_FinishWaitDuration = 3.0f;
 static Sprite2D* g_pGameSprite = nullptr;
 static ClickFont* g_pChangeSceneText = nullptr;
 static FontRenderer* g_pSelectedJsonText = nullptr;
-static Field*         g_pField         = nullptr;
-static Player*        g_pPlayer        = nullptr;
-static NoteManager*   g_pNoteManager   = nullptr;
+static Field* g_pField = nullptr;
+static Player* g_pPlayer = nullptr;
+static NoteManager* g_pNoteManager = nullptr;
 static StatusManager* g_pStatusManager = nullptr;
 static bool           g_IsMouseCursorVisible = false;
-static GameUI*        g_pGameUI        = nullptr;
+static GameUI* g_pGameUI = nullptr;
 
 // プリロード対象のモデルポインタ保持
 static const char* g_PreloadModelPaths[] = {
@@ -85,11 +85,11 @@ void Game_Initialize(void)
 	LoadTexture(L"asset/texture/OrbAnimationSpriteSheetRed.png");
 	LoadTexture(L"asset/texture/rainbow_start.png");
 
-  // 各状態の初期化
-	g_GameState   = GameState::PLAYING;
+	// 各状態の初期化
+	g_GameState = GameState::PLAYING;
 	g_FinishTimer = 0.0f;
 
-  //各種初期化
+	//各種初期化
 	GameCamera::Init();
 	GameLight::Init();
 
@@ -136,12 +136,22 @@ void Game_Update(void)
 		{
 			SendResult r = g_pStatusManager->GetResult();
 			r.fullCombo = g_pNoteManager->GetScoreData().fullCombo;
+			r.fullOrb = g_pNoteManager->GetScoreData().fullOrb;
+
 			// 途中でゲームオーバー等によりノーツをすべて処理しきれずに終了した場合、
 			// 処理しきれなかった分のノーツはすべてミスとする
 			if (r.hits + r.misses < r.fullCombo)
 			{
 				r.misses = r.fullCombo - r.hits;
 			}
+
+			// 途中でゲームオーバー等によりノーツをすべて処理しきれずに終了した場合、
+			// 処理しきれなかった分のノーツはすべてミスとする
+			if (r.orbgets + r.orblosses < r.fullOrb)
+			{
+				r.orblosses = r.fullOrb - r.orbgets;
+			}
+
 			SetResult(r);
 			SetSceneFade(SCENE_RESULT);
 		}
@@ -230,12 +240,12 @@ void Game_Draw(void)
 
 		const float FACE_HALF = 2.5f;   // 各面(床/壁/天井)のトンネル半径
 		const float lightDist = 12.0f;  // 面から内側へどれだけ離れた所にライトを置くか
-		const float centerZ   = pPos.z + 6.0f; // 影の中心Z（プレイヤーの少し奥）
+		const float centerZ = pPos.z + 6.0f; // 影の中心Z（プレイヤーの少し奥）
 
 		// 影の濃さ(0=真っ黒〜1=影なし。小さいほど濃い)。Player/Enemyで個別に設定できる。
-		const float SHADOW_BIAS              = 0.003f;
+		const float SHADOW_BIAS = 0.003f;
 		const float PLAYER_SHADOW_BRIGHTNESS = 0.35f; // ← Playerの影の濃さ
-		const float ENEMY_SHADOW_BRIGHTNESS  = 0.2f; // ← Enemyの影の濃さ
+		const float ENEMY_SHADOW_BRIGHTNESS = 0.2f; // ← Enemyの影の濃さ
 
 		XMMATRIX faceView[NUM_SHADOW_FACES];
 		XMMATRIX faceProj[NUM_SHADOW_FACES];
@@ -249,13 +259,13 @@ void Game_Draw(void)
 			{
 			case FACE_FLOOR:      target = XMVectorSet(0.0f, -FACE_HALF, centerZ, 1.0f); eye = XMVectorSet(0.0f, -FACE_HALF + lightDist, centerZ, 1.0f); break;
 			case FACE_LEFT_WALL:  target = XMVectorSet(-FACE_HALF, 0.0f, centerZ, 1.0f); eye = XMVectorSet(-FACE_HALF + lightDist, 0.0f, centerZ, 1.0f); break;
-			case FACE_CEILING:    target = XMVectorSet(0.0f,  FACE_HALF, centerZ, 1.0f); eye = XMVectorSet(0.0f,  FACE_HALF - lightDist, centerZ, 1.0f); break;
-			case FACE_RIGHT_WALL: target = XMVectorSet( FACE_HALF, 0.0f, centerZ, 1.0f); eye = XMVectorSet( FACE_HALF - lightDist, 0.0f, centerZ, 1.0f); break;
+			case FACE_CEILING:    target = XMVectorSet(0.0f, FACE_HALF, centerZ, 1.0f); eye = XMVectorSet(0.0f, FACE_HALF - lightDist, centerZ, 1.0f); break;
+			case FACE_RIGHT_WALL: target = XMVectorSet(FACE_HALF, 0.0f, centerZ, 1.0f); eye = XMVectorSet(FACE_HALF - lightDist, 0.0f, centerZ, 1.0f); break;
 			}
 			faceView[f] = XMMatrixLookAtLH(eye, target, camUp);
 			// 正射影：幅20(レーン方向) × 奥行50(Z)
 			faceProj[f] = XMMatrixOrthographicLH(20.0f, 50.0f, 0.5f, lightDist * 2.0f);
-			faceVP[f]   = faceView[f] * faceProj[f];
+			faceVP[f] = faceView[f] * faceProj[f];
 		}
 
 		SetFaceShadowMatrices(faceVP, SHADOW_BIAS, PLAYER_SHADOW_BRIGHTNESS, ENEMY_SHADOW_BRIGHTNESS);
@@ -305,11 +315,11 @@ void Game_Finalize(void)
 	SAFE_DELETE(g_pSelectedJsonText);
 	SAFE_DELETE(g_pChangeSceneText);
 
-	if (g_pField)         { g_pField->Finalize();         SAFE_DELETE(g_pField); }
-	if (g_pPlayer)        { g_pPlayer->Finalize();        SAFE_DELETE(g_pPlayer); }
-	if (g_pNoteManager)   { g_pNoteManager->Finalize();   SAFE_DELETE(g_pNoteManager); }
+	if (g_pField) { g_pField->Finalize();         SAFE_DELETE(g_pField); }
+	if (g_pPlayer) { g_pPlayer->Finalize();        SAFE_DELETE(g_pPlayer); }
+	if (g_pNoteManager) { g_pNoteManager->Finalize();   SAFE_DELETE(g_pNoteManager); }
 	if (g_pStatusManager) { g_pStatusManager->Finalize(); SAFE_DELETE(g_pStatusManager); }
-	if (g_pGameUI)        { g_pGameUI->Finalize();        SAFE_DELETE(g_pGameUI); }
+	if (g_pGameUI) { g_pGameUI->Finalize();        SAFE_DELETE(g_pGameUI); }
 	GameLight::Finalize();
 	GameCamera::Finalize();
 
@@ -335,17 +345,17 @@ void Game_DebugUIDraw(void)
 	auto& p = D_PARAMS;
 
 	ImGui::SeparatorText("Notes");
-	if (ImGui::SliderFloat("Speed",        &p.noteSpeed,        1.0f,  60.0f, "%.1f u/s"))
+	if (ImGui::SliderFloat("Speed", &p.noteSpeed, 1.0f, 60.0f, "%.1f u/s"))
 		p.noteSpeed = roundf(p.noteSpeed * 10.0f) / 10.0f;
-	if (ImGui::SliderFloat("Hit Distance", &p.hitDistance,      0.5f,  10.0f, "%.2f u"))
+	if (ImGui::SliderFloat("Hit Distance", &p.hitDistance, 0.5f, 10.0f, "%.2f u"))
 		p.hitDistance = roundf(p.hitDistance * 100.0f) / 100.0f;
 	if (ImGui::SliderFloat("Rainbow Corner Softness", &p.rainbowCornerSoftness, 0.0f, 1.0f, "%.2f"))
 		p.rainbowCornerSoftness = roundf(p.rainbowCornerSoftness * 100.0f) / 100.0f;
 
 	ImGui::SeparatorText("Player");
-	if (ImGui::SliderFloat("Lane Width",   &p.laneWidth,        0.5f,  5.0f,  "%.2f u"))
+	if (ImGui::SliderFloat("Lane Width", &p.laneWidth, 0.5f, 5.0f, "%.2f u"))
 		p.laneWidth = roundf(p.laneWidth * 100.0f) / 100.0f;
-	if (ImGui::SliderFloat("Gravity Time", &p.gravityTransTime, 0.05f, 1.0f,  "%.2f s"))
+	if (ImGui::SliderFloat("Gravity Time", &p.gravityTransTime, 0.05f, 1.0f, "%.2f s"))
 		p.gravityTransTime = roundf(p.gravityTransTime * 100.0f) / 100.0f;
 
 	ImGui::SeparatorText("Camera Offsets");

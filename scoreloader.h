@@ -90,15 +90,16 @@ struct ScoreEvent
 // スコアデータの構造体
 struct ScoreData
 {
-	float bpm;
-	std::string music;
+	float bpm = 120.0f;
+	std::string music = "";
 	// 音楽ファイルの実際の音の出だしと譜面上のbeat=0のタイミングのズレを補正する値（秒）。
 	// 例: 曲の先頭に0.2秒の無音があるなら offset=0.2 とすることで、
 	//     ノーツの通過タイミングと実際に聴こえる音を一致させる。
 	// JSONに"offset"キーが無い場合は0.0（補正なし）として扱う。
-	float offset;
-	std::vector<ScoreEvent> events;
+	float offset = 0.0f;
+	std::vector<ScoreEvent> events{};
 	int fullCombo = 0;
+	int fullOrb = 0;
 };
 
 // 音楽ファイルのパス解決を行うインライン関数
@@ -194,7 +195,8 @@ inline ScoreData LoadScore(const std::string& filePath)
 				fullCombo += 2; // 始点と終点の2回分
 				break;
 			case ScoreType::Orb:
-				// Orb はコンボに影響しないため加算しない
+				// Orb は総オーブ数に代入
+				scoreData.fullOrb++;
 				break;
 			}
 		}
