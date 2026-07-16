@@ -116,7 +116,7 @@ bool Input_IsActionDown(Input_Action action)
     case INPUT_ACTION_PAUSE:
         return Keyboard_IsKeyDown(KK_ESCAPE) || Gamepad_IsButtonDown(player, GPB_START);
     case INPUT_ACTION_ATTACK:
-        return Keyboard_IsKeyDown(KK_SPACE) || Gamepad_GetLeftTrigger(player) > 0.5f || Gamepad_GetRightTrigger(player) > 0.5f || Gamepad_IsButtonDown(player, GPB_LEFT_SHOULDER) || Gamepad_IsButtonDown(player, GPB_RIGHT_SHOULDER);
+        return Keyboard_IsKeyDown(KK_SPACE) || Keyboard_IsKeyDown(KK_ENTER) || Gamepad_GetLeftTrigger(player) > 0.5f || Gamepad_GetRightTrigger(player) > 0.5f || Gamepad_IsButtonDown(player, GPB_LEFT_SHOULDER) || Gamepad_IsButtonDown(player, GPB_RIGHT_SHOULDER);
     case INPUT_ACTION_MOVE_UP:
         return Keyboard_IsKeyDown(KK_W) || Gamepad_IsButtonDown(player, GPB_DPAD_UP) || Input_GetMoveVector().y > kMoveStickThreshold;
     case INPUT_ACTION_MOVE_DOWN:
@@ -167,7 +167,7 @@ bool Input_IsActionTrigger(Input_Action action)
     case INPUT_ACTION_PAUSE:
         return Keyboard_IsKeyDownTrigger(KK_ESCAPE) || Gamepad_IsButtonTrigger(player, GPB_START);
     case INPUT_ACTION_ATTACK:
-        return Keyboard_IsKeyDownTrigger(KK_SPACE) || g_LTriggerTrigger || g_RTriggerTrigger || Gamepad_IsButtonTrigger(player, GPB_LEFT_SHOULDER) || Gamepad_IsButtonTrigger(player, GPB_RIGHT_SHOULDER);
+        return Keyboard_IsKeyDownTrigger(KK_SPACE) || Keyboard_IsKeyDownTrigger(KK_ENTER) || g_LTriggerTrigger || g_RTriggerTrigger || Gamepad_IsButtonTrigger(player, GPB_LEFT_SHOULDER) || Gamepad_IsButtonTrigger(player, GPB_RIGHT_SHOULDER);
     case INPUT_ACTION_MOVE_UP:
         return Keyboard_IsKeyDownTrigger(KK_W) || Gamepad_IsButtonTrigger(player, GPB_DPAD_UP) || g_LStickTriggerUp;
     case INPUT_ACTION_MOVE_DOWN:

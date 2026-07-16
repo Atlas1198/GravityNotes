@@ -11,7 +11,7 @@ typedef enum Input_Action_tag
     INPUT_ACTION_MENU_LEFT,         // メニュー左移動 (A, LEFT, DPad-LEFT, LStick-LEFT)
     INPUT_ACTION_MENU_RIGHT,        // メニュー右移動 (D, RIGHT, DPad-RIGHT, LStick-RIGHT)
     INPUT_ACTION_PAUSE,             // ポーズ画面 (Escape / STARTボタン)
-    INPUT_ACTION_ATTACK,            // 攻撃 / ノーツタップ (Space / LT, RT, LB, RB)
+    INPUT_ACTION_ATTACK,            // 攻撃 / ノーツタップ (Space, Enter / LT, RT, LB, RB)
     INPUT_ACTION_MOVE_UP,           // プレイヤー移動上 (W, DPad-UP, LStick-UP)
     INPUT_ACTION_MOVE_DOWN,         // プレイヤー移動下 (S, DPad-DOWN, LStick-DOWN)
     INPUT_ACTION_MOVE_LEFT,         // プレイヤー移動左 (A, DPad-LEFT, LStick-LEFT)
