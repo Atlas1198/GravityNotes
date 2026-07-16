@@ -182,7 +182,7 @@ void RopeHoldNote::Init(int startLane, int endLane, const std::vector<int>& face
 	}
 
 	// 6列5行の分割ビルボードとして初期化
-	m_StartBillboard = SplitBilBoard(6, 5, bbPos, { TUNNEL_HALF * 2.0f, 1.0f }, { 0.0f, 0.0f, angleZ }, "asset/texture/rainbow_start.png", true);
+	m_StartBillboard = SplitBilBoard(6, 5, bbPos, { 4.5, 0.9f }, { 0.0f, 0.0f, angleZ }, "asset/texture/rainbow_start.png", true);
 	m_StartBillboard.SetBillboardMode(false);
 	m_StartBillboard.SetWallFadeEnabled(false);
 	m_StartBillboard.SetColor({ 1.0f, 1.0f, 1.0f, 0.4f });
