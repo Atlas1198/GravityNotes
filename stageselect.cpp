@@ -183,7 +183,7 @@ static void RefreshSelectedScoreText()
 	std::snprintf(
 		buf,
 		sizeof(buf),
-		"[%d/%d]\nMusic: %s\nComposer: %s\nCharter: %s\nDifficulty: %.1f\nBPM: %.1f\nJSON: %s",
+		"[%d/%d]\n%s\n%s\n譜面作者: %s\n難易度: %.1f\nBPM: %.1f\n%s",
 		g_SelectedScoreIndex + 1,
 		static_cast<int>(g_ScoreSummaries.size()),
 		summary.musicname.c_str(),
@@ -319,7 +319,7 @@ void StageSelect_Initialize(void)
 
 	// 5. 曲情報/スコア表示クラスを初期化（画面右側に配置）
 	g_pScoreInfoText = new MultiLineFontRenderer(
-		{ SCREEN_WIDTH - 180.0f, SCREEN_HEIGHT - 500.0f }, // 画面外にはみ出さないように位置を調整
+		{ SCREEN_WIDTH - 175.0f, SCREEN_HEIGHT / 3.0f - 40.0f }, // 画面外にはみ出さないように位置を調整
 		28.0f,
 		0.0f,
 		{ 1.0f, 1.0f, 1.0f, 1.0f },
@@ -368,7 +368,8 @@ void StageSelect_Update(void)
 
 	if (isUpPressed || isDownPressed) {
 		g_MenuRepeatTimer++;
-	} else {
+	}
+	else {
 		g_MenuRepeatTimer = 0;
 	}
 
@@ -461,7 +462,8 @@ void StageSelect_Update(void)
 			std::wstring mainThumbPath = L"";
 			if (g_MaxStages > 0) {
 				mainThumbPath = GetThumbnailPath(g_ScoreSummaries[g_SelectedStage].thumbnail);
-			} else {
+			}
+			else {
 				mainThumbPath = L"asset\\texture\\notfound_thumbnail.png";
 			}
 			g_pMainVinyl = new Sprite2D(
@@ -498,7 +500,8 @@ void StageSelect_Update(void)
 				g_ScrollTarget += 1.0f;
 				if (g_pMenuMoveSe != nullptr) PlaySound(g_pMenuMoveSe, false);
 			}
-		} else {
+		}
+		else {
 			// ディスク交換直後、トーンアームを新しいディスクに降下させる状態に移行
 			g_CurrentState = STATE_DROPPING_ARM;
 		}

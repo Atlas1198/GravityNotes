@@ -1,0 +1,510 @@
+{
+	"musicname": "GAIA",
+	"musicauthor": "作曲:森田交一（魔王魂）\n作詞:火ノ岡レイ 歌:KEI",
+	"scoreauthor": "N.M",
+	"difficulty": 1.0,
+	"thumbnail": "GAIA.png",
+	"bpm": 110.0,
+	"music": "maou_short_47_gaia.mp3",
+	"offset": 0.0,
+	"events": [
+		{
+			"beat": 4.0,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 8.0,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 6.0,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 13.0,
+			"type": "Rainbow",
+			"wall": "Down",
+			"lane": 1,
+			"endBeat": 17.0,
+			"endWall": "Left",
+			"direction": "CW"
+		},
+		{
+			"beat": 10.0,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 12.0,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 21.0,
+			"type": "Rainbow",
+			"wall": "Left",
+			"lane": 1,
+			"endBeat": 25.0,
+			"endWall": "Up",
+			"direction": "CW"
+		},
+		{
+			"beat": 26.0,
+			"type": "Enemy",
+			"wall": "Up",
+			"lane": 1
+		},
+		{
+			"beat": 28.0,
+			"type": "Enemy",
+			"wall": "Up",
+			"lane": 1
+		},
+		{
+			"beat": 34.0,
+			"type": "Enemy",
+			"wall": "Up",
+			"lane": 1
+		},
+		{
+			"beat": 36.0,
+			"type": "Enemy",
+			"wall": "Up",
+			"lane": 1
+		},
+		{
+			"beat": 38.0,
+			"type": "Enemy",
+			"wall": "Up",
+			"lane": 1
+		},
+		{
+			"beat": 40.0,
+			"type": "Enemy",
+			"wall": "Up",
+			"lane": 1
+		},
+		{
+			"beat": 20.0,
+			"type": "Enemy",
+			"wall": "Left",
+			"lane": 1
+		},
+		{
+			"beat": 18.0,
+			"type": "Enemy",
+			"wall": "Left",
+			"lane": 1
+		},
+		{
+			"beat": 46.0,
+			"type": "Hold",
+			"wall": "Down",
+			"lane": 1,
+			"endBeat": 50.0,
+			"endLane": 1
+		},
+		{
+			"beat": 68.0,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 69.0,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 70.0,
+			"type": "Rainbow",
+			"wall": "Down",
+			"lane": 1,
+			"endBeat": 73.0,
+			"endWall": "Right",
+			"direction": "CCW"
+		},
+		{
+			"beat": 74.0,
+			"type": "Enemy",
+			"wall": "Right",
+			"lane": 1
+		},
+		{
+			"beat": 76.0,
+			"type": "Enemy",
+			"wall": "Right",
+			"lane": 1
+		},
+		{
+			"beat": 44.0,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 45.0,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 43.0,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 42.0,
+			"type": "Orb",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 78.0,
+			"type": "Hold",
+			"wall": "Right",
+			"lane": 1,
+			"endBeat": 81.0,
+			"endLane": 1
+		},
+		{
+			"beat": 95.0,
+			"type": "Enemy",
+			"wall": "Right",
+			"lane": 1
+		},
+		{
+			"beat": 94.0,
+			"type": "Enemy",
+			"wall": "Right",
+			"lane": 1
+		},
+		{
+			"beat": 92.0,
+			"type": "Enemy",
+			"wall": "Right",
+			"lane": 1
+		},
+		{
+			"beat": 90.0,
+			"type": "Orb",
+			"wall": "Right",
+			"lane": 1
+		},
+		{
+			"beat": 96.0,
+			"type": "Hold",
+			"wall": "Right",
+			"lane": 1,
+			"endBeat": 98.0,
+			"endLane": 1
+		},
+		{
+			"beat": 100.0,
+			"type": "Enemy",
+			"wall": "Up",
+			"lane": 1
+		},
+		{
+			"beat": 102.0,
+			"type": "Enemy",
+			"wall": "Up",
+			"lane": 1
+		},
+		{
+			"beat": 118.0,
+			"type": "Enemy",
+			"wall": "Up",
+			"lane": 1
+		},
+		{
+			"beat": 119.0,
+			"type": "Enemy",
+			"wall": "Up",
+			"lane": 1
+		},
+		{
+			"beat": 120.0,
+			"type": "Rainbow",
+			"wall": "Up",
+			"lane": 1,
+			"endBeat": 123.0,
+			"endWall": "Down",
+			"direction": "CW"
+		},
+		{
+			"beat": 104.0,
+			"type": "Enemy",
+			"wall": "Up",
+			"lane": 1
+		},
+		{
+			"beat": 110.0,
+			"type": "Enemy",
+			"wall": "Up",
+			"lane": 1
+		},
+		{
+			"beat": 112.0,
+			"type": "Enemy",
+			"wall": "Up",
+			"lane": 1
+		},
+		{
+			"beat": 139.0,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 140.0,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 138.0,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 142.0,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 144.0,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 146.0,
+			"type": "Orb",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 130.0,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 129.0,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 128.0,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 124.0,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 134.0,
+			"type": "Hold",
+			"wall": "Down",
+			"lane": 1,
+			"endBeat": 137.5,
+			"endLane": 1
+		},
+		{
+			"beat": 32.0,
+			"type": "Enemy",
+			"wall": "Up",
+			"lane": 2
+		},
+		{
+			"beat": 31.0,
+			"type": "Enemy",
+			"wall": "Up",
+			"lane": 2
+		},
+		{
+			"beat": 30.0,
+			"type": "Enemy",
+			"wall": "Up",
+			"lane": 2
+		},
+		{
+			"beat": 51.0,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 0
+		},
+		{
+			"beat": 53.0,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 0
+		},
+		{
+			"beat": 58.0,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 0
+		},
+		{
+			"beat": 54.0,
+			"type": "Hold",
+			"wall": "Down",
+			"lane": 0,
+			"endBeat": 57.5,
+			"endLane": 0
+		},
+		{
+			"beat": 62.0,
+			"type": "Hold",
+			"wall": "Down",
+			"lane": 2,
+			"endBeat": 65.5,
+			"endLane": 2
+		},
+		{
+			"beat": 61.0,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 2
+		},
+		{
+			"beat": 60.0,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 2
+		},
+		{
+			"beat": 66.0,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 2
+		},
+		{
+			"beat": 82.0,
+			"type": "Enemy",
+			"wall": "Right",
+			"lane": 2
+		},
+		{
+			"beat": 86.0,
+			"type": "Enemy",
+			"wall": "Right",
+			"lane": 2
+		},
+		{
+			"beat": 85.0,
+			"type": "Enemy",
+			"wall": "Right",
+			"lane": 2
+		},
+		{
+			"beat": 84.0,
+			"type": "Enemy",
+			"wall": "Right",
+			"lane": 2
+		},
+		{
+			"beat": 88.0,
+			"type": "Enemy",
+			"wall": "Right",
+			"lane": 2
+		},
+		{
+			"beat": 106.0,
+			"type": "Enemy",
+			"wall": "Up",
+			"lane": 0
+		},
+		{
+			"beat": 107.0,
+			"type": "Enemy",
+			"wall": "Up",
+			"lane": 0
+		},
+		{
+			"beat": 108.0,
+			"type": "Enemy",
+			"wall": "Up",
+			"lane": 0
+		},
+		{
+			"beat": 114.0,
+			"type": "Enemy",
+			"wall": "Up",
+			"lane": 2
+		},
+		{
+			"beat": 115.0,
+			"type": "Enemy",
+			"wall": "Up",
+			"lane": 2
+		},
+		{
+			"beat": 116.0,
+			"type": "Enemy",
+			"wall": "Up",
+			"lane": 2
+		},
+		{
+			"beat": 132.0,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 2
+		},
+		{
+			"beat": 126.0,
+			"type": "Enemy",
+			"wall": "Down",
+			"lane": 0
+		},
+		{
+			"beat": 67.0,
+			"type": "Barrier",
+			"wall": "Down",
+			"lane": 1
+		},
+		{
+			"beat": 89.0,
+			"type": "Barrier",
+			"wall": "Right",
+			"lane": 1
+		},
+		{
+			"beat": 109.0,
+			"type": "Barrier",
+			"wall": "Up",
+			"lane": 0
+		},
+		{
+			"beat": 117.0,
+			"type": "Barrier",
+			"wall": "Up",
+			"lane": 2
+		},
+		{
+			"beat": 125.0,
+			"type": "Barrier",
+			"wall": "Down",
+			"lane": 1
+		}
+	]
+}
