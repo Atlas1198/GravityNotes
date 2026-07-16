@@ -37,6 +37,7 @@ enum class GameState {
 
 static GameState      g_GameState = GameState::PLAYING;
 static float          g_FinishTimer = 0.0f;
+static float          g_FinishWaitDuration = 3.0f;
 
 // ①インスタンス、ポインタ用意
 static Sprite2D* g_pGameSprite = nullptr;
@@ -116,9 +117,9 @@ void Game_Update(void)
 {
 	if (g_GameState == GameState::FINISHED_WAIT)
 	{
-		// 終了演出待機中：3秒間余韻を持たせる（黒フェードが徐々に表示される）
+		// 終了演出待機中：余韻を持たせる（黒フェードが徐々に表示される）
 		g_FinishTimer += dt;
-		if (g_FinishTimer >= 3.0f)
+		if (g_FinishTimer >= g_FinishWaitDuration)
 		{
 			g_GameState = GameState::FINISHED_DISPLAY;
 			g_FinishTimer = 0.0f;
@@ -195,6 +196,9 @@ void Game_Update(void)
 		{
 			g_GameState = GameState::FINISHED_WAIT;
 			g_FinishTimer = 0.0f;
+
+			// ゲームオーバー時は素早く(0.5秒)、クリア時は余韻を持たせて(1.0秒)ロゴを表示する
+			g_FinishWaitDuration = isDead ? 0.5f : 1.0f;
 
 			// UI側に終了演出（フェードイン）開始を通知
 			bool isAllHit = (!isDead && g_pStatusManager->GetResult().misses == 0);

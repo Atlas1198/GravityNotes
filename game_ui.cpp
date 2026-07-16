@@ -148,7 +148,7 @@ void GameUI::Init()
     m_IsDead         = false;
     m_IsAllHit       = false;
     m_FadeTimer      = 0.0f;
-    m_FadeDuration   = 3.0f;
+    m_FadeDuration   = 1.0f;
     m_LogoAnimTimer  = 0.0f;
     m_LogoAnimDuration = 0.35f;
 
