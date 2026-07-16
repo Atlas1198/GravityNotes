@@ -326,7 +326,7 @@ void Result_Initialize(void)
 	// BGMの読み込みと再生
 	if (!g_ScoreSummary.music.empty())
 	{
-		std::string bgmPath = "asset/score/" + g_ScoreSummary.music;
+		std::string bgmPath = ResolveMusicPath(g_ScoreSummary.music);
 		g_pResultBGM = LoadMP3(bgmPath);
 		if (g_pResultBGM)
 		{

@@ -311,14 +311,29 @@ void UnloadSound(SoundData* data) {
 			data->pSourceVoice->FlushSourceBuffers();
 		}
 
+		// キャッシュキーの生成
+		size_t lastSlash = path.find_last_of(L"\\/");
+		std::wstring fileName = (lastSlash == std::wstring::npos) ? path : path.substr(lastSlash + 1);
+		std::transform(fileName.begin(), fileName.end(), fileName.begin(), ::towlower);
+
+		LONGLONG fileSize = 0;
+		WIN32_FILE_ATTRIBUTE_DATA fad;
+		if (GetFileAttributesExW(path.c_str(), GetFileExInfoStandard, &fad)) {
+			LARGE_INTEGER size;
+			size.LowPart = fad.nFileSizeLow;
+			size.HighPart = fad.nFileSizeHigh;
+			fileSize = size.QuadPart;
+		}
+		std::wstring cacheKey = fileName + L"_" + std::to_wstring(fileSize);
+
 		if (currentScene >= 0 && currentScene < SCENE_MAX)
 		{
-			auto sceneIt = g_SoundCache[currentScene].find(path);
+			auto sceneIt = g_SoundCache[currentScene].find(cacheKey);
 			if (sceneIt != g_SoundCache[currentScene].end())
 			{
 				g_SoundCache[currentScene].erase(sceneIt);
 
-				auto globIt = g_GlobalSoundMap.find(path);
+				auto globIt = g_GlobalSoundMap.find(cacheKey);
 				if (globIt != g_GlobalSoundMap.end())
 				{
 					globIt->second.refCount--;
