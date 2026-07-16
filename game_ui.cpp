@@ -20,6 +20,8 @@ static constexpr float JUDGE_Y           = SCREEN_HEIGHT * 0.4f;   // 表示中�
 static constexpr float JUDGE_W           = 150.0f;                 // スプライト幅
 static constexpr float JUDGE_H           = 150.0f;                 // スプライト高さ
 static constexpr float JUDGE_DISPLAY_SEC = 0.6f;                   // 表示秒数
+static constexpr float HANTEI_UI_X       = 180.0f;                 // 判定表示位置のXマージン
+static constexpr float HANTEI_UI_Y       = 180.0f;                 // 判定表示位置のYマージン
 
 // HP バー
 static constexpr float HP_BAR_LEFT  = SCREEN_WIDTH  * 0.78f;  // バー左端X
@@ -179,6 +181,22 @@ void GameUI::Reset()
     m_JudgeTimer   = 0.0f;
     m_CurrentJudge = JUDGE_NONE;
 
+    if (m_pHitSprite)
+    {
+        m_pHitSprite->SetPos({ JUDGE_X, JUDGE_Y });
+        m_pHitSprite->SetColor({ 1.0f, 1.0f, 1.0f, 1.0f });
+    }
+    if (m_pMissSprite)
+    {
+        m_pMissSprite->SetPos({ JUDGE_X, JUDGE_Y });
+        m_pMissSprite->SetColor({ 1.0f, 1.0f, 1.0f, 1.0f });
+    }
+    if (m_pKaihiSprite)
+    {
+        m_pKaihiSprite->SetPos({ JUDGE_X, JUDGE_Y });
+        m_pKaihiSprite->SetColor({ 1.0f, 1.0f, 1.0f, 1.0f });
+    }
+
     m_ShowEndOverlay = false;
     m_ShowLogos      = false;
     m_IsDead         = false;
@@ -202,7 +220,7 @@ void GameUI::Reset()
     }
 }
 
-void GameUI::Update(const StatusManager* pStatus, bool isHoldingRainbow)
+void GameUI::Update(const StatusManager* pStatus, bool isHoldingRainbow, int gravityFace, int laneIndex)
 {
     m_IsHoldingRainbow = isHoldingRainbow;
 
@@ -248,7 +266,62 @@ void GameUI::Update(const StatusManager* pStatus, bool isHoldingRainbow)
     }
 
     if (m_JudgeTimer > 0.0f)
+    {
         m_JudgeTimer -= dt;
+        if (m_JudgeTimer < 0.0f) m_JudgeTimer = 0.0f;
+
+        float t = 1.0f - (m_JudgeTimer / JUDGE_DISPLAY_SEC);
+        float moveY = t * 48.0f;
+        float alpha = 1.0f - t;
+
+        float baseX = SCREEN_WIDTH / 2.0f;
+        float baseY = SCREEN_HEIGHT / 2.0f;
+
+        float laneOffset = laneIndex * 150.0f;
+
+        switch (gravityFace)
+        {
+        case 0: // FACE_FLOOR
+            baseX = SCREEN_WIDTH / 2.0f + laneOffset + HANTEI_UI_X;
+            baseY = SCREEN_HEIGHT - HANTEI_UI_Y;
+            break;
+        case 1: // FACE_LEFT_WALL
+            baseX = HANTEI_UI_X;
+            baseY = SCREEN_HEIGHT / 2.0f - laneOffset;
+            break;
+        case 2: // FACE_CEILING
+            baseX = SCREEN_WIDTH / 2.0f + laneOffset - HANTEI_UI_X;
+            baseY = HANTEI_UI_Y;
+            break;
+        case 3: // FACE_RIGHT_WALL
+            baseX = SCREEN_WIDTH - HANTEI_UI_X;
+            baseY = SCREEN_HEIGHT / 2.0f - laneOffset;
+            break;
+        default:
+            baseX = SCREEN_WIDTH / 2.0f;
+            baseY = SCREEN_HEIGHT / 2.0f;
+            break;
+        }
+
+        XMFLOAT2 pos = { baseX, baseY - moveY };
+        XMFLOAT4 color = { 1.0f, 1.0f, 1.0f, alpha };
+
+        if (m_pHitSprite)
+        {
+            m_pHitSprite->SetPos(pos);
+            m_pHitSprite->SetColor(color);
+        }
+        if (m_pMissSprite)
+        {
+            m_pMissSprite->SetPos(pos);
+            m_pMissSprite->SetColor(color);
+        }
+        if (m_pKaihiSprite)
+        {
+            m_pKaihiSprite->SetPos(pos);
+            m_pKaihiSprite->SetColor(color);
+        }
+    }
 
     // 終了時の透過フェードイン更新
     if (m_ShowEndOverlay && m_FadeTimer < m_FadeDuration)
