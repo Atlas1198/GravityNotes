@@ -18,6 +18,11 @@ static const float HOLD_HIT_WINDOW  = 2.5f;
 static const float HOLD_FIRST_CHILD_SCALE_MULT = 1.1f;  // 一体目は少し大きく
 static const float HOLD_CHILD_SCALE_MULT       = 0.8f; // それ以外は少し小さく
 
+// ホールドGargoyleのリム色。先頭と後続で個別に変更できる。
+static const XMFLOAT3 HOLD_FIRST_RIM_COLOR = { 1.0f, 0.15f, 0.08f };
+static const XMFLOAT3 HOLD_CHILD_RIM_COLOR = { 1.0f, 1.0f, 1.0f };
+static const float HOLD_RIM_INTENSITY = 0.50f;
+
 HoldNote::~HoldNote()
 {
 	for (EnemyNote* child : m_ChildNotes)
@@ -64,11 +69,14 @@ void HoldNote::Init(int lane, int endLane, int face, float initZ, float endZ, fl
 		if (i == 0)
 		{
 			child->SetCustomTexture("asset/texture/Gargoyle_red.png");
+			child->SetRimLightColor(HOLD_FIRST_RIM_COLOR);
 		}
 		else
 		{
 			child->SetCustomTexture("asset/texture/Gargoyle_white.png");
+			child->SetRimLightColor(HOLD_CHILD_RIM_COLOR);
 		}
+		child->SetRimLightIntensity(HOLD_RIM_INTENSITY);
 
 		// 一体目だけ少し大きく、それ以外は少し小さく表示する
 		float scaleMult = (i == 0) ? HOLD_FIRST_CHILD_SCALE_MULT : HOLD_CHILD_SCALE_MULT;
