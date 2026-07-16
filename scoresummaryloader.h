@@ -102,7 +102,7 @@ inline std::vector<ScoreSummary> LoadScoreSummaries(const std::vector<std::strin
 			{
 				return a.jsonname < b.jsonname;
 			}
-			return a.difficulty > b.difficulty;
+			return a.difficulty < b.difficulty;
 		});
 
 	for (size_t i = 0; i < summaries.size(); ++i)
