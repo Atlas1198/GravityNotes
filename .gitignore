@@ -370,8 +370,8 @@ FodyWeavers.xsd
 .claude/CLAUDE.md
 
 *tool/selfeditor_path.txt
-json/
-music/
+/json/
+/music/
 
 # Generated version header
-version.h
+version.h
