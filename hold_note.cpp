@@ -90,8 +90,13 @@ void HoldNote::Update()
 		child->Update();
 
 		// 判定窓を通過したら押し逃しMiss
+		// プレイヤーと同じlane/faceにいた場合のみダメージあり、それ以外はコンボリセットのみ
 		if (!child->IsHit() && child->GetPosZ() < HOLD_HIT_ZONE_Z - HOLD_HIT_WINDOW)
+		{
+			bool isDamage = (child->GetLaneIndex() == m_PlayerLane && child->GetFace() == m_PlayerFace);
 			child->OnMiss();
+			m_PendingMissJudges.push(isDamage);
+		}
 
 		if (child->IsActive())
 			anyActive = true;

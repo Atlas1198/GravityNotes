@@ -15,7 +15,8 @@ enum JUDGE {
 	JUDGE_MISS,
 	JUDGE_KAIHI,
 	JUDGE_SILENT_COMBO,
-	JUDGE_PASS_MISS
+	JUDGE_PASS_MISS,
+	JUDGE_HOLD_MISS // Hold(連撃)の子ノートMiss（lane一致）専用。JUDGE_MISSよりダメージが小さい
 };
 
 enum ORB_EVENT {

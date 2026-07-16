@@ -143,6 +143,7 @@ void RopeHoldNote::Init(int startLane, int endLane, const std::vector<int>& face
 	m_RopeLength    = endZ - startZ;
 	m_HoldProgress  = 0.0f;
 	m_State         = State::IDLE;
+	m_MissedAtStart = false;
 	m_InitialSpawnZ = startZ;
 
 	if (!m_Texture)

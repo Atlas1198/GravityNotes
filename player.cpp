@@ -134,7 +134,7 @@ void Player::Update()
 		else
 			m_pStatusManager->OnJudge(result);
 
-		if (result == JUDGE_MISS)
+		if (result == JUDGE_MISS || result == JUDGE_HOLD_MISS)
 		{
 			m_DamageFlashRemaining = D_PARAMS.damageFlashDuration;
 			m_DamageFlashElapsed = 0.0f;
