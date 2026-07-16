@@ -261,17 +261,9 @@ void NoteManager::Update(int playerLane, int playerFace, bool isGravityMoving)
 			}
 			else
 			{
-				static int syncCounter = 0;
-				syncCounter++;
-				if (syncCounter >= 10)
-				{
-					m_ElapsedTime = (float)GetPlaybackPositionSec(m_pBgmData);
-					syncCounter = 0;
-				}
-				else
-				{
-					m_ElapsedTime += dt;
-				}
+				// 毎フレームXAudio2の実際の再生位置で同期することで、
+				// Releaseビルド高FPS時のdt積算誤差によるタイミングずれを防ぐ。
+				m_ElapsedTime = (float)GetPlaybackPositionSec(m_pBgmData);
 			}
 		}
 		else
