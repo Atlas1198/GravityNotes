@@ -5,7 +5,19 @@
 #include "fade.h"
 
 #include "gamecamera.h"
+#include "game.h"
+#include "player.h"
 #include "debug_params.h"
+
+#include <cmath>
+
+namespace
+{
+	// ダメージ時の揺れ幅と長さ。短く減衰させ、ノーツの視認性を保つ。
+	constexpr float DAMAGE_SHAKE_DURATION = 0.2f;
+	constexpr float DAMAGE_SHAKE_STRENGTH = 0.15f;
+	constexpr float DAMAGE_SHAKE_FREQUENCY = 38.0f;
+}
 
 GameCamera* GameCamera::s_Instance=nullptr;
 
@@ -34,6 +46,8 @@ void GameCamera::Init() {
 	s_Instance->m_TargetYaw = initialYaw;
 	s_Instance->m_TargetPitch = initialPitch;
 	s_Instance->m_AngleLerpSpeed = 0.05f; // ゆっくり補間（値が小さいほど滑らか）
+	s_Instance->m_DamageShakeRemaining = 0.0f;
+	s_Instance->m_DamageShakeElapsed = 0.0f;
 
 	cameraIndex = true;
 }
@@ -94,7 +108,9 @@ void GameCamera::Update(Player* player) {
 		XMStoreFloat3(&atPos, atVec);
 
 		if (GetCamera()) {
-			GetCamera()->UpdateView(s_Instance->m_Pos, atPos);
+			XMFLOAT3 viewPos = s_Instance->m_Pos;
+			s_Instance->ApplyDamageShake(viewPos, atPos);
+			GetCamera()->UpdateView(viewPos, atPos);
 		}
 	}
 	else {
@@ -137,9 +153,48 @@ void GameCamera::Update(Player* player) {
 		s_Instance->m_AtPos = atPos;
 
 		if (GetCamera()) {
-			GetCamera()->UpdateView(s_Instance->m_Pos, s_Instance->m_AtPos);
+			XMFLOAT3 viewPos = s_Instance->m_Pos;
+			XMFLOAT3 viewAt = s_Instance->m_AtPos;
+			s_Instance->ApplyDamageShake(viewPos, viewAt);
+			GetCamera()->UpdateView(viewPos, viewAt);
 		}
 	}
+}
+
+void GameCamera::StartDamageShake()
+{
+	if (!s_Instance)
+		return;
+
+	s_Instance->m_DamageShakeRemaining = DAMAGE_SHAKE_DURATION;
+	s_Instance->m_DamageShakeElapsed = 0.0f;
+}
+
+void GameCamera::ApplyDamageShake(XMFLOAT3& cameraPos, XMFLOAT3& targetPos)
+{
+	if (m_DamageShakeRemaining <= 0.0f)
+		return;
+
+	m_DamageShakeRemaining -= dt;
+	m_DamageShakeElapsed += dt;
+	if (m_DamageShakeRemaining < 0.0f)
+		m_DamageShakeRemaining = 0.0f;
+
+	const float fade = m_DamageShakeRemaining / DAMAGE_SHAKE_DURATION;
+	const float phase = m_DamageShakeElapsed * DAMAGE_SHAKE_FREQUENCY;
+	const float shakeX = std::sin(phase) * DAMAGE_SHAKE_STRENGTH * fade;
+	const float shakeY = std::cos(phase * 1.37f) * DAMAGE_SHAKE_STRENGTH * 0.7f * fade;
+
+	// カメラの右・上ベクトルを使い、重力面に関係なく画面方向へ揺らす。
+	XMVECTOR pos = XMLoadFloat3(&cameraPos);
+	XMVECTOR target = XMLoadFloat3(&targetPos);
+	XMVECTOR forward = XMVector3Normalize(XMVectorSubtract(target, pos));
+	XMVECTOR right = XMVector3Normalize(XMVector3Cross(XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), forward));
+	XMVECTOR up = XMVector3Normalize(XMVector3Cross(forward, right));
+	XMVECTOR offset = XMVectorAdd(XMVectorScale(right, shakeX), XMVectorScale(up, shakeY));
+
+	XMStoreFloat3(&cameraPos, XMVectorAdd(pos, offset));
+	XMStoreFloat3(&targetPos, XMVectorAdd(target, offset));
 }
 
 void GameCamera::Draw() {

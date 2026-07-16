@@ -9,6 +9,7 @@
 #include "rainbow_note.h"
 #include "sound.h"
 #include "debug_params.h"
+#include "gamecamera.h"
 
 namespace
 {
@@ -129,15 +130,18 @@ void Player::Update()
 		if (result == JUDGE_NONE)
 			return;
 
+		const int hpBeforeJudge = m_pStatusManager->GetHP();
 		if (isHold)
 			m_pStatusManager->OnJudgeHold(result);
 		else
 			m_pStatusManager->OnJudge(result);
 
-		if (result == JUDGE_MISS || result == JUDGE_HOLD_MISS)
+		// HPが実際に減った時だけ、点滅とカメラ振動を同時に開始する。
+		if (m_pStatusManager->GetHP() < hpBeforeJudge)
 		{
 			m_DamageFlashRemaining = D_PARAMS.damageFlashDuration;
 			m_DamageFlashElapsed = 0.0f;
+			GameCamera::StartDamageShake();
 		}
 	};
 
