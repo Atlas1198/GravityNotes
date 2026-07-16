@@ -512,6 +512,45 @@ void NoteManager::Update(int playerLane, int playerFace, bool isGravityMoving)
 		}
 	}
 
+	// バリアーの競合（角の重複）をチェックし、天井・床を優先する
+	std::vector<BarrierNote*> activeBarriers;
+	for (NoteBase* note : m_Notes)
+	{
+		if (note->GetType() == NoteType::Barrier && note->IsActive() && !note->IsHit())
+		{
+			activeBarriers.push_back(static_cast<BarrierNote*>(note));
+		}
+	}
+
+	for (BarrierNote* barrier : activeBarriers)
+	{
+		barrier->SetHiddenByPriority(false);
+	}
+
+	for (size_t i = 0; i < activeBarriers.size(); ++i)
+	{
+		for (size_t j = i + 1; j < activeBarriers.size(); ++j)
+		{
+			BarrierNote* b1 = activeBarriers[i];
+			BarrierNote* b2 = activeBarriers[j];
+
+			if (fabsf(b1->GetBeat() - b2->GetBeat()) < 0.001f)
+			{
+				if (IsCornerAdjacent(b1->GetLaneIndex(), b1->GetFace(), b2->GetLaneIndex(), b2->GetFace()))
+				{
+					if (b1->GetFace() == 0 || b1->GetFace() == 2)
+					{
+						b2->SetHiddenByPriority(true);
+					}
+					else if (b2->GetFace() == 0 || b2->GetFace() == 2)
+					{
+						b1->SetHiddenByPriority(true);
+					}
+				}
+			}
+		}
+	}
+
 	// ノーツが消えた後も、残っている粒子は寿命まで更新する。
 	if (m_pEnemyDefeatEffect)
 		m_pEnemyDefeatEffect->Update(dt);
