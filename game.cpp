@@ -82,6 +82,7 @@ void Game_Initialize(void)
 	LoadTexture(L"asset/texture/enemy_defeat_particle.png");
 	LoadTexture(L"asset/texture/OrbAnimationSpriteSheetBlue.png");
 	LoadTexture(L"asset/texture/OrbAnimationSpriteSheetRed.png");
+	LoadTexture(L"asset/texture/rainbow_start.png");
 
   // 各状態の初期化
 	g_GameState   = GameState::PLAYING;

@@ -1,4 +1,4 @@
-﻿#include "define.h"
+#include "define.h"
 #include "debug_ostream.h"
 #include "game.h"
 #include "note_manager.h"
@@ -719,20 +719,23 @@ JUDGE NoteManager::Judge(int lane, int face)
 
 JUDGE NoteManager::JudgeHold(int lane, int face)
 {
-	// RopeHoldNote: 足元（PASSIVE_ZONE_Z）に来た時だけKeyDownで活性化（スコアは完了時に加算）
+	// RopeHoldNote: HIT_ZONE_Z（3.0f）に来た時だけKeyDownで活性化（スコアは完了時に加算）
 	for (NoteBase* note : m_Notes)
 	{
 		if (note->GetType() != NoteType::RopeHold) continue;
 		RopeHoldNote* rope = static_cast<RopeHoldNote*>(note);
 		if (rope->GetState() != RopeHoldNote::State::IDLE) continue;
 		if (rope->GetFace() != face) continue;
-
-		float dist = fabsf(rope->GetPosZ() - PASSIVE_ZONE_Z);
-		if (dist < ROPE_ACTIVATE_WINDOW)
+ 
+		float offsetZ = rope->GetPosZ() - HIT_ZONE_Z;
+		// 前判定（ノーツが手前にあるとき: offsetZ > 0）は ROPE_ACTIVATE_WINDOW (0.5f)
+		// 後判定（ノーツが通り過ぎたとき: offsetZ < 0）は 1.5f
+		float window = (offsetZ >= 0.0f) ? ROPE_ACTIVATE_WINDOW : 1.5f;
+		if (fabsf(offsetZ) < window)
 		{
 			rope->Activate();
 			m_HoldingRope = rope;
-			return JUDGE_NONE; // 活性化のみ。スコアは Complete 時に PendingJudge で加算
+			return JUDGE_HIT; // 活性化（始点タッチ）時にコンボ加算
 		}
 	}
 

@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "note_base.h"
+#include "split_bilboard.h"
 #include <d3d11.h>
 #include <vector>
 
@@ -19,6 +20,9 @@ private:
 	float m_LoopTime;      // 30タイル1ループにかかる秒数
 	float m_InitialSpawnZ; // タイルインデックス計算の基準Z
 
+	SplitBilBoard m_StartBillboard; // 始点ビルボード
+	float m_BillboardTimer;    // ビルボードふわふわアニメーション用タイマー
+
 	// t(0~1) が属するセグメント（面ペア）とそのローカルtを求める
 	void ResolveSegment(float t, int& faceA, int& faceB, float& localT) const;
 	XMFLOAT2 EvalCurveXY(float t) const;
@@ -28,7 +32,8 @@ public:
 	RopeHoldNote()
 		: NoteBase(), m_FacePath{ 0 }, m_EndLane(0),
 		  m_RopeLength(0.0f), m_HoldProgress(0.0f), m_State(State::IDLE),
-		  m_Texture(nullptr), m_LoopTime(2.0f), m_InitialSpawnZ(0.0f) {}
+		  m_Texture(nullptr), m_LoopTime(2.0f), m_InitialSpawnZ(0.0f),
+		  m_BillboardTimer(0.0f) {}
 
 	NoteType GetType() const override { return NoteType::RopeHold; }
 

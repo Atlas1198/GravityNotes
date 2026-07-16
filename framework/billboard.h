@@ -54,7 +54,7 @@ public:
 	void SetRotation(XMFLOAT3 rot) { m_Rot = rot; }
 	XMFLOAT3 GetRotation(void) { return m_Rot; }
 
-	void SetColor(XMFLOAT4 color) { m_Color = color; }
+	void SetColor(XMFLOAT4 color) { m_Color = color; CreateBuffer(); }
 	XMFLOAT4 GetColor(void) { return m_Color; }
 
 	// ライティング無効化オプション
