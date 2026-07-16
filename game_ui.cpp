@@ -22,6 +22,8 @@ static constexpr float JUDGE_H           = 150.0f;                 // スプラ�
 static constexpr float JUDGE_DISPLAY_SEC = 0.6f;                   // 表示秒数
 static constexpr float HANTEI_UI_X       = 180.0f;                 // 判定表示位置のXマージン
 static constexpr float HANTEI_UI_Y       = 180.0f;                 // 判定表示位置のYマージン
+static constexpr float LANE_OFFSET_X     = 180.0f;                  // 横方向のレーンずれ幅
+static constexpr float LANE_OFFSET_Y     = 150.0f;                  // 縦方向のレーンずれ幅
 
 // HP バー
 static constexpr float HP_BAR_LEFT  = SCREEN_WIDTH  * 0.78f;  // バー左端X
@@ -277,25 +279,23 @@ void GameUI::Update(const StatusManager* pStatus, bool isHoldingRainbow, int gra
         float baseX = SCREEN_WIDTH / 2.0f;
         float baseY = SCREEN_HEIGHT / 2.0f;
 
-        float laneOffset = laneIndex * 150.0f;
-
         switch (gravityFace)
         {
         case 0: // FACE_FLOOR
-            baseX = SCREEN_WIDTH / 2.0f + laneOffset + HANTEI_UI_X;
+            baseX = SCREEN_WIDTH / 2.0f + laneIndex * LANE_OFFSET_X + HANTEI_UI_X;
             baseY = SCREEN_HEIGHT - HANTEI_UI_Y;
             break;
         case 1: // FACE_LEFT_WALL
             baseX = HANTEI_UI_X;
-            baseY = SCREEN_HEIGHT / 2.0f - laneOffset;
+            baseY = SCREEN_HEIGHT / 2.0f - laneIndex * LANE_OFFSET_Y;
             break;
         case 2: // FACE_CEILING
-            baseX = SCREEN_WIDTH / 2.0f + laneOffset - HANTEI_UI_X;
+            baseX = SCREEN_WIDTH / 2.0f + laneIndex * LANE_OFFSET_X - HANTEI_UI_X;
             baseY = HANTEI_UI_Y;
             break;
         case 3: // FACE_RIGHT_WALL
             baseX = SCREEN_WIDTH - HANTEI_UI_X;
-            baseY = SCREEN_HEIGHT / 2.0f - ;
+            baseY = SCREEN_HEIGHT / 2.0f - laneIndex * LANE_OFFSET_Y;
             break;
         default:
             baseX = SCREEN_WIDTH / 2.0f;
