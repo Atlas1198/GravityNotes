@@ -221,7 +221,7 @@ void NoteManager::ReleaseRope(RopeHoldNote* rope)
 	delete rope;
 }
 
-void NoteManager::Update(int playerLane, int playerFace)
+void NoteManager::Update(int playerLane, int playerFace, bool isGravityMoving)
 {
 	// BGMフェードアウト処理
 	if (m_IsFadingOut && m_pBgmData && m_pBgmData->pSourceVoice)
@@ -301,6 +301,7 @@ void NoteManager::Update(int playerLane, int playerFace)
 		{
 			EnemyNote* note = new EnemyNote();
 			note->Init(gameLane, face, initZ, m_NoteSpeed);
+			note->SetBeat(ev.beat);
 			m_Notes.push_back(note);
 			break;
 		}
@@ -308,6 +309,7 @@ void NoteManager::Update(int playerLane, int playerFace)
 		{
 			OrbNote* note = new OrbNote();
 			note->Init(gameLane, face, initZ, m_NoteSpeed);
+			note->SetBeat(ev.beat);
 			m_Notes.push_back(note);
 			break;
 		}
@@ -315,6 +317,7 @@ void NoteManager::Update(int playerLane, int playerFace)
 		{
 			BarrierNote* note = new BarrierNote();
 			note->Init(gameLane, face, initZ, m_NoteSpeed, ev.beat);
+			note->SetBeat(ev.beat);
 			m_Notes.push_back(note);
 			break;
 		}
@@ -325,6 +328,7 @@ void NoteManager::Update(int playerLane, int playerFace)
 
 			HoldNote* note = new HoldNote();
 			note->Init(ev.lane, ev.endLane, face, initZ, endZ, m_NoteSpeed, m_ScoreData.bpm, ev.beat, ev.endBeat);
+			note->SetBeat(ev.beat);
 			m_Notes.push_back(note);
 			break;
 		}
@@ -339,6 +343,7 @@ void NoteManager::Update(int playerLane, int playerFace)
 
 			RopeHoldNote* note = AcquireRope();
 			note->Init(gameLane, gameEndLane, facePath, initZ, endZ, m_NoteSpeed);
+			note->SetBeat(ev.beat);
 			m_Notes.push_back(note);
 			break;
 		}
@@ -395,9 +400,22 @@ void NoteManager::Update(int playerLane, int playerFace)
 					if (m_Notes[i]->GetLaneIndex() == playerLane &&
 						m_Notes[i]->GetFace()      == playerFace)
 					{
-						barrier->OnMiss();
-						m_PendingJudges.push(JUDGE_MISS);
-						m_ProcessedBarrierBeats.insert(beat);
+						if (isGravityMoving)
+						{
+							// 重力移動中はバリアに被弾しない（安全に回避中）
+							barrier->OnHit();
+							if (m_ProcessedBarrierBeats.find(beat) == m_ProcessedBarrierBeats.end())
+							{
+								m_PendingJudges.push(JUDGE_SILENT_COMBO);
+								m_ProcessedBarrierBeats.insert(beat);
+							}
+						}
+						else
+						{
+							barrier->OnMiss();
+							m_PendingJudges.push(JUDGE_MISS);
+							m_ProcessedBarrierBeats.insert(beat);
+						}
 					}
 					else
 					{
@@ -431,7 +449,12 @@ void NoteManager::Update(int playerLane, int playerFace)
 				if (rope->GetState() == RopeHoldNote::State::COMPLETE)
 					m_PendingJudges.push(JUDGE_HIT);
 				else if (rope->GetState() == RopeHoldNote::State::FAILED_START)
+				{
 					m_PendingJudges.push(JUDGE_PASS_MISS); // 始点で触れられなかった場合。Enemyの押し逃しと同様、コンボリセットのみでHPは減らさない
+					hal::dout << "[MISS] Type: RopeHold (Failed Start), Beat: " << rope->GetBeat()
+					          << ", Lane: " << rope->GetLaneIndex()
+					          << ", Face: " << rope->GetFace() << std::endl;
+				}
 				if (m_HoldingRope == rope)
 				{
 					m_HoldingRope = nullptr;
@@ -712,7 +735,17 @@ JUDGE NoteManager::OnButtonRelease(int lane, int face)
 		{
 			m_HoldingRope = nullptr;
 		}
-		return (progress >= 0.5f) ? JUDGE_HIT : JUDGE_MISS;
+		if (progress >= 0.5f)
+		{
+			return JUDGE_HIT;
+		}
+		else
+		{
+			hal::dout << "[MISS] Type: RopeHold (Release Early), Beat: " << rope->GetBeat()
+			          << ", Lane: " << rope->GetLaneIndex()
+			          << ", Face: " << rope->GetFace() << std::endl;
+			return JUDGE_MISS;
+		}
 	}
 	return JUDGE_NONE;
 }

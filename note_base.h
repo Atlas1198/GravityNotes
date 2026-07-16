@@ -17,9 +17,10 @@ protected:
 	float m_Speed;
 	bool  m_IsActive;
 	bool  m_IsHit;
+	float m_Beat;
 
 public:
-	NoteBase() : Sprite3D(), m_LaneIndex(0), m_Face(0), m_Speed(0.0f), m_IsActive(false), m_IsHit(false) {}
+	NoteBase() : Sprite3D(), m_LaneIndex(0), m_Face(0), m_Speed(0.0f), m_IsActive(false), m_IsHit(false), m_Beat(0.0f) {}
 	virtual ~NoteBase() = default;
 
 	virtual NoteType GetType() const = 0;
@@ -35,6 +36,8 @@ public:
 	bool IsHit()    const { return m_IsHit; }
 	int  GetLaneIndex() const { return m_LaneIndex; }
 	int  GetFace()      const { return m_Face; }
+	void  SetBeat(float beat) { m_Beat = beat; }
+	float GetBeat() const { return m_Beat; }
 };
 
 // 面をまたいだ隣接レーンの角判定

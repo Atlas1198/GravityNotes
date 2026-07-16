@@ -299,6 +299,8 @@ void Player::Update()
 		PlayOverrideAnimation("attack", overrideBones, false);
 		m_IsOverridePlaying = true;
 
+		int judgeFace = m_IsGravityMoving ? m_TargetFace : m_GravityFace;
+
 		if (m_pEffectSlash)
 		{
 			m_pEffectSlash->SetTextureIndex(0);
@@ -307,7 +309,7 @@ void Player::Update()
 
 			float upX = 0.0f;
 			float upY = 0.0f;
-			switch (m_GravityFace)
+			switch (judgeFace)
 			{
 			case FACE_FLOOR:      upX =  0.0f; upY =  1.0f; break; // 床では上方向
 			case FACE_CEILING:    upX =  0.0f; upY = -1.0f; break; // 天井では下方向
@@ -317,7 +319,7 @@ void Player::Update()
 			m_pEffectSlash->SetPos({ m_Position.x + 1.0f * upX, m_Position.y + 1.0f * upY, m_Position.z });
 
 			XMFLOAT3 rot = { 90.0f, 180.0f, 0.0f };
-			switch (m_GravityFace)
+			switch (judgeFace)
 			{
 			case FACE_FLOOR:
 				rot = { 90.0f, 180.0f, 0.0f };
@@ -336,7 +338,6 @@ void Player::Update()
 		}
 
 		// 押した瞬間（KeyTrigger）：Enemy・Hold(最初の一撃) 判定
-		int judgeFace = m_IsGravityMoving ? m_TargetFace : m_GravityFace;
 		JUDGE result = m_pNoteManager->Judge(m_LaneIndex, judgeFace);
 		processJudge(result, false);
 

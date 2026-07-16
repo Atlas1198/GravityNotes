@@ -152,7 +152,7 @@ void Game_Update(void)
 
 		g_pField->Update(g_pNoteManager->GetNoteSpeed());
 		g_pPlayer->Update();
-		g_pNoteManager->Update(g_pPlayer->GetLaneIndex(), g_pPlayer->GetGravityFace());
+		g_pNoteManager->Update(g_pPlayer->GetLaneIndex(), g_pPlayer->GetGravityFace(), g_pPlayer->IsGravityMoving());
 
 	}
 

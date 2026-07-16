@@ -2,6 +2,7 @@
 
 #include "game.h"
 #include "note_base.h"
+#include "debug_ostream.h"
 
 static const float NOTE_TUNNEL_HALF = 2.5f;
 static const float NOTE_DESPAWN_Z   = -5.0f;
@@ -66,6 +67,21 @@ void NoteBase::OnHit()
 void NoteBase::OnMiss()
 {
 	m_IsActive = false;
+
+	const char* typeStr = "Unknown";
+	switch (GetType())
+	{
+	case NoteType::Enemy:    typeStr = "Enemy"; break;
+	case NoteType::Orb:      typeStr = "Orb"; break;
+	case NoteType::Barrier:  typeStr = "Barrier"; break;
+	case NoteType::Hold:     typeStr = "Hold"; break;
+	case NoteType::RopeHold: typeStr = "RopeHold"; break;
+	}
+
+	hal::dout << "[MISS] Type: " << typeStr
+	          << ", Beat: " << m_Beat
+	          << ", Lane: " << m_LaneIndex
+	          << ", Face: " << m_Face << std::endl;
 }
 
 bool IsCornerAdjacent(int lane1, int face1, int lane2, int face2)

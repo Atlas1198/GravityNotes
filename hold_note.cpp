@@ -60,6 +60,7 @@ void HoldNote::Init(int lane, int endLane, int face, float initZ, float endZ, fl
 		EnemyNote* child = new EnemyNote();
 		// 一体目も共通モデルを使用し、テクスチャのみを差し替える
 		child->Init(snapLane, face, childZ, speed, nullptr);
+		child->SetBeat(beat + (float)i * HOLD_BEAT_INTERVAL);
 		if (i == 0)
 		{
 			child->SetCustomTexture("asset/texture/Gargoyle_red.png");

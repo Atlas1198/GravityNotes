@@ -75,7 +75,7 @@ private:
 
 public:
 	void  Init(const std::string& scoreFilePath);
-	void  Update(int playerLane, int playerFace);
+	void  Update(int playerLane, int playerFace, bool isGravityMoving);
 	void  Draw();
 	// 指定した面(0=FLOOR,1=LEFT_WALL,2=CEILING,3=RIGHT_WALL)にいるEnemy/Orbの影を描く。
 	void  DrawShadowMapForFace(int face, const XMMATRIX& lightView, const XMMATRIX& lightProjection);
