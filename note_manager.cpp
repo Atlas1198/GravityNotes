@@ -1,4 +1,4 @@
-#include "define.h"
+﻿#include "define.h"
 #include "debug_ostream.h"
 #include "game.h"
 #include "note_manager.h"
@@ -717,7 +717,7 @@ JUDGE NoteManager::Judge(int lane, int face)
 	return JUDGE_NONE;
 }
 
-JUDGE NoteManager::JudgeHold(int lane, int face)
+JUDGE NoteManager::JudgeHold(int lane, int face, bool isTrigger)
 {
 	// RopeHoldNote: HIT_ZONE_Z（3.0f）に来た時だけKeyDownで活性化（スコアは完了時に加算）
 	for (NoteBase* note : m_Notes)
@@ -726,6 +726,7 @@ JUDGE NoteManager::JudgeHold(int lane, int face)
 		RopeHoldNote* rope = static_cast<RopeHoldNote*>(note);
 		if (rope->GetState() != RopeHoldNote::State::IDLE) continue;
 		if (rope->GetFace() != face) continue;
+		if (!isTrigger) continue; // 押しっぱなし（トリガーの瞬間以外）では新規活性化しない
  
 		float offsetZ = rope->GetPosZ() - HIT_ZONE_Z;
 		// 前判定（ノーツが手前にあるとき: offsetZ > 0）は ROPE_ACTIVATE_WINDOW (0.5f)

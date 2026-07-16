@@ -87,7 +87,7 @@ public:
 	const ScoreData& GetScoreData() const { return m_ScoreData; }
 
 	JUDGE Judge(int lane, int face);
-	JUDGE JudgeHold(int lane, int face);
+	JUDGE JudgeHold(int lane, int face, bool isTrigger = false);
 	JUDGE OnButtonRelease(int lane, int face);
 
 	RopeHoldNote* GetHoldingRope() const { return m_HoldingRope; }

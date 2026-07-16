@@ -360,7 +360,8 @@ void Player::Update()
 		// 押している間（KeyDown、トリガーの瞬間も含む）：
 		// HoldNote 継続判定 / RopeHoldNote の活性化・継続判定
 		int judgeFace = m_IsGravityMoving ? m_TargetFace : m_GravityFace;
-		JUDGE result = m_pNoteManager->JudgeHold(m_LaneIndex, judgeFace);
+		// 押した瞬間(isPressed)のみ活性化(始点タッチ)を許可するために、isPressed を渡す
+		JUDGE result = m_pNoteManager->JudgeHold(m_LaneIndex, judgeFace, isPressed);
 		processJudge(result, true);
 
 		if (result == JUDGE_HIT)
