@@ -65,11 +65,7 @@ jobs:
         Copy-Item -Path "assimp-vc143-mt.dll" -Destination "release" -Force 
         Copy-Item -Path "asset" -Destination "release" -Recurse -Force
         Copy-Item -Path "selfeditor/*" -Destination "release" -Recurse -Force
-
-        # 空フォルダを作成
-        New-Item -ItemType Directory -Path "release/music" -Force | Out-Null
-        New-Item -ItemType Directory -Path "release/json" -Force | Out-Null
-        
+                
         # zipを作成
         Compress-Archive -Path "release/*" -DestinationPath "${{ steps.version.outputs.archive_name }}" -Force
 
