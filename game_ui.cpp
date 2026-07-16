@@ -1,4 +1,4 @@
-﻿#include "game_ui.h"
+#include "game_ui.h"
 #include "define.h"
 #include <string>
 #include "sound.h"
@@ -15,8 +15,8 @@ static constexpr float LABEL_X        = DIGIT_ANCHOR_X + DIGIT_W * 0.5f + 8.0f;
 static constexpr float LABEL_Y        = COMBO_CENTER_Y;
 
 // Hit / Miss 表示
-static constexpr float JUDGE_X           = SCREEN_WIDTH  * 0.5f;   // 表示中心X
-static constexpr float JUDGE_Y           = SCREEN_HEIGHT * 0.4f;   // 表示中心Y
+static constexpr float JUDGE_X           = 150.0f;                 // 表示中心X
+static constexpr float JUDGE_Y           = 120.0f;                 // 表示中心Y
 static constexpr float JUDGE_W           = 150.0f;                 // スプライト幅
 static constexpr float JUDGE_H           = 150.0f;                 // スプライト高さ
 static constexpr float JUDGE_DISPLAY_SEC = 0.6f;                   // 表示秒数
@@ -272,53 +272,45 @@ void GameUI::Update(const StatusManager* pStatus, bool isHoldingRainbow, int gra
         m_JudgeTimer -= dt;
         if (m_JudgeTimer < 0.0f) m_JudgeTimer = 0.0f;
 
-        float t = 1.0f - (m_JudgeTimer / JUDGE_DISPLAY_SEC);
-        float moveY = t * 48.0f;
-        float alpha = 1.0f - t;
+        float elapsed = JUDGE_DISPLAY_SEC - m_JudgeTimer;
+        float animDuration = 0.25f; // ぽこんアニメーションの秒数
 
-        float baseX = SCREEN_WIDTH / 2.0f;
-        float baseY = SCREEN_HEIGHT / 2.0f;
+        float s = 1.0f;     // スケール倍率
+        float alpha = 1.0f; // アルファ値
 
-        switch (gravityFace)
+        if (elapsed < animDuration)
         {
-        case 0: // FACE_FLOOR
-            baseX = SCREEN_WIDTH / 2.0f + laneIndex * LANE_OFFSET_X + HANTEI_UI_X;
-            baseY = SCREEN_HEIGHT - HANTEI_UI_Y;
-            break;
-        case 1: // FACE_LEFT_WALL
-            baseX = HANTEI_UI_X;
-            baseY = SCREEN_HEIGHT / 2.0f - laneIndex * LANE_OFFSET_Y;
-            break;
-        case 2: // FACE_CEILING
-            baseX = SCREEN_WIDTH / 2.0f + laneIndex * LANE_OFFSET_X - HANTEI_UI_X;
-            baseY = HANTEI_UI_Y;
-            break;
-        case 3: // FACE_RIGHT_WALL
-            baseX = SCREEN_WIDTH - HANTEI_UI_X;
-            baseY = SCREEN_HEIGHT / 2.0f - laneIndex * LANE_OFFSET_Y;
-            break;
-        default:
-            baseX = SCREEN_WIDTH / 2.0f;
-            baseY = SCREEN_HEIGHT / 2.0f;
-            break;
+            float t = elapsed / animDuration;
+            alpha = sqrtf(t); // すばやくフェードイン
+            if (alpha > 1.0f) alpha = 1.0f;
+
+            // Ease-Out Back イージング
+            float c1 = 1.70158f;
+            float c3 = c1 + 1.0f;
+            float tm1 = t - 1.0f;
+            s = 1.0f + c3 * tm1 * tm1 * tm1 + c1 * tm1 * tm1;
         }
 
-        XMFLOAT2 pos = { baseX, baseY - moveY };
+        XMFLOAT2 pos = { JUDGE_X, JUDGE_Y };
+        XMFLOAT2 size = { JUDGE_W * s, JUDGE_H * s };
         XMFLOAT4 color = { 1.0f, 1.0f, 1.0f, alpha };
 
         if (m_pHitSprite)
         {
             m_pHitSprite->SetPos(pos);
+            m_pHitSprite->SetSize(size);
             m_pHitSprite->SetColor(color);
         }
         if (m_pMissSprite)
         {
             m_pMissSprite->SetPos(pos);
+            m_pMissSprite->SetSize(size);
             m_pMissSprite->SetColor(color);
         }
         if (m_pKaihiSprite)
         {
             m_pKaihiSprite->SetPos(pos);
+            m_pKaihiSprite->SetSize(size);
             m_pKaihiSprite->SetColor(color);
         }
     }
