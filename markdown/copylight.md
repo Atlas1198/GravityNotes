@@ -3,6 +3,10 @@
 ## 楽曲
 シャイニングスター / 作詞・作曲：森田交一（魔王魂） / 歌：詩歩
 
+4th smile / 作曲：LeaF
+
+GAIA / 作曲：森田交一（魔王魂）/ 作詞：火ノ岡レイ / 歌：KEI
+
 ## SE
 AllHit.mp3：ゲームクリア時「AllHit」演出音 /
 シャキーン3 - https://soundeffect-lab.info/sound/anime/
