@@ -59,6 +59,7 @@ static float g_ScrollOffset = 0.0f;      // 現在のオフセット（滑らか
 static float g_ScrollTarget = 0.0f;      // 目標のオフセット
 
 static int g_MenuRepeatTimer = 0;        // リピート処理用のタイマー
+static int g_PendingDelta = 0;           // アニメーション中に受け付けた入力バッファ（+1=下, -1=上）
 static SoundData* g_pMenuMoveSe = nullptr; // メニュー移動SE
 
 // JSONからの譜面データの管理とスコア表示（日本語コード部分より）
@@ -243,6 +244,7 @@ void StageSelect_Initialize(void)
 	g_ScrollOffset = 0.0f;
 	g_ScrollTarget = 0.0f;
 	g_MenuRepeatTimer = 0;
+	g_PendingDelta = 0;
 	g_pMenuMoveSe = LoadMP3("asset/sound/se/musicMove.mp3");
 
 	g_pResultBG = new Sprite2D(
@@ -394,31 +396,55 @@ void StageSelect_Update(void)
 	if (g_CurrentState == STATE_PLAYING)
 	{
 		bool isInputPressed = false;
+		int delta = 0;
 
-		// 上下矢印、wasd、DPad、Lスティック上下でレコードのステージを変更
-		if (Input_IsActionTrigger(INPUT_ACTION_MENU_UP)) {
-			g_NextStage = g_SelectedStage - 1;
-			if (g_NextStage < 0) g_NextStage = g_MaxStages - 1;
+		// バッファ済みの入力（短押し連打）を優先して消化
+		if (g_PendingDelta != 0) {
+			delta = g_PendingDelta;
+			g_PendingDelta = 0;
 			isInputPressed = true;
-			g_ScrollTarget -= 1.0f;  // 1段階上へスライド
-			if (g_pMenuMoveSe != nullptr) PlaySound(g_pMenuMoveSe, false);
+		}
+		// 上下矢印、wasd、DPad、Lスティック上下でレコードのステージを変更
+		else if (Input_IsActionTrigger(INPUT_ACTION_MENU_UP)) {
+			delta = -1;
+			isInputPressed = true;
 		}
 		else if (Input_IsActionTrigger(INPUT_ACTION_MENU_DOWN)) {
-			g_NextStage = g_SelectedStage + 1;
-			if (g_NextStage >= g_MaxStages) g_NextStage = 0;
+			delta = +1;
 			isInputPressed = true;
-			g_ScrollTarget += 1.0f;  // 1段階下へスライド
-			if (g_pMenuMoveSe != nullptr) PlaySound(g_pMenuMoveSe, false);
 		}
 
-		// ステージが変更された場合、アームを持ち上げる一連のアクションを開始
 		if (isInputPressed) {
+			if (delta < 0) {
+				g_NextStage = g_SelectedStage - 1;
+				if (g_NextStage < 0) g_NextStage = g_MaxStages - 1;
+				g_ScrollTarget -= 1.0f;  // 1段階上へスライド
+			}
+			else {
+				g_NextStage = g_SelectedStage + 1;
+				if (g_NextStage >= g_MaxStages) g_NextStage = 0;
+				g_ScrollTarget += 1.0f;  // 1段階下へスライド
+			}
+			if (g_pMenuMoveSe != nullptr) PlaySound(g_pMenuMoveSe, false);
+
+			// ステージが変更された場合、アームを持ち上げる一連のアクションを開始
 			g_CurrentState = STATE_LIFTING_ARM;
 			if (g_pCurrentBgmData != nullptr) {
 				StopSound(g_pCurrentBgmData);
 				g_pCurrentBgmData = nullptr;
 			}
 			g_LoadedBgmPath = "";
+		}
+	}
+	else
+	{
+		// アニメーション中（LIFTING / DROPPING）に短押しされた入力をバッファリング
+		// 最後に押された方向のみ保持する（複数連打は加算ではなく上書き）
+		if (Input_IsActionTrigger(INPUT_ACTION_MENU_UP)) {
+			g_PendingDelta = -1;
+		}
+		else if (Input_IsActionTrigger(INPUT_ACTION_MENU_DOWN)) {
+			g_PendingDelta = +1;
 		}
 	}
 
