@@ -14,6 +14,7 @@ private:
 	float m_RopeLength;
 	float m_HoldProgress;
 	State m_State;
+	bool  m_MissedAtStart; // IDLE中に判定窓を通過して見逃した場合のみtrue（途中離しとの区別用）
 
 	ID3D11ShaderResourceView* m_Texture;
 	float m_LoopTime;      // 30タイル1ループにかかる秒数
@@ -27,7 +28,7 @@ private:
 public:
 	RopeHoldNote()
 		: NoteBase(), m_FacePath{ 0 }, m_EndLane(0),
-		  m_RopeLength(0.0f), m_HoldProgress(0.0f), m_State(State::IDLE),
+		  m_RopeLength(0.0f), m_HoldProgress(0.0f), m_State(State::IDLE), m_MissedAtStart(false),
 		  m_Texture(nullptr), m_LoopTime(2.0f), m_InitialSpawnZ(0.0f) {}
 
 	static void FinalizeSharedResources();
@@ -48,6 +49,7 @@ public:
 	int   GetEndFace()      const { return m_FacePath.back(); }
 	int   GetEndLane()      const { return m_EndLane; }
 	float GetHoldProgress() const { return m_HoldProgress; }
+	bool  WasMissedAtStart() const { return m_MissedAtStart; }
 
 	XMFLOAT2 GetCurveXY(float t) const { return EvalCurveXY(t); }
 	// プレイヤーの向き補間用：tが属するセグメントの両端面とローカルtを返す

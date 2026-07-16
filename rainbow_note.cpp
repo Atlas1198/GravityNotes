@@ -143,6 +143,7 @@ void RopeHoldNote::Init(int startLane, int endLane, const std::vector<int>& face
 	m_RopeLength    = endZ - startZ;
 	m_HoldProgress  = 0.0f;
 	m_State         = State::IDLE;
+	m_MissedAtStart = false;
 	m_InitialSpawnZ = startZ;
 
 	if (!m_Texture)
@@ -211,8 +212,9 @@ void RopeHoldNote::Update()
 	// IDLE: 判定窓を過ぎたら FAILED（始点を取れなかった場合、途中離しと同様に即座に非表示）
 	if (m_State == State::IDLE && GetPosZ() < ROPE_HIT_ZONE_Z - ROPE_ACTIVE_RANGE)
 	{
-		m_State    = State::FAILED;
-		m_IsActive = false;
+		m_State         = State::FAILED;
+		m_IsActive      = false;
+		m_MissedAtStart = true;
 	}
 }
 

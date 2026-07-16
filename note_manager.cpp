@@ -297,7 +297,19 @@ void NoteManager::Update(int playerLane, int playerFace)
 	// 更新・自動判定・削除
 	for (int i = (int)m_Notes.size() - 1; i >= 0; i--)
 	{
+		if (HoldNote* hold = dynamic_cast<HoldNote*>(m_Notes[i]))
+			hold->SetPlayerPosition(playerLane, playerFace);
+
 		m_Notes[i]->Update();
+
+		if (HoldNote* hold = dynamic_cast<HoldNote*>(m_Notes[i]))
+		{
+			while (hold->HasPendingMissJudge())
+			{
+				bool isDamage = hold->PopMissJudge();
+				m_PendingJudges.push(isDamage ? JUDGE_HOLD_MISS : JUDGE_PASS_MISS);
+			}
+		}
 
 		if (!m_Notes[i]->IsHit())
 		{
@@ -362,7 +374,16 @@ void NoteManager::Update(int playerLane, int playerFace)
 			         z < HIT_ZONE_Z - HIT_WINDOW)
 			{
 				m_Notes[i]->OnMiss();
-				m_PendingJudges.push(JUDGE_PASS_MISS); // StatusManager に伝える
+				// プレイヤーと同じlane/faceにいた場合のみダメージあり、それ以外はコンボリセットのみ
+				if (m_Notes[i]->GetLaneIndex() == playerLane &&
+					m_Notes[i]->GetFace()      == playerFace)
+				{
+					m_PendingJudges.push(JUDGE_MISS); // StatusManager に伝える
+				}
+				else
+				{
+					m_PendingJudges.push(JUDGE_PASS_MISS);
+				}
 			}
 		}
 
@@ -373,6 +394,9 @@ void NoteManager::Update(int playerLane, int playerFace)
 			{
 				if (rope->GetState() == RopeHoldNote::State::COMPLETE)
 					m_PendingJudges.push(JUDGE_HIT);
+				// 始点を一度も取れずに見逃した場合のみMiss通知（途中離しはOnButtonRelease()側で既に通知済み）
+				else if (rope->GetState() == RopeHoldNote::State::FAILED && rope->WasMissedAtStart())
+					m_PendingJudges.push(JUDGE_PASS_MISS);
 				ReleaseRope(rope);
 			}
 			else
@@ -631,7 +655,7 @@ JUDGE NoteManager::OnButtonRelease(int lane, int face)
 
 		float progress = rope->GetHoldProgress();
 		rope->Release();
-		return (progress >= 0.5f) ? JUDGE_HIT : JUDGE_MISS;
+		return (progress >= 0.5f) ? JUDGE_HIT : JUDGE_PASS_MISS;
 	}
 	return JUDGE_NONE;
 }
