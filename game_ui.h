@@ -21,7 +21,7 @@ class GameUI
 public:
     void Init();
     void Reset();
-    void Update(const StatusManager* pStatus, bool isHoldingRainbow = false);
+    void Update(const StatusManager* pStatus, bool isHoldingRainbow = false, int gravityFace = 0, int laneIndex = 0);
     void Draw();
     void Finalize();
     void NotifyJudge(JUDGE judge);

@@ -6,11 +6,11 @@
 #include <algorithm>
 #include <cmath>
 
-static const float ROPE_HIT_ZONE_Z   = -0.5f;
-static const float ROPE_START_ZONE_Z = 0.5f;   // 活性化（開始）の基準Z座標（PASSIVE_ZONE_Zと同値）
+static const float ROPE_HIT_ZONE_Z   = 0.0f; // 叩く基準(3.0f)に対して後ろ判定の限界Z値（3.0f - 1.5f より少し後ろに設定）
+static const float ROPE_START_ZONE_Z = 1.0f;   // 活性化（開始）の基準Z座標（HIT_ZONE_Zと同値）
 static const float ROPE_ACTIVE_RANGE = 0.0f;
 static const float TUNNEL_HALF       = 2.5f;
-static const float RIBBON_INSET      = 0.10f;  // z-fighting防止：壁から内側にずらす量
+static const float RIBBON_INSET      = 0.13f;  // z-fighting防止：壁から内側にずらす量
 static const int   TILE_COLS         = 6;
 static const int   TILE_ROWS         = 5;
 static const int   TILE_COUNT        = TILE_COLS * TILE_ROWS; // 30
@@ -148,6 +148,47 @@ void RopeHoldNote::Init(int startLane, int endLane, const std::vector<int>& face
 
 	if (!m_Texture)
 		m_Texture = LoadTexture(L"asset/texture/30ver.png");
+
+	// 始点の面情報から位置と角度を求める
+	// face: 0=FLOOR, 1=LEFT_WALL, 2=CEILING, 3=RIGHT_WALL
+	int startFace = m_FacePath.front();
+	float angleZ = 0.0f;
+	XMFLOAT2 startXY = EvalCurveXY(0.0f);
+	XMFLOAT2 normal = EvalNormal(0.0f);
+
+	// 壁から浮かせるインセット（z-fighting防止：RIBBON_INSET=0.1f と同様）
+	// normal方向へ少し内側（トンネルの中心方向）へ移動し、
+	// さらに高さが1.0fなので、面（壁面・床面）に接地するようにnormal方向へオフセットする。
+	// 板のサイズは 幅 5.0f (TUNNEL_HALF * 2.0f)、高さ 1.0f。板のローカル座標で下端が接地するように、中心から normal * 0.5f オフセットする。
+	float inset = RIBBON_INSET + 0.5f; // 接地のため高さの半分(0.5f) + 浮かせる分
+	XMFLOAT3 bbPos = {
+		startXY.x + normal.x * inset,
+		startXY.y + normal.y * inset,
+		startZ
+	};
+
+	// 角度の設定: 面に応じてZ軸周りに回転させ、壁・天井・床に接地させる
+	// デフォルト (0.0f, 0.0f, 0.0f) は床(FLOOR)の上に立つ板
+	// face 0(FLOOR):   Z回転 0°
+	// face 1(LEFT):    Z回転 -90° (左壁に接地)
+	// face 2(CEILING): Z回転 180° (天井に接地)
+	// face 3(RIGHT):   Z回転 90° (右壁に接地)
+	switch (startFace)
+	{
+	case 0: angleZ = 0.0f; break;
+	case 1: angleZ = -90.0f; break;
+	case 2: angleZ = 180.0f; break;
+	case 3: angleZ = 90.0f; break;
+	}
+
+	// 6列5行の分割ビルボードとして初期化
+	m_StartBillboard = SplitBilBoard(6, 5, bbPos, { TUNNEL_HALF * 2.0f, 1.0f }, { 0.0f, 0.0f, angleZ }, "asset/texture/rainbow_start.png", true);
+	m_StartBillboard.SetBillboardMode(false);
+	m_StartBillboard.SetWallFadeEnabled(false);
+	m_StartBillboard.SetColor({ 1.0f, 1.0f, 1.0f, 0.4f });
+	m_StartBillboard.SetFPS(30.0f);
+	m_StartBillboard.SetAnimationEnabled(true);
+	m_StartBillboard.SetLoop(true);
 }
 
 // t(0~1) が属するセグメント（面ペア）とそのローカルtを求める
@@ -209,13 +250,29 @@ void RopeHoldNote::Update()
 		return;
 	}
 
-	// IDLE: 判定窓を過ぎたら FAILED（始点を取れなかった場合、途中離しと同様に即座に非表示）
+	// IDLE: 判定窓を過ぎたら FAILED_START（始点を取れなかった場合、途中離しと同様に即座に非表示）
+	// FAILED（途中離し）とは区別し、NoteManager側でMiss判定を確実に発行できるようにする
 	if (m_State == State::IDLE && GetPosZ() < ROPE_HIT_ZONE_Z - ROPE_ACTIVE_RANGE)
 	{
-		m_State         = State::FAILED;
-		m_IsActive      = false;
-		m_MissedAtStart = true;
+		m_State    = State::FAILED_START;
+		m_IsActive = false;
 	}
+
+	// 始点ビルボードの座標同期と更新
+	m_BillboardTimer += dt;
+	float wave = sinf(m_BillboardTimer * 4.0f) * 0.4f; // 周期約1.5秒、振幅0.6f
+
+	// 接地位置（法線方向にRIBBON_INSET + 0.5f）をベースに、さらにふわふわ揺らす
+	XMFLOAT2 startXY = EvalCurveXY(0.0f);
+	XMFLOAT2 normal = EvalNormal(0.0f);
+	float inset = RIBBON_INSET + 1.1f + wave;
+	XMFLOAT3 bbPos = {
+		startXY.x + normal.x * inset,
+		startXY.y + normal.y * inset,
+		m_Position.z
+	};
+	m_StartBillboard.SetPos(bbPos);
+	m_StartBillboard.Update();
 }
 
 void RopeHoldNote::Draw()
@@ -229,8 +286,8 @@ void RopeHoldNote::Draw()
 	float halfWidth = TUNNEL_HALF;
 
 	const float drawNear = (m_State == State::HOLDING)
-		? ROPE_START_ZONE_Z
-		: std::max(0.0f, m_Position.z);
+		? -0.2f
+		: std::max(-0.2f, m_Position.z);
 	const float drawFar  = m_Position.z + m_RopeLength;
 
 	const float geoStep = tileZWidth / RIBBON_SUBDIV;
@@ -284,6 +341,12 @@ void RopeHoldNote::Draw()
 
 			DrawRibbonQuad(corners, u0, u1, vFar, vNear, m_Texture);
 		}
+	}
+
+	// 始点ビルボードの描画（IDLE状態のみ表示）
+	if (m_State == State::IDLE)
+	{
+		m_StartBillboard.Draw();
 	}
 }
 

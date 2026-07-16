@@ -49,6 +49,7 @@ private:
 	bool      m_RainbowSePlaying = false;
 	EnemyDefeatEffect* m_pEnemyDefeatEffect = nullptr;
 	OrbCollectEffect* m_pOrbCollectEffect = nullptr;
+	RopeHoldNote* m_HoldingRope = nullptr;
 
 	std::queue<JUDGE> m_PendingJudges;
 	std::queue<ORB_EVENT> m_PendingOrbEvents;
@@ -75,7 +76,7 @@ private:
 
 public:
 	void  Init(const std::string& scoreFilePath);
-	void  Update(int playerLane, int playerFace);
+	void  Update(int playerLane, int playerFace, bool isGravityMoving);
 	void  Draw();
 	// 指定した面(0=FLOOR,1=LEFT_WALL,2=CEILING,3=RIGHT_WALL)にいるEnemy/Orbの影を描く。
 	void  DrawShadowMapForFace(int face, const XMMATRIX& lightView, const XMMATRIX& lightProjection);
@@ -87,10 +88,10 @@ public:
 	const ScoreData& GetScoreData() const { return m_ScoreData; }
 
 	JUDGE Judge(int lane, int face);
-	JUDGE JudgeHold(int lane, int face);
+	JUDGE JudgeHold(int lane, int face, bool isTrigger = false);
 	JUDGE OnButtonRelease(int lane, int face);
 
-	RopeHoldNote* GetHoldingRope();
+	RopeHoldNote* GetHoldingRope() const { return m_HoldingRope; }
 
 	bool  HasPendingJudge()  const { return !m_PendingJudges.empty(); }
 	JUDGE PopPendingJudge()        { JUDGE j = m_PendingJudges.front(); m_PendingJudges.pop(); return j; }

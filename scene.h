@@ -34,3 +34,7 @@ void SetPlayJson(const std::string& jsonName);
 const std::string& GetPlayJson(void);
 void SetResult(const SendResult& r);
 const SendResult* GetResult();
+
+void SetKeepLoadedData(bool keep);
+bool GetKeepLoadedData(void);
+

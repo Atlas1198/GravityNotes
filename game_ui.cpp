@@ -2,6 +2,7 @@
 #include "define.h"
 #include <string>
 #include "sound.h"
+#include "game.h"
 
 // --- 仮置き定数（後で調整してください） ---
 //コンボ表示
@@ -14,11 +15,15 @@ static constexpr float LABEL_X        = DIGIT_ANCHOR_X + DIGIT_W * 0.5f + 8.0f;
 static constexpr float LABEL_Y        = COMBO_CENTER_Y;
 
 // Hit / Miss 表示
-static constexpr float JUDGE_X           = SCREEN_WIDTH  * 0.5f;   // 表示中心X
-static constexpr float JUDGE_Y           = SCREEN_HEIGHT * 0.4f;   // 表示中心Y
+static constexpr float JUDGE_X           = 150.0f;                 // 表示中心X
+static constexpr float JUDGE_Y           = 120.0f;                 // 表示中心Y
 static constexpr float JUDGE_W           = 150.0f;                 // スプライト幅
 static constexpr float JUDGE_H           = 150.0f;                 // スプライト高さ
 static constexpr float JUDGE_DISPLAY_SEC = 0.6f;                   // 表示秒数
+static constexpr float HANTEI_UI_X       = 180.0f;                 // 判定表示位置のXマージン
+static constexpr float HANTEI_UI_Y       = 180.0f;                 // 判定表示位置のYマージン
+static constexpr float LANE_OFFSET_X     = 180.0f;                  // 横方向のレーンずれ幅
+static constexpr float LANE_OFFSET_Y     = 150.0f;                  // 縦方向のレーンずれ幅
 
 // HP バー
 static constexpr float HP_BAR_LEFT  = SCREEN_WIDTH  * 0.78f;  // バー左端X
@@ -178,6 +183,22 @@ void GameUI::Reset()
     m_JudgeTimer   = 0.0f;
     m_CurrentJudge = JUDGE_NONE;
 
+    if (m_pHitSprite)
+    {
+        m_pHitSprite->SetPos({ JUDGE_X, JUDGE_Y });
+        m_pHitSprite->SetColor({ 1.0f, 1.0f, 1.0f, 1.0f });
+    }
+    if (m_pMissSprite)
+    {
+        m_pMissSprite->SetPos({ JUDGE_X, JUDGE_Y });
+        m_pMissSprite->SetColor({ 1.0f, 1.0f, 1.0f, 1.0f });
+    }
+    if (m_pKaihiSprite)
+    {
+        m_pKaihiSprite->SetPos({ JUDGE_X, JUDGE_Y });
+        m_pKaihiSprite->SetColor({ 1.0f, 1.0f, 1.0f, 1.0f });
+    }
+
     m_ShowEndOverlay = false;
     m_ShowLogos      = false;
     m_IsDead         = false;
@@ -201,24 +222,24 @@ void GameUI::Reset()
     }
 }
 
-void GameUI::Update(const StatusManager* pStatus, bool isHoldingRainbow)
+void GameUI::Update(const StatusManager* pStatus, bool isHoldingRainbow, int gravityFace, int laneIndex)
 {
     m_IsHoldingRainbow = isHoldingRainbow;
 
     if (m_IsHoldingRainbow)
     {
-        m_WindCutAlpha += (1.0f / 0.24f) / FPS; // 約0.24秒でフェードイン
+        m_WindCutAlpha += (1.0f / 0.24f) * dt; // 約0.24秒でフェードイン
         if (m_WindCutAlpha > 1.0f) m_WindCutAlpha = 1.0f;
     }
     else
     {
-        m_WindCutAlpha -= (1.0f / 0.30f) / FPS; // 約0.30秒でフェードアウト
+        m_WindCutAlpha -= (1.0f / 0.30f) * dt; // 約0.30秒でフェードアウト
         if (m_WindCutAlpha < 0.0f) m_WindCutAlpha = 0.0f;
     }
 
     if (m_WindCutAlpha > 0.0f)
     {
-        m_WindCutAnimTimer += 1.0f / FPS;
+        m_WindCutAnimTimer += dt;
         int textureNumber = static_cast<int>(m_WindCutAnimTimer * 30.0f) % 30;
         if (m_pWindCutSprite)
         {
@@ -247,12 +268,57 @@ void GameUI::Update(const StatusManager* pStatus, bool isHoldingRainbow)
     }
 
     if (m_JudgeTimer > 0.0f)
-        m_JudgeTimer -= 1.0f / FPS;
+    {
+        m_JudgeTimer -= dt;
+        if (m_JudgeTimer < 0.0f) m_JudgeTimer = 0.0f;
+
+        float elapsed = JUDGE_DISPLAY_SEC - m_JudgeTimer;
+        float animDuration = 0.25f; // ぽこんアニメーションの秒数
+
+        float s = 1.0f;     // スケール倍率
+        float alpha = 1.0f; // アルファ値
+
+        if (elapsed < animDuration)
+        {
+            float t = elapsed / animDuration;
+            alpha = sqrtf(t); // すばやくフェードイン
+            if (alpha > 1.0f) alpha = 1.0f;
+
+            // Ease-Out Back イージング
+            float c1 = 1.70158f;
+            float c3 = c1 + 1.0f;
+            float tm1 = t - 1.0f;
+            s = 1.0f + c3 * tm1 * tm1 * tm1 + c1 * tm1 * tm1;
+        }
+
+        XMFLOAT2 pos = { JUDGE_X, JUDGE_Y };
+        XMFLOAT2 size = { JUDGE_W * s, JUDGE_H * s };
+        XMFLOAT4 color = { 1.0f, 1.0f, 1.0f, alpha };
+
+        if (m_pHitSprite)
+        {
+            m_pHitSprite->SetPos(pos);
+            m_pHitSprite->SetSize(size);
+            m_pHitSprite->SetColor(color);
+        }
+        if (m_pMissSprite)
+        {
+            m_pMissSprite->SetPos(pos);
+            m_pMissSprite->SetSize(size);
+            m_pMissSprite->SetColor(color);
+        }
+        if (m_pKaihiSprite)
+        {
+            m_pKaihiSprite->SetPos(pos);
+            m_pKaihiSprite->SetSize(size);
+            m_pKaihiSprite->SetColor(color);
+        }
+    }
 
     // 終了時の透過フェードイン更新
     if (m_ShowEndOverlay && m_FadeTimer < m_FadeDuration)
     {
-        m_FadeTimer += 1.0f / FPS;
+        m_FadeTimer += dt;
         if (m_FadeTimer > m_FadeDuration)
             m_FadeTimer = m_FadeDuration;
 
@@ -264,7 +330,7 @@ void GameUI::Update(const StatusManager* pStatus, bool isHoldingRainbow)
     // ロゴ「ぽこん！」ポップアニメーション更新
     if (m_ShowLogos && m_LogoAnimTimer < m_LogoAnimDuration)
     {
-        m_LogoAnimTimer += 1.0f / FPS;
+        m_LogoAnimTimer += dt;
         if (m_LogoAnimTimer > m_LogoAnimDuration)
             m_LogoAnimTimer = m_LogoAnimDuration;
 

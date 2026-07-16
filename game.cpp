@@ -69,11 +69,20 @@ void Game_Initialize(void)
 	// 主要モデルのプリロード
 	for (int i = 0; i < G_PRELOAD_MODEL_COUNT; i++)
 	{
-		g_pPreloadedModels[i] = ModelLoad(g_PreloadModelPaths[i]);
+		if (!g_pPreloadedModels[i])
+		{
+			g_pPreloadedModels[i] = ModelLoad(g_PreloadModelPaths[i]);
+		}
 	}
 
-	// 虹ノーツ用テクスチャのプリロード（スタッター防止）
+	// テクスチャのプリロード（スタッター防止）
 	LoadTexture(L"asset/texture/30ver.png");
+	LoadTexture(L"asset/texture/effect_slash_ver01.png");
+	LoadTexture(L"asset/texture/effect_windCut_ver01.png");
+	LoadTexture(L"asset/texture/enemy_defeat_particle.png");
+	LoadTexture(L"asset/texture/OrbAnimationSpriteSheetBlue.png");
+	LoadTexture(L"asset/texture/OrbAnimationSpriteSheetRed.png");
+	LoadTexture(L"asset/texture/rainbow_start.png");
 
   // 各状態の初期化
 	g_GameState   = GameState::PLAYING;
@@ -144,14 +153,14 @@ void Game_Update(void)
 
 		g_pField->Update(g_pNoteManager->GetNoteSpeed());
 		g_pPlayer->Update();
-		g_pNoteManager->Update(g_pPlayer->GetLaneIndex(), g_pPlayer->GetGravityFace());
+		g_pNoteManager->Update(g_pPlayer->GetLaneIndex(), g_pPlayer->GetGravityFace(), g_pPlayer->IsGravityMoving());
 
 	}
 
 	//2D描画
 	{
 		//③処理
-		g_pGameUI->Update(g_pStatusManager, g_pNoteManager->GetHoldingRope() != nullptr);
+		g_pGameUI->Update(g_pStatusManager, g_pNoteManager->GetHoldingRope() != nullptr, g_pPlayer->GetGravityFace(), g_pPlayer->GetLaneIndex());
 		if (g_pStatusManager->HasNewJudge())
 			g_pGameUI->NotifyJudge(g_pStatusManager->ConsumeJudge());
 		//g_pChangeSceneText->Update();
@@ -198,14 +207,9 @@ void Game_Update(void)
 
 	if (Input_IsActionTrigger(INPUT_ACTION_DEBUG_F1)) {
 		Options_Initialize(); // options.ymlを再ロード
-
-		g_pNoteManager->ResetPlayPosition();
-		g_pPlayer->Reset();
-		g_pStatusManager->Init();
-		g_pGameUI->Reset();
-
-		g_GameState   = GameState::PLAYING;
-		g_FinishTimer = 0.0f;
+		SetKeepLoadedData(true);
+		SetScene(SCENE_GAME);
+		SetKeepLoadedData(false);
 	}
 }
 
@@ -305,13 +309,16 @@ void Game_Finalize(void)
 	GameLight::Finalize();
 	GameCamera::Finalize();
 
-	// プリロードモデルの解放
-	for (int i = 0; i < G_PRELOAD_MODEL_COUNT; i++)
+	if (!GetKeepLoadedData())
 	{
-		if (g_pPreloadedModels[i])
+		// プリロードモデルの解放
+		for (int i = 0; i < G_PRELOAD_MODEL_COUNT; i++)
 		{
-			ModelRelease(g_pPreloadedModels[i]);
-			g_pPreloadedModels[i] = nullptr;
+			if (g_pPreloadedModels[i])
+			{
+				ModelRelease(g_pPreloadedModels[i]);
+				g_pPreloadedModels[i] = nullptr;
+			}
 		}
 	}
 }

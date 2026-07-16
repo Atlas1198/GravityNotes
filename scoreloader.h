@@ -191,7 +191,7 @@ inline ScoreData LoadScore(const std::string& filePath)
 				}
 				break;
 			case ScoreType::RopeHold:
-				fullCombo += 1;
+				fullCombo += 2; // 始点と終点の2回分
 				break;
 			case ScoreType::Orb:
 				// Orb はコンボに影響しないため加算しない

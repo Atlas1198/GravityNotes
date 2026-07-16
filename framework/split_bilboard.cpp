@@ -106,7 +106,8 @@ void SplitBilBoard::CreateBufferWithSplitUV(float uMin, float uMax, float vMin, 
 	float h = 0.5f;
 	std::vector<BILLBOARD_VERTEX> vList;
 
-	XMFLOAT4 vertexColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	// 頂点カラーにメンバ変数 m_Color を設定（アルファブレンドを効かせるため）
+	XMFLOAT4 vertexColor = m_Color;
 
 	// 表面
 	vList.push_back({ { -w,  h, 0.0f }, { 0.0f, 0.0f, -1.0f }, vertexColor, { uMin, vMin } });

@@ -65,7 +65,7 @@ void Billboard::Initialize(XMFLOAT3 pos, XMFLOAT2 size, XMFLOAT3 rot, const char
 	m_NormalTexture = nullptr;
 	m_NormalTexturePath.clear();
 
-	// バッファ作成
+	// バッファ作成 (m_Color 設定後に呼ぶ)
 	CreateBuffer();
 	SetTexture(texturePath);
 }
@@ -144,8 +144,8 @@ void Billboard::CreateBufferWithUV(float uMin, float uMax)
 	float h = 0.5f;
 	std::vector<BILLBOARD_VERTEX> vList;
 
-	// ライティング無効化時は頂点カラーを白に設定
-	XMFLOAT4 vertexColor = m_IgnoreLighting ? XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f) : XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	// 頂点カラーにメンバ変数 m_Color を設定（アルファブレンドを効かせるため）
+	XMFLOAT4 vertexColor = m_Color;
 
 	// 表面
 	vList.push_back({ { -w,  h, 0.0f }, { 0.0f, 0.0f, -1.0f }, vertexColor, { uMin, 0.0f } });

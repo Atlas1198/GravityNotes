@@ -1,12 +1,13 @@
 ﻿#pragma once
 #include "note_base.h"
+#include "split_bilboard.h"
 #include <d3d11.h>
 #include <vector>
 
 class RopeHoldNote : public NoteBase
 {
 public:
-	enum class State { IDLE, HOLDING, COMPLETE, FAILED };
+	enum class State { IDLE, HOLDING, COMPLETE, FAILED, FAILED_START };
 
 private:
 	std::vector<int> m_FacePath; // 経由する面の並び（先頭=開始面、末尾=終了面）。90°ごとに1要素
@@ -20,6 +21,9 @@ private:
 	float m_LoopTime;      // 30タイル1ループにかかる秒数
 	float m_InitialSpawnZ; // タイルインデックス計算の基準Z
 
+	SplitBilBoard m_StartBillboard; // 始点ビルボード
+	float m_BillboardTimer;    // ビルボードふわふわアニメーション用タイマー
+
 	// t(0~1) が属するセグメント（面ペア）とそのローカルtを求める
 	void ResolveSegment(float t, int& faceA, int& faceB, float& localT) const;
 	XMFLOAT2 EvalCurveXY(float t) const;
@@ -28,8 +32,11 @@ private:
 public:
 	RopeHoldNote()
 		: NoteBase(), m_FacePath{ 0 }, m_EndLane(0),
-		  m_RopeLength(0.0f), m_HoldProgress(0.0f), m_State(State::IDLE), m_MissedAtStart(false),
-		  m_Texture(nullptr), m_LoopTime(2.0f), m_InitialSpawnZ(0.0f) {}
+		  m_RopeLength(0.0f), m_HoldProgress(0.0f), m_State(State::IDLE),
+		  m_Texture(nullptr), m_LoopTime(2.0f), m_InitialSpawnZ(0.0f),
+		  m_BillboardTimer(0.0f) {}
+
+	NoteType GetType() const override { return NoteType::RopeHold; }
 
 	static void FinalizeSharedResources();
 	void SetLoopTime(float t) { m_LoopTime = t; }
