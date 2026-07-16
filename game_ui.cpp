@@ -295,7 +295,7 @@ void GameUI::Update(const StatusManager* pStatus, bool isHoldingRainbow, int gra
             break;
         case 3: // FACE_RIGHT_WALL
             baseX = SCREEN_WIDTH - HANTEI_UI_X;
-            baseY = SCREEN_HEIGHT / 2.0f - laneOffset;
+            baseY = SCREEN_HEIGHT / 2.0f - ;
             break;
         default:
             baseX = SCREEN_WIDTH / 2.0f;
