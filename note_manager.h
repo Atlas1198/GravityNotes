@@ -60,6 +60,7 @@ private:
 	float m_FadeOutTimer = 0.0f;
 	float m_FadeOutStartVolume = 1.0f;
 	bool  m_IsFadingOut = false;
+	bool  m_IsPaused = false;
 
 	static constexpr int MAX_ROPE_POOL = 4;
 	RopeHoldNote* m_RopePool[MAX_ROPE_POOL] = {};
@@ -103,6 +104,7 @@ public:
 	bool  CheckAndHitBarrier(int fromLane, int fromFace, int toLane, int toFace);
 	bool  IsFinished() const;
 	void  StartBgmFadeOut(float durationSec);
+	void  SetPaused(bool paused);
 	bool  IsHoldingActiveHoldNote(int lane, int face) const;
 };
 

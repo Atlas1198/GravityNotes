@@ -40,6 +40,7 @@ static float          g_FinishTimer = 0.0f;
 static float          g_FinishWaitDuration = 3.0f;
 static float          g_EscapeHoldTimer = 0.0f;
 static bool           g_IsStageSelectRequested = false;
+static bool           g_IsPaused = false;
 
 bool IsGamePlaying(void)
 {
@@ -97,6 +98,7 @@ void Game_Initialize(void)
 	g_FinishTimer = 0.0f;
 	g_EscapeHoldTimer = 0.0f;
 	g_IsStageSelectRequested = false;
+	g_IsPaused = false;
 
 	//各種初期化
 	GameCamera::Init();
@@ -143,6 +145,28 @@ void Game_Update(void)
 	}
 
 	if (g_IsStageSelectRequested)
+	{
+		return;
+	}
+
+	// F3でポーズ／再生トグル（PLAYING中のみ）
+	if (g_GameState == GameState::PLAYING && Keyboard_IsKeyDownTrigger(KK_F3))
+	{
+		g_IsPaused = !g_IsPaused;
+		if (g_pNoteManager)
+		{
+			g_pNoteManager->SetPaused(g_IsPaused);
+		}
+	}
+
+	if (Input_IsActionTrigger(INPUT_ACTION_DEBUG_F1)) {
+		Options_Initialize(); // options.ymlを再ロード
+		SetKeepLoadedData(true);
+		SetScene(SCENE_GAME);
+		SetKeepLoadedData(false);
+	}
+
+	if (g_IsPaused)
 	{
 		return;
 	}
@@ -249,13 +273,6 @@ void Game_Update(void)
 			// 6.0秒かけて音をフェードアウト
 			g_pNoteManager->StartBgmFadeOut(6.0f);
 		}
-	}
-
-	if (Input_IsActionTrigger(INPUT_ACTION_DEBUG_F1)) {
-		Options_Initialize(); // options.ymlを再ロード
-		SetKeepLoadedData(true);
-		SetScene(SCENE_GAME);
-		SetKeepLoadedData(false);
 	}
 }
 

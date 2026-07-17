@@ -105,6 +105,7 @@ void NoteManager::Init(const std::string& scoreFilePath)
 	m_BgmStarted     = false;
 	m_BgmStartTime   = 0.0f;
 	m_IsFadingOut    = false;
+	m_IsPaused       = false;
 	m_FadeOutDuration = 0.0f;
 	m_FadeOutTimer   = 0.0f;
 	m_FadeOutStartVolume = 1.0f;
@@ -224,6 +225,11 @@ void NoteManager::ReleaseRope(RopeHoldNote* rope)
 
 void NoteManager::Update(int playerLane, int playerFace, bool isGravityMoving)
 {
+	if (m_IsPaused)
+	{
+		return;
+	}
+
 	// BGMフェードアウト処理
 	if (m_IsFadingOut && m_pBgmData && m_pBgmData->pSourceVoice)
 	{
@@ -875,6 +881,40 @@ void NoteManager::StartBgmFadeOut(float durationSec)
 	if (m_pBgmData && m_pBgmData->pSourceVoice)
 	{
 		m_pBgmData->pSourceVoice->GetVolume(&m_FadeOutStartVolume);
+	}
+}
+
+void NoteManager::SetPaused(bool paused)
+{
+	if (m_IsPaused == paused)
+	{
+		return;
+	}
+
+	m_IsPaused = paused;
+
+	if (m_pBgmData && m_pBgmData->pSourceVoice)
+	{
+		if (paused)
+		{
+			m_pBgmData->pSourceVoice->Stop(0);
+		}
+		else
+		{
+			m_pBgmData->pSourceVoice->Start(0);
+		}
+	}
+
+	if (m_RainbowSePlaying && m_pRainbowSe && m_pRainbowSe->pSourceVoice)
+	{
+		if (paused)
+		{
+			m_pRainbowSe->pSourceVoice->Stop(0);
+		}
+		else
+		{
+			m_pRainbowSe->pSourceVoice->Start(0);
+		}
 	}
 }
 
