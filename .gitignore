@@ -376,3 +376,4 @@ FodyWeavers.xsd
 # Generated version header
 version.h
 /screenshot/
+/freetype-master/
