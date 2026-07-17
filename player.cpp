@@ -38,6 +38,7 @@ void Player::Init(NoteManager* nm, StatusManager* sm)
 	m_GravityTimer = 0.0f;
 	m_GravityDuration = 0.3f;
 	m_WasHoldingRope = false;
+	m_IsPostRopeSnapping = false;
 
 	m_Position = { 0.0f,-2.5f,0.0f };
 	m_StartPos = m_Position;
@@ -93,6 +94,7 @@ void Player::Reset()
 	m_IsGravityMoving = false;
 	m_GravityTimer = 0.0f;
 	m_WasHoldingRope = false;
+	m_IsPostRopeSnapping = false;
 
 	m_Position = { 0.0f,-2.5f,0.0f };
 	m_StartPos = m_Position;
@@ -190,9 +192,9 @@ void Player::Update()
 			float diff = NormalizeAngleDelta(m_TargetRot.z - m_GravityStartRot.z);
 			m_TargetRot.z = m_GravityStartRot.z + diff;
 
-			m_GravityTimer    = 0.0f;
-			m_IsGravityMoving = true;
-			m_IsMoving        = false; // 通常移動はキャンセル
+			m_GravityTimer       = 0.0f;
+			m_IsPostRopeSnapping = true; // 入力はブロックしない座標補正のみ
+			m_IsMoving           = false; // 通常移動はキャンセル
 		}
 
 		//lane移動入力
@@ -246,8 +248,8 @@ void Player::Update()
 			}
 		}
 
-		//重力移動補間
-		if (m_IsGravityMoving)
+		//重力移動補間（通常の重力移動 or ロープ終端からの座標補正）
+		if (m_IsGravityMoving || m_IsPostRopeSnapping)
 		{
 			m_GravityTimer += dt;
 			float t = m_GravityTimer / m_GravityDuration;
@@ -256,6 +258,7 @@ void Player::Update()
 				t = 1.0f;
 				m_GravityFace = m_TargetFace;
 				m_IsGravityMoving = false;
+				m_IsPostRopeSnapping = false;
 			}
 			float eased = 1.0f - (1.0f - t) * (1.0f - t);
 			m_Position.x = m_GravityStartPos.x + (m_TargetPos.x - m_GravityStartPos.x) * eased;
@@ -523,6 +526,7 @@ void Player::ChangeGravity(int targetFace)
 
 	m_GravityTimer = 0.0f;
 	m_IsGravityMoving = true;
+	m_IsPostRopeSnapping = false; // ロープ終端の座標補正より優先
 	m_IsMoving = false; // レーン移動はキャンセル
 }
 
