@@ -321,12 +321,12 @@ void StageSelect_Initialize(void)
 
 	// 5. 曲情報/スコア表示クラスを初期化（画面右側に配置）
 	g_pScoreInfoText = new MultiLineFontRenderer(
-		{ SCREEN_WIDTH - 175.0f, SCREEN_HEIGHT / 3.0f - 40.0f }, // 画面外にはみ出さないように位置を調整
-		28.0f,
+		{ SCREEN_WIDTH - 177.0f, SCREEN_HEIGHT / 3.0f - 40.0f }, // 画面外にはみ出さないように位置を調整
+		22.0f,
 		0.0f,
 		{ 1.0f, 1.0f, 1.0f, 1.0f },
 		"Loading...",
-		1.35f
+		1.4f
 	);
 
 	// ディスク0の最初のBGMを自動的に検索して再生

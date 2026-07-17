@@ -90,7 +90,7 @@ static FontRenderer* g_pMusicTexts[4] = { nullptr };
 static MultiLineFontRenderer* g_pAuthorFont = nullptr;
 static float g_MusicTextPos[4][2];
 static float g_MusicTextScale[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-static Sprite2D* g_pRankTextre = nullptr;
+static Sprite2D* g_pRankTexture = nullptr;
 static Sprite2D* g_pNextSceneTexture = nullptr;
 
 // アニメーション用の構造体
@@ -207,7 +207,7 @@ void Result_Initialize(void)
 
 	g_pChangeSceneText = new ClickFont(
 		{ 1009, 612 },				//位置
-		50.0f,														//文字サイズ
+		40.0f,														//文字サイズ
 		0.0f,														//回転（度）
 		{ 1.0f, 1.0f, 1.0f, 1.0f },									//通常色
 		{ 1.0f, 0.8f, 0.2f, 1.0f },									//ホバー色
@@ -215,8 +215,8 @@ void Result_Initialize(void)
 	);
 
 	// フォントの生成（空文字で初期化し、Draw時にセットする）
-	g_pLabelFont = new FontRenderer({ 0, 0 }, 43.0f, 0.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, "", TA_START);
-	g_pValueFont = new FontRenderer({ 0, 0 }, 43.0f, 0.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, "", TA_MIDDLE);
+	g_pLabelFont = new FontRenderer({ 0, 0 }, 27.5f, 0.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, "", TA_START); // 旧43相当をさらに縮小
+	g_pValueFont = new FontRenderer({ 0, 0 }, 27.5f, 0.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, "", TA_MIDDLE);
 
 	// 各行の初期状態
 	float startX = 100.0f;
@@ -238,8 +238,8 @@ void Result_Initialize(void)
 	// [0]: 曲名, [1]: 作曲者, [2]: 譜面制作者, [3]: 難易度
 	float initialPos[4][2] = {
 		{ 300.0f, 152.0f },
-		{ 400.0f, 210.0f },
-		{ 400.0f, 240.0f },
+		{ 405.0f, 210.0f },
+		{ 405.0f, 240.0f },
 		{ 138.0f, 613.0f }
 	};
 
@@ -261,7 +261,7 @@ void Result_Initialize(void)
 	for (int i = 0; i < 4; ++i) {
 		g_pMusicTexts[i] = new FontRenderer(
 			{ g_MusicTextPos[i][0], g_MusicTextPos[i][1] },
-			30.0f,
+			24.0f, // 30.0f * 0.8
 			0.0f,
 			{ 1.0f, 1.0f, 1.0f, 1.0f },
 			texts[i],
@@ -273,11 +273,11 @@ void Result_Initialize(void)
 	// 作曲者、譜面制作者
 	g_pAuthorFont = new MultiLineFontRenderer(
 		{ 300.0f, 210.0f },
-		18.0f,
+		14.4f, // 18.0f * 0.8
 		0.0f,
 		{ 1.0f, 1.0f, 1.0f, 1.0f },
 		"MusicAuthor\nScoreAuthor",
-		1.5f,
+		2.0f,
 		TA_START
 	);
 
@@ -308,7 +308,7 @@ void Result_Initialize(void)
 	//テクスチャのファイルパスを動的に生成
 	std::wstring rankTexturePath = L"asset\\texture\\Result_Rank_" + wRank + L"_UI.png";
 
-	g_pRankTextre = new Sprite2D(
+	g_pRankTexture = new Sprite2D(
 		{ SCREEN_WIDTH / 2 + 350.0f , SCREEN_HEIGHT / 3 + 100.0f },			//位置
 		{ 500, 500 },														//サイズ
 		0.0f,																//回転（度）
@@ -469,18 +469,18 @@ void Result_Update(void)
 	{
 		float progress = (g_ResultSceneTimer - RANK_ANIM_START_TIME) / RANK_ANIM_DURATION;
 		if (progress > 1.0f) progress = 1.0f;
-		g_pRankTextre->SetColor({ 1.0f, 1.0f, 1.0f, progress });
+		g_pRankTexture->SetColor({ 1.0f, 1.0f, 1.0f, progress });
 
 		// イーズイン（徐々に加速して落ちてくるスタンプ演出）
 		float easeIn = progress * progress * progress;
 		// 3倍(1500)から等倍(500)へ縮小
 		float currentSize = 1500.0f + (500.0f - 1500.0f) * easeIn;
-		g_pRankTextre->SetSize({ currentSize, currentSize });
+		g_pRankTexture->SetSize({ currentSize, currentSize });
 	}
 	else
 	{
-		g_pRankTextre->SetColor({ 1.0f, 1.0f, 1.0f, 0.0f });
-		g_pRankTextre->SetSize({ 1500.0f, 1500.0f }); // 初期サイズは大きめ
+		g_pRankTexture->SetColor({ 1.0f, 1.0f, 1.0f, 0.0f });
+		g_pRankTexture->SetSize({ 1500.0f, 1500.0f }); // 初期サイズは大きめ
 	}
 
 
@@ -492,7 +492,6 @@ void Result_Draw(void)
 	g_pResultBG->Draw();
 	g_pResultBackUI->Draw();
 	if (g_pThumbnailSprite) g_pThumbnailSprite->Draw();
-	g_pRankTextre->Draw();
 	g_pNextSceneTexture->Draw();
 	g_pChangeSceneText->Draw();
 	for (int i = 0; i < 4; ++i) {
@@ -523,6 +522,8 @@ void Result_Draw(void)
 	}
 
 	g_pAuthorFont->Draw();
+
+	g_pRankTexture->Draw();
 }
 
 void Result_Finalize(void)
@@ -536,7 +537,7 @@ void Result_Finalize(void)
 		SAFE_DELETE(g_pMusicTexts[i]);
 	}
 
-	SAFE_DELETE(g_pRankTextre);
+	SAFE_DELETE(g_pRankTexture);
 	SAFE_DELETE(g_pLabelFont);
 	SAFE_DELETE(g_pValueFont);
 	SAFE_DELETE(g_pAuthorFont);
