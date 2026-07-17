@@ -57,15 +57,6 @@ void Title_Initialize(void)
 		"Game Start"										//テキスト
 	);
 
-	g_pDebugSceneText = new ClickFont(
-		{ SCREEN_WIDTH - 100.0f, 50.0f },			//位置
-		20.0f,														//文字サイズ
-		0.0f,														//回転（度）
-		{ 1.0f, 1.0f, 1.0f, 0.5f },									//通常色
-		{ 1.0f, 0.8f, 0.2f, 1.0f },									//ホバー色
-		"[debug] "										//テキスト
-	);
-
 	UnLockMouse();//マウスアンロック
 
 	g_pTitleBGM = LoadMP3("asset/sound/se/title_kaigan.mp3");
@@ -96,16 +87,11 @@ void Title_Update(void)
 		g_pLogoMovieBB->Update();
 	}
 	g_pChangeSceneText->Update();
-	g_pDebugSceneText->Update();
 
 	//ClickFontがクリックされた、または決定ボタンが押された
 	if (g_pChangeSceneText->IsClick() || Input_IsActionTrigger(INPUT_ACTION_DECIDE))
 	{
 		SetSceneFade(SCENE_STAGESELECT);
-	}
-	if (g_pDebugSceneText->IsClick())
-	{
-		SetSceneFade(SCENE_DEBUG);
 	}
 
 }
@@ -119,8 +105,6 @@ void Title_Draw(void)
 		g_pLogoMovieBB->Draw();
 	}
 	g_pChangeSceneText->Draw();
-	g_pDebugSceneText->Draw();
-
 }
 
 void Title_Finalize(void)
@@ -129,7 +113,6 @@ void Title_Finalize(void)
 	SAFE_DELETE(g_pTitleMovie);
 	SAFE_DELETE(g_pLogoMovieBB);
 	SAFE_DELETE(g_pChangeSceneText);
-	SAFE_DELETE(g_pDebugSceneText);
 
 	if (g_pTitleBGM)
 	{
