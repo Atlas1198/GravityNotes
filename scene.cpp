@@ -54,9 +54,15 @@ void Init( void )
 
 void Update( void )
 {
+	if (Keyboard_IsKeyDownTrigger(KK_F2))
+	{
+		TakeScreenshot();
+	}
+
 	switch ( scene )
 	{
 		case SCENE_TITLE:
+
 		Title_Update();
 		break;
 		case SCENE_STAGESELECT:

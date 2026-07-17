@@ -86,6 +86,12 @@ static D3D11_TEXTURE2D_DESC g_BackBufferDesc;
 // 深度ステンシルバッファ（解放用に保持）
 static ID3D11Texture2D* g_pDepthStencilBuffer = NULL;
 
+// スクリーンショット撮影用フラグとターゲット
+static bool g_IsTakingScreenshot = false;
+static ID3D11RenderTargetView* g_SSTargetView = nullptr;
+static ID3D11DepthStencilView* g_SSDepthView = nullptr;
+
+
 // =====================================================
 // 内部ヘルパー：バックバッファ/深度バッファ解放
 // =====================================================
@@ -376,7 +382,14 @@ void BeginShadowMap(void)
 void EndShadowMap(void)
 {
 	// ShadowMapへの描画を終えたので、通常の画面描画用RenderTargetへ戻す。
-	g_ImmediateContext->OMSetRenderTargets(1, &g_RenderTargetView, g_DepthStencilView);
+	if (g_IsTakingScreenshot)
+	{
+		g_ImmediateContext->OMSetRenderTargets(1, &g_SSTargetView, g_SSDepthView);
+	}
+	else
+	{
+		g_ImmediateContext->OMSetRenderTargets(1, &g_RenderTargetView, g_DepthStencilView);
+	}
 	SetDepthEnable(true);
 
 	// 以降のピクセルシェーダーがShadowMapを読めるように、t1/s1へセットする。
@@ -430,7 +443,14 @@ void BeginFaceShadowMap(int slice)
 void EndFaceShadowMap(void)
 {
 	// 通常の画面描画用RenderTargetへ戻す（SetDepthEnableでビューポートも3Dへ復帰）。
-	g_ImmediateContext->OMSetRenderTargets(1, &g_RenderTargetView, g_DepthStencilView);
+	if (g_IsTakingScreenshot)
+	{
+		g_ImmediateContext->OMSetRenderTargets(1, &g_SSTargetView, g_SSDepthView);
+	}
+	else
+	{
+		g_ImmediateContext->OMSetRenderTargets(1, &g_RenderTargetView, g_DepthStencilView);
+	}
 	SetDepthEnable(true);
 
 	// 受け手が4面ShadowMap配列を読めるように、t6へセット（サンプラーはs1を流用）。
@@ -922,4 +942,192 @@ void Direct3D_Resize(unsigned int width, unsigned int height)
 	g_SwapChain->ResizeBuffers(1, width, height, DXGI_FORMAT_R8G8B8A8_UNORM, 0);
 	configureBackBuffer();
 }
+
+#include <direct.h>
+#include <time.h>
+#include <wincodec.h>
+#include "DirectXTex.h"
+
+void TakeScreenshot(void)
+{
+	// screenshotフォルダを作成（存在しない場合のみ作成される）
+	_mkdir("screenshot");
+
+	// 現在の時刻を取得してファイル名を決定
+	time_t t = time(nullptr);
+	struct tm tm_local;
+	localtime_s(&tm_local, &t);
+	wchar_t fileName[256];
+	swprintf_s(fileName, L"screenshot/screenshot_%04d%02d%02d_%02d%02d%02d.png",
+		tm_local.tm_year + 1900, tm_local.tm_mon + 1, tm_local.tm_mday,
+		tm_local.tm_hour, tm_local.tm_min, tm_local.tm_sec);
+
+	// 1920x1080 のテクスチャ（レンダーターゲット用）を作成
+	D3D11_TEXTURE2D_DESC td;
+	ZeroMemory(&td, sizeof(td));
+	td.Width = 1920;
+	td.Height = 1080;
+	td.MipLevels = 1;
+	td.ArraySize = 1;
+	td.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	td.SampleDesc.Count = 1;
+	td.SampleDesc.Quality = 0;
+	td.Usage = D3D11_USAGE_DEFAULT;
+	td.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	td.CPUAccessFlags = 0;
+	td.MiscFlags = 0;
+
+	ID3D11Texture2D* pSSTexture = nullptr;
+	HRESULT hr = g_D3DDevice->CreateTexture2D(&td, nullptr, &pSSTexture);
+	if (FAILED(hr)) return;
+
+	ID3D11RenderTargetView* pSSRTView = nullptr;
+	hr = g_D3DDevice->CreateRenderTargetView(pSSTexture, nullptr, &pSSRTView);
+	if (FAILED(hr))
+	{
+		SAFE_RELEASE(pSSTexture);
+		return;
+	}
+
+	// 1920x1080 の深度ステンシルバッファを作成
+	D3D11_TEXTURE2D_DESC depthDesc;
+	ZeroMemory(&depthDesc, sizeof(depthDesc));
+	depthDesc.Width = 1920;
+	depthDesc.Height = 1080;
+	depthDesc.MipLevels = 1;
+	depthDesc.ArraySize = 1;
+	depthDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthDesc.SampleDesc.Count = 1;
+	depthDesc.SampleDesc.Quality = 0;
+	depthDesc.Usage = D3D11_USAGE_DEFAULT;
+	depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	depthDesc.CPUAccessFlags = 0;
+	depthDesc.MiscFlags = 0;
+
+	ID3D11Texture2D* pSSDepthBuffer = nullptr;
+	hr = g_D3DDevice->CreateTexture2D(&depthDesc, nullptr, &pSSDepthBuffer);
+	if (FAILED(hr))
+	{
+		SAFE_RELEASE(pSSRTView);
+		SAFE_RELEASE(pSSTexture);
+		return;
+	}
+
+	ID3D11DepthStencilView* pSSDSView = nullptr;
+	hr = g_D3DDevice->CreateDepthStencilView(pSSDepthBuffer, nullptr, &pSSDSView);
+	if (FAILED(hr))
+	{
+		SAFE_RELEASE(pSSDepthBuffer);
+		SAFE_RELEASE(pSSRTView);
+		SAFE_RELEASE(pSSTexture);
+		return;
+	}
+
+	// 現在のレンダーターゲット、深度バッファ、ビューポート、クライアントサイズを保存
+	ID3D11RenderTargetView* pPrevRTView = nullptr;
+	ID3D11DepthStencilView* pPrevDSView = nullptr;
+	g_ImmediateContext->OMGetRenderTargets(1, &pPrevRTView, &pPrevDSView);
+
+	UINT numViewports = 1;
+	D3D11_VIEWPORT prevViewport;
+	g_ImmediateContext->RSGetViewports(&numViewports, &prevViewport);
+
+	float prevClientWidth = g_ClientWidth;
+	float prevClientHeight = g_ClientHeight;
+	D3D11_TEXTURE2D_DESC prevBackBufferDesc = g_BackBufferDesc;
+
+	// 1920x1080 に解像度を変更し、バックバッファ記述も書き換える
+	g_ClientWidth = 1920.0f;
+	g_ClientHeight = 1080.0f;
+	g_BackBufferDesc.Width = 1920;
+	g_BackBufferDesc.Height = 1080;
+
+	// スクリーンショット撮影中フラグとターゲットの設定
+	g_IsTakingScreenshot = true;
+	g_SSTargetView = pSSRTView;
+	g_SSDepthView = pSSDSView;
+
+	g_ImmediateContext->OMSetRenderTargets(1, &pSSRTView, pSSDSView);
+
+	D3D11_VIEWPORT vp;
+	vp.TopLeftX = 0.0f;
+	vp.TopLeftY = 0.0f;
+	vp.Width = 1920.0f;
+	vp.Height = 1080.0f;
+	vp.MinDepth = 0.0f;
+	vp.MaxDepth = 1.0f;
+	g_ImmediateContext->RSSetViewports(1, &vp);
+
+	// レンダーターゲットと深度バッファをクリア (背景色をゲーム本来の灰色に統一)
+	float clearColor[4] = { 0.2f, 0.2f, 0.2f, 1.0f };
+	g_ImmediateContext->ClearRenderTargetView(pSSRTView, clearColor);
+	g_ImmediateContext->ClearDepthStencilView(pSSDSView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+	// 2D投影行列を 1920x1080 に適応させる
+	SetWorldViewProjection2D();
+
+	// 描画を呼び出す
+	extern void Draw(void);
+	Draw();
+
+	SetDepthEnable(false);
+	extern void Fade_Draw(void);
+	Fade_Draw();
+
+	// GPUの描画コマンド完了を保証するためFlushを呼ぶ
+	g_ImmediateContext->Flush();
+
+	// DirectXTex を使用して PNG としてキャプチャ＆保存
+	DirectX::ScratchImage scratchImage;
+	hr = DirectX::CaptureTexture(g_D3DDevice, g_ImmediateContext, pSSTexture, scratchImage);
+	if (SUCCEEDED(hr))
+	{
+		const DirectX::Image* img = scratchImage.GetImage(0, 0, 0);
+		if (img && img->pixels)
+		{
+			// ゲームはsRGB空間で描画しており、WICのフォーマット変換（RGBA→BGR24bpp）が
+			// 内部でリニア→sRGBのガンマ補正を誤適用して白っぽくなってしまう。
+			// 変換なし（RGBA32bppのまま）で保存することでガンマ変換をスキップし、
+			// アルファのみ直接0xFFに書き換えて透過を防ぐ。
+			uint8_t* pPixels = img->pixels;
+			const size_t rowPitch = img->rowPitch;
+			for (size_t y = 0; y < img->height; ++y)
+			{
+				uint8_t* pRow = pPixels + y * rowPitch;
+				for (size_t x = 0; x < img->width; ++x)
+				{
+					pRow[x * 4 + 3] = 0xFF; // アルファを不透明に強制
+				}
+			}
+			DirectX::SaveToWICFile(
+				*img,
+				DirectX::WIC_FLAGS_FORCE_SRGB,  // sRGBメタデータを埋め込みビューワーの誤ガンマ補正を防ぐ
+				GUID_ContainerFormatPng,
+				fileName
+				// ターゲットフォーマット指定なし → RGBA32bppのままでガンマ変換が起きない
+			);
+		}
+	}
+
+	// 状態を復元する
+	g_IsTakingScreenshot = false;
+	g_SSTargetView = nullptr;
+	g_SSDepthView = nullptr;
+
+	g_ClientWidth = prevClientWidth;
+	g_ClientHeight = prevClientHeight;
+	g_BackBufferDesc = prevBackBufferDesc;
+
+	g_ImmediateContext->OMSetRenderTargets(1, &pPrevRTView, pPrevDSView);
+	g_ImmediateContext->RSSetViewports(1, &prevViewport);
+
+	// リソースを解放
+	SAFE_RELEASE(pPrevRTView);
+	SAFE_RELEASE(pPrevDSView);
+	SAFE_RELEASE(pSSDSView);
+	SAFE_RELEASE(pSSDepthBuffer);
+	SAFE_RELEASE(pSSRTView);
+	SAFE_RELEASE(pSSTexture);
+}
+
 

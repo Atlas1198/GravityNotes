@@ -169,4 +169,5 @@ void Direct3D_ResizeWindow(unsigned int clientW, unsigned int clientH);
 float Direct3D_GetClientWidth(void);
 float Direct3D_GetClientHeight(void);
 void Direct3D_Resize(unsigned int width, unsigned int height);
+void TakeScreenshot(void);
 
