@@ -14,6 +14,8 @@ void NoteBase::Init(int lane, int face, float spawnZ, float speed, const char* m
 	m_Speed     = speed;
 	m_IsActive  = true;
 	m_IsHit     = false;
+	m_SpawnZ    = spawnZ;
+	m_SpawnTimer = 0.0f;
 
 	// 初回のみモデルをロード（プール再利用時はスキップ）
 	if (!m_Model && modelPath)
@@ -46,10 +48,13 @@ void NoteBase::Update()
 	AddPosZ(-m_Speed * dt);
 	if (GetPosZ() < NOTE_DESPAWN_Z)
 		m_IsActive = false;
+
+	m_SpawnTimer += dt;
 }
 
 void NoteBase::Draw()
 {
+	SetColorAlpha(GetFadeInAlpha());
 	Sprite3D::Draw();
 }
 

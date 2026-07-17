@@ -86,14 +86,16 @@ void BarrierNote::Draw()
 		}
 	}
 
-	const bool isDithered = alpha < 1.0f;
+	const bool isDithered = alpha < 1.0f || GetFadeInAlpha() < 1.0f;
+	alpha *= GetFadeInAlpha();
 	SetColorAlpha(alpha);
 	if (isDithered)
 	{
 		SetBlendState(BLENDSTATE_NONE);
 		SetDepthWriteEnable(true);
 	}
-	NoteBase::Draw();
+	// NoteBase::Draw は SetColorAlpha(GetFadeInAlpha()) で距離フェードを上書きするため、直接描画する
+	Sprite3D::Draw();
 	if (isDithered)
 		SetBlendState(BLENDSTATE_ALFA);
 }

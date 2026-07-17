@@ -89,7 +89,8 @@ static XMFLOAT2 Norm2(XMFLOAT2 v)
 // ---------- 3D quad draw ----------
 static void DrawRibbonQuad(XMFLOAT3 corners[4],
                             float u0, float u1, float vFar, float vNear,
-                            ID3D11ShaderResourceView* tex)
+                            ID3D11ShaderResourceView* tex,
+                            float alpha)
 {
 	EnsureRibbonVB();
 	if (!g_RibbonVB || !tex) return;
@@ -109,7 +110,7 @@ static void DrawRibbonQuad(XMFLOAT3 corners[4],
 	ctx->Map(g_RibbonVB, 0, D3D11_MAP_WRITE_DISCARD, 0, &msr);
 	Vertex3D* v = (Vertex3D*)msr.pData;
 	XMFLOAT3 n = { 0.0f, 0.0f, 1.0f };
-	XMFLOAT4 c = { 1.0f, 1.0f, 1.0f, 1.0f };
+	XMFLOAT4 c = { 1.0f, 1.0f, 1.0f, alpha };
 	// TRIANGLESTRIP: 0-1-2, 1-3-2
 	v[0] = { corners[0], n, c, { u0, vNear } }; // near-left
 	v[1] = { corners[1], n, c, { u1, vNear } }; // near-right
@@ -186,6 +187,8 @@ void RopeHoldNote::Init(int startLane, int endLane, const std::vector<int>& face
 	m_StartBillboard.SetBillboardMode(false);
 	m_StartBillboard.SetWallFadeEnabled(false);
 	m_StartBillboard.SetColor({ 1.0f, 1.0f, 1.0f, 0.4f });
+	// SetColor が CreateBuffer() で UV を全シートに戻すため、分割UVを再適用する
+	m_StartBillboard.SetTextureIndex(0);
 	m_StartBillboard.SetFPS(30.0f);
 	m_StartBillboard.SetAnimationEnabled(true);
 	m_StartBillboard.SetLoop(true);
@@ -240,6 +243,7 @@ XMFLOAT2 RopeHoldNote::EvalNormal(float t) const
 void RopeHoldNote::Update()
 {
 	AddPosZ(-m_Speed * dt);
+	m_SpawnTimer += dt; // NoteBase::Update を呼ばないため、フェードイン用タイマーを自前で進める
 
 	if (m_State == State::HOLDING)
 	{
@@ -339,13 +343,16 @@ void RopeHoldNote::Draw()
 			float vNear = vNearFull + localT0 * (vFarFull - vNearFull);
 			float vFar  = vNearFull + localT1 * (vFarFull - vNearFull);
 
-			DrawRibbonQuad(corners, u0, u1, vFar, vNear, m_Texture);
+			DrawRibbonQuad(corners, u0, u1, vFar, vNear, m_Texture, GetFadeInAlpha());
 		}
 	}
 
 	// 始点ビルボードの描画（IDLE状態のみ表示）
 	if (m_State == State::IDLE)
 	{
+		m_StartBillboard.SetColor({ 1.0f, 1.0f, 1.0f, 0.4f * GetFadeInAlpha() });
+		// SetColor が CreateBuffer() で UV を全シートに戻すため、分割UVを再適用する
+		m_StartBillboard.SetTextureIndex(m_StartBillboard.GetTextureIndex());
 		m_StartBillboard.Draw();
 	}
 }

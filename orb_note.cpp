@@ -70,7 +70,12 @@ void OrbNote::Update()
 void OrbNote::Draw()
 {
 	if (m_pBillboard)
+	{
+		m_pBillboard->SetColor(XMFLOAT4(1.0f, 1.0f, 1.0f, GetFadeInAlpha()));
+		// Billboard::SetColor は CreateBuffer() で UV を 0〜1 に戻すため、分割UVを再適用する
+		m_pBillboard->SetTextureIndex(m_pBillboard->GetTextureIndex());
 		m_pBillboard->Draw();
+	}
 }
 
 void OrbNote::DrawShadowMap(const XMMATRIX& lightView, const XMMATRIX& lightProjection)
