@@ -1,5 +1,6 @@
 ﻿#include "game.h"
 #include "barrier_note.h"
+#include "camera.h"
 
 void BarrierNote::Init(int lane, int face, float spawnZ, float speed, float beat)
 {
@@ -60,5 +61,39 @@ void BarrierNote::OnMiss()
 void BarrierNote::Draw()
 {
 	if (m_IsHiddenByPriority) return;
+
+	constexpr float PLAYER_Z = 2.0f;
+	constexpr float FADE_END_DISTANCE = 4.0f;
+	constexpr float MIN_ALPHA = 0.1f;
+	const XMFLOAT3 cameraPos = GetCamera()->GetPos();
+	const XMVECTOR toCamera = XMVectorSubtract(XMLoadFloat3(&cameraPos), XMLoadFloat3(&m_Position));
+	const float cameraDistance = XMVectorGetX(XMVector3Length(toCamera));
+	float alpha = 1.0f;
+
+	if (m_Position.z < PLAYER_Z)
+	{
+		XMFLOAT3 fadeStartPos = m_Position;
+		fadeStartPos.z = PLAYER_Z;
+		const XMVECTOR toFadeStart = XMVectorSubtract(XMLoadFloat3(&cameraPos), XMLoadFloat3(&fadeStartPos));
+		const float fadeStartDistance = XMVectorGetX(XMVector3Length(toFadeStart));
+		const float fadeRange = fadeStartDistance - FADE_END_DISTANCE;
+		if (fadeRange > 0.0f)
+		{
+			float fade = (fadeStartDistance - cameraDistance) / fadeRange;
+			if (fade < 0.0f) fade = 0.0f;
+			if (fade > 1.0f) fade = 1.0f;
+			alpha = 1.0f + (MIN_ALPHA - 1.0f) * fade;
+		}
+	}
+
+	const bool isDithered = alpha < 1.0f;
+	SetColorAlpha(alpha);
+	if (isDithered)
+	{
+		SetBlendState(BLENDSTATE_NONE);
+		SetDepthWriteEnable(true);
+	}
 	NoteBase::Draw();
+	if (isDithered)
+		SetBlendState(BLENDSTATE_ALFA);
 }

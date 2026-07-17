@@ -3,6 +3,19 @@
 Texture2D g_Texture : register(t0);
 SamplerState g_SamplerState : register(s0);
 
+float GetDitherThreshold(float2 screenPosition)
+{
+    static const float dither4x4[16] =
+    {
+         0.0f,  8.0f,  2.0f, 10.0f,
+        12.0f,  4.0f, 14.0f,  6.0f,
+         3.0f, 11.0f,  1.0f,  9.0f,
+        15.0f,  7.0f, 13.0f,  5.0f
+    };
+    uint2 pixel = uint2(screenPosition) & 3;
+    return (dither4x4[pixel.y * 4 + pixel.x] + 0.5f) / 16.0f;
+}
+
 void main(in PS_IN In, out float4 outDiffuse : SV_Target)
 {
     // スキニングあり/なしの両方で同じライト計算になるよう、PixelShader側でLambertを計算する。
@@ -24,10 +37,16 @@ void main(in PS_IN In, out float4 outDiffuse : SV_Target)
     }
 
     float4 texColor = g_Texture.Sample(g_SamplerState, In.TexCoord);
+    float opacity = saturate(texColor.a * In.Diffuse.a);
+    if (In.Diffuse.a < 1.0f)
+    {
+        clip(opacity - GetDitherThreshold(In.Position.xy));
+        opacity = 1.0f;
+    }
     float3 baseColor = texColor.rgb * In.Diffuse.rgb;
     float3 ambient = saturate(Light.Ambient.rgb);
     float3 diffuse = baseColor * light * Light.Diffuse.rgb;
 
     outDiffuse.rgb = saturate(baseColor * ambient + diffuse);
-    outDiffuse.a = texColor.a * In.Diffuse.a;
+    outDiffuse.a = opacity;
 }
