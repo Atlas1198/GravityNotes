@@ -37,7 +37,7 @@ void Title_Initialize(void)
 	g_LogoFrameCount = 0;
 
 	g_pLogoMovieBB = new Movie(
-		{ SCREEN_WIDTH / 3 * 2 , SCREEN_HEIGHT / 3 - 60.0f},					//位置
+		{ SCREEN_WIDTH / 3 * 2 - 10.0f , SCREEN_HEIGHT / 3 - 60.0f},					//位置
 		{ 500.0f },											//サイズ
 		0.0f,														//回転（度）
 		{ 1.0f,1.0f,1.0f, 1.0f },
@@ -54,7 +54,7 @@ void Title_Initialize(void)
 		0.0f,														//回転（度）
 		{ 1.0f, 1.0f, 1.0f, 1.0f },									//通常色
 		{ 1.0f, 0.8f, 0.2f, 1.0f },									//ホバー色
-		"Game Start"										//テキスト
+		"Press A"										//テキスト
 	);
 
 	UnLockMouse();//マウスアンロック

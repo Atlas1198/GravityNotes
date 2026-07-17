@@ -326,7 +326,7 @@ void StageSelect_Initialize(void)
 		0.0f,
 		{ 1.0f, 1.0f, 1.0f, 1.0f },
 		"Loading...",
-		1.4f
+		1.7f
 	);
 
 	// ディスク0の最初のBGMを自動的に検索して再生
@@ -349,7 +349,7 @@ void StageSelect_Initialize(void)
 
 	g_pStartGameText = new ClickFont(
 		{ 1051.0f, 611.0f },				//位置
-		50.0f,														//文字サイズ
+		40.0f,														//文字サイズ
 		0.0f,														//回転（度）
 		{ 1.0f, 1.0f, 1.0f, 1.0f },									//通常色
 		{ 1.0f, 0.8f, 0.2f, 1.0f },									//ホバー色
