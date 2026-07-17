@@ -72,7 +72,7 @@ private:
 	// beatを、offset補正込みの「曲再生位置における実時刻（秒）」に変換する
 	float BeatToAudioTime(float beat) const;
 	int   WallToFace(ScoreWall wall)  const;
-	JUDGE JudgeByDistance(NoteBase* note, float targetZ);
+	JUDGE JudgeByDistance(NoteBase* note, float targetZ, float window);
 
 public:
 	void  Init(const std::string& scoreFilePath);

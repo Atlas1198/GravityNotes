@@ -196,19 +196,22 @@ void Player::Update()
 		}
 
 		//lane移動入力
-		if (m_GravityFace == FACE::FACE_FLOOR || m_GravityFace == FACE::FACE_CEILING)
+		if (IsGamePlaying())
 		{
-			if (Input_IsActionTrigger(INPUT_ACTION_MOVE_LEFT))
-				MoveLeft();
-			else if (Input_IsActionTrigger(INPUT_ACTION_MOVE_RIGHT))
-				MoveRight();
-		}
-		else
-		{
-			if (Input_IsActionTrigger(INPUT_ACTION_MOVE_UP))
-				MoveRight();
-			else if (Input_IsActionTrigger(INPUT_ACTION_MOVE_DOWN))
-				MoveLeft();
+			if (m_GravityFace == FACE::FACE_FLOOR || m_GravityFace == FACE::FACE_CEILING)
+			{
+				if (Input_IsActionTrigger(INPUT_ACTION_MOVE_LEFT))
+					MoveLeft();
+				else if (Input_IsActionTrigger(INPUT_ACTION_MOVE_RIGHT))
+					MoveRight();
+			}
+			else
+			{
+				if (Input_IsActionTrigger(INPUT_ACTION_MOVE_UP))
+					MoveRight();
+				else if (Input_IsActionTrigger(INPUT_ACTION_MOVE_DOWN))
+					MoveLeft();
+			}
 		}
 
 		//移動補間
@@ -228,16 +231,19 @@ void Player::Update()
 		}
 
 		//重力変更入力
-		if (!m_IsGravityMoving)
+		if (IsGamePlaying())
 		{
-			if (Input_IsActionTrigger(INPUT_ACTION_GRAVITY_UP))
-				ChangeGravity(FACE_CEILING);
-			else if (Input_IsActionTrigger(INPUT_ACTION_GRAVITY_DOWN))
-				ChangeGravity(FACE_FLOOR);
-			else if (Input_IsActionTrigger(INPUT_ACTION_GRAVITY_LEFT))
-				ChangeGravity(FACE_LEFT_WALL);
-			else if (Input_IsActionTrigger(INPUT_ACTION_GRAVITY_RIGHT))
-				ChangeGravity(FACE_RIGHT_WALL);
+			if (!m_IsGravityMoving)
+			{
+				if (Input_IsActionTrigger(INPUT_ACTION_GRAVITY_UP))
+					ChangeGravity(FACE_CEILING);
+				else if (Input_IsActionTrigger(INPUT_ACTION_GRAVITY_DOWN))
+					ChangeGravity(FACE_FLOOR);
+				else if (Input_IsActionTrigger(INPUT_ACTION_GRAVITY_LEFT))
+					ChangeGravity(FACE_LEFT_WALL);
+				else if (Input_IsActionTrigger(INPUT_ACTION_GRAVITY_RIGHT))
+					ChangeGravity(FACE_RIGHT_WALL);
+			}
 		}
 
 		//重力移動補間
@@ -286,123 +292,136 @@ void Player::Update()
 		}
 	}
 
-	//ノーツヒット入力
-	bool isPressed  = Input_IsActionTrigger(INPUT_ACTION_ATTACK);
-	bool isHolding  = Input_IsActionDown(INPUT_ACTION_ATTACK);
-
-	if (isPressed)
+	if (IsGamePlaying())
 	{
-		bool isJumping = (m_AnimState.currentAnimName.find("jump_left") != std::string::npos ||
-						  m_AnimState.currentAnimName.find("jump_right") != std::string::npos);
-		if (!isJumping)
+		//ノーツヒット入力
+		bool isPressed  = Input_IsActionTrigger(INPUT_ACTION_ATTACK);
+		bool isHolding  = Input_IsActionDown(INPUT_ACTION_ATTACK);
+
+		if (isPressed)
 		{
-			PlayAnimationByName("run", true);
+			bool isJumping = (m_AnimState.currentAnimName.find("jump_left") != std::string::npos ||
+							  m_AnimState.currentAnimName.find("jump_right") != std::string::npos);
+			if (!isJumping)
+			{
+				PlayAnimationByName("run", true);
+			}
+
+			std::vector<std::string> overrideBones = { "BJnt_R_shoulder", "BJnt_sword" };
+			PlayOverrideAnimation("attack", overrideBones, false);
+			m_IsOverridePlaying = true;
+
+			int judgeFace = m_IsGravityMoving ? m_TargetFace : m_GravityFace;
+
+			if (m_pEffectSlash)
+			{
+				m_pEffectSlash->SetTextureIndex(0);
+				m_pEffectSlash->SetAnimationEnabled(true);
+				m_IsEffectSlashActive = true;
+
+				float upX = 0.0f;
+				float upY = 0.0f;
+				switch (judgeFace)
+				{
+				case FACE_FLOOR:      upX =  0.0f; upY =  1.0f; break; // 床では上方向
+				case FACE_CEILING:    upX =  0.0f; upY = -1.0f; break; // 天井では下方向
+				case FACE_LEFT_WALL:  upX =  1.0f; upY =  0.0f; break; // 左壁では右方向(内側)
+				case FACE_RIGHT_WALL: upX = -1.0f; upY =  0.0f; break; // 右壁では左方向(内側)
+				}
+				m_pEffectSlash->SetPos({ m_Position.x + 1.0f * upX, m_Position.y + 1.0f * upY, m_Position.z });
+
+				XMFLOAT3 rot = { 90.0f, 180.0f, 0.0f };
+				switch (judgeFace)
+				{
+				case FACE_FLOOR:
+					rot = { 90.0f, 180.0f, 0.0f };
+					break;
+				case FACE_CEILING:
+					rot = { -90.0f, 180.0f, 180.0f };
+					break;
+				case FACE_LEFT_WALL:
+					rot = { 0.0f, 270.0f, 90.0f }; // 左壁に沿わせるためのオイラー角
+					break;
+				case FACE_RIGHT_WALL:
+					rot = { 0.0f, 90.0f, -90.0f }; // 右壁に沿わせるためのオイラー角
+					break;
+				}
+				m_pEffectSlash->SetRotation(rot);
+			}
+
+			// 押した瞬間（KeyTrigger）：Enemy・Hold(最初の一撃) 判定
+			JUDGE result = m_pNoteManager->Judge(m_LaneIndex, judgeFace);
+			processJudge(result, false);
+
+			if (result == JUDGE_HIT)
+			{
+				if (m_pEnemyHitSe) PlaySound(m_pEnemyHitSe, false);
+			}
+			else
+			{
+				// 攻撃がヒットしなかった（空振った）時のみ sword 音を再生
+				if (m_pSwordSe)
+				{
+					PlaySound(m_pSwordSe, false, 0.25f);
+				}
+			}
 		}
 
-		std::vector<std::string> overrideBones = { "BJnt_R_shoulder", "BJnt_sword" };
-		PlayOverrideAnimation("attack", overrideBones, false);
-		m_IsOverridePlaying = true;
-
-		int judgeFace = m_IsGravityMoving ? m_TargetFace : m_GravityFace;
-
-		if (m_pEffectSlash)
+		if (isHolding)
 		{
-			m_pEffectSlash->SetTextureIndex(0);
-			m_pEffectSlash->SetAnimationEnabled(true);
-			m_IsEffectSlashActive = true;
+			// 押している間（KeyDown、トリガーの瞬間も含む）：
+			// HoldNote 継続判定 / RopeHoldNote の活性化・継続判定
+			int judgeFace = m_IsGravityMoving ? m_TargetFace : m_GravityFace;
+			// 押した瞬間(isPressed)のみ活性化(始点タッチ)を許可するために、isPressed を渡す
+			JUDGE result = m_pNoteManager->JudgeHold(m_LaneIndex, judgeFace, isPressed);
+			processJudge(result, true);
 
-			float upX = 0.0f;
-			float upY = 0.0f;
-			switch (judgeFace)
+			if (result == JUDGE_HIT)
 			{
-			case FACE_FLOOR:      upX =  0.0f; upY =  1.0f; break; // 床では上方向
-			case FACE_CEILING:    upX =  0.0f; upY = -1.0f; break; // 天井では下方向
-			case FACE_LEFT_WALL:  upX =  1.0f; upY =  0.0f; break; // 左壁では右方向(内側)
-			case FACE_RIGHT_WALL: upX = -1.0f; upY =  0.0f; break; // 右壁では左方向(内側)
+				if (m_pEnemyHitSe) PlaySound(m_pEnemyHitSe, false);
 			}
-			m_pEffectSlash->SetPos({ m_Position.x + 1.0f * upX, m_Position.y + 1.0f * upY, m_Position.z });
-
-			XMFLOAT3 rot = { 90.0f, 180.0f, 0.0f };
-			switch (judgeFace)
-			{
-			case FACE_FLOOR:
-				rot = { 90.0f, 180.0f, 0.0f };
-				break;
-			case FACE_CEILING:
-				rot = { -90.0f, 180.0f, 180.0f };
-				break;
-			case FACE_LEFT_WALL:
-				rot = { 0.0f, 270.0f, 90.0f }; // 左壁に沿わせるためのオイラー角
-				break;
-			case FACE_RIGHT_WALL:
-				rot = { 0.0f, 90.0f, -90.0f }; // 右壁に沿わせるためのオイラー角
-				break;
-			}
-			m_pEffectSlash->SetRotation(rot);
-		}
-
-		// 押した瞬間（KeyTrigger）：Enemy・Hold(最初の一撃) 判定
-		JUDGE result = m_pNoteManager->Judge(m_LaneIndex, judgeFace);
-		processJudge(result, false);
-
-		if (result == JUDGE_HIT)
-		{
-			if (m_pEnemyHitSe) PlaySound(m_pEnemyHitSe, false);
 		}
 		else
 		{
-			// 攻撃がヒットしなかった（空振った）時のみ sword 音を再生
-			if (m_pSwordSe)
-			{
-				PlaySound(m_pSwordSe, false, 0.25f);
-			}
+			// ボタンを離した瞬間：RopeHoldNote の途中離し判定
+			int judgeFace = m_IsGravityMoving ? m_TargetFace : m_GravityFace;
+			JUDGE result = m_pNoteManager->OnButtonRelease(m_LaneIndex, judgeFace);
+			processJudge(result, false);
 		}
-	}
 
-	if (isHolding)
-	{
-		// 押している間（KeyDown、トリガーの瞬間も含む）：
-		// HoldNote 継続判定 / RopeHoldNote の活性化・継続判定
-		int judgeFace = m_IsGravityMoving ? m_TargetFace : m_GravityFace;
-		// 押した瞬間(isPressed)のみ活性化(始点タッチ)を許可するために、isPressed を渡す
-		JUDGE result = m_pNoteManager->JudgeHold(m_LaneIndex, judgeFace, isPressed);
-		processJudge(result, true);
+		// RopeHoldNote 完了など、非同期で積まれた判定を処理
+		while (m_pNoteManager->HasPendingJudge())
+			processJudge(m_pNoteManager->PopPendingJudge(), false);
 
-		if (result == JUDGE_HIT)
+		// Orb: スコア・コンボは変化させずHP回復/取り逃し数のみ反映
+		while (m_pNoteManager->HasPendingOrbEvent())
 		{
-			if (m_pEnemyHitSe) PlaySound(m_pEnemyHitSe, false);
+			ORB_EVENT ev = m_pNoteManager->PopPendingOrbEvent();
+			if (ev == ORB_EVENT_HIT)
+				m_pStatusManager->OnOrbHit();
+			else
+				m_pStatusManager->OnOrbMiss();
+		}
+
+		// Barrier: 回避イベント処理
+		while (m_pNoteManager->HasPendingBarrierEvent())
+		{
+			BARRIER_EVENT ev = m_pNoteManager->PopPendingBarrierEvent();
+			if (ev == BARRIER_EVENT_KAIHI)
+			{
+				if (m_pKaihiSe) PlaySound(m_pKaihiSe, false);
+			}
 		}
 	}
 	else
 	{
-		// ボタンを離した瞬間：RopeHoldNote の途中離し判定
-		int judgeFace = m_IsGravityMoving ? m_TargetFace : m_GravityFace;
-		JUDGE result = m_pNoteManager->OnButtonRelease(m_LaneIndex, judgeFace);
-		processJudge(result, false);
-	}
-
-	// RopeHoldNote 完了など、非同期で積まれた判定を処理
-	while (m_pNoteManager->HasPendingJudge())
-		processJudge(m_pNoteManager->PopPendingJudge(), false);
-
-	// Orb: スコア・コンボは変化させずHP回復/取り逃し数のみ反映
-	while (m_pNoteManager->HasPendingOrbEvent())
-	{
-		ORB_EVENT ev = m_pNoteManager->PopPendingOrbEvent();
-		if (ev == ORB_EVENT_HIT)
-			m_pStatusManager->OnOrbHit();
-		else
-			m_pStatusManager->OnOrbMiss();
-	}
-
-	// Barrier: 回避イベント処理
-	while (m_pNoteManager->HasPendingBarrierEvent())
-	{
-		BARRIER_EVENT ev = m_pNoteManager->PopPendingBarrierEvent();
-		if (ev == BARRIER_EVENT_KAIHI)
-		{
-			if (m_pKaihiSe) PlaySound(m_pKaihiSe, false);
-		}
+		// 非プレイ中（クリア・ゲームオーバー）は未処理の判定イベントキューをただ空にする（破棄する）
+		while (m_pNoteManager->HasPendingJudge())
+			m_pNoteManager->PopPendingJudge();
+		while (m_pNoteManager->HasPendingOrbEvent())
+			m_pNoteManager->PopPendingOrbEvent();
+		while (m_pNoteManager->HasPendingBarrierEvent())
+			m_pNoteManager->PopPendingBarrierEvent();
 	}
 
 	m_WasHoldingRope = (holdingRope != nullptr);

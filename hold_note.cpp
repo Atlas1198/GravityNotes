@@ -1,4 +1,4 @@
-﻿#include "hold_note.h"
+#include "hold_note.h"
 #include "game.h"
 #include <cmath>
 
@@ -12,7 +12,7 @@ static const float HOLD_BEAT_INTERVAL = 0.25f;
 
 // NoteManager 側の定数と揃えること
 static const float HOLD_HIT_ZONE_Z  = 3.0f;
-static const float HOLD_HIT_WINDOW  = 2.5f;
+static const float HOLD_HIT_WINDOW  = 2.3f;
 
 // 子ノートの大きさ（EnemyNote::Init() で設定される基準スケールに対する倍率）
 static const float HOLD_FIRST_CHILD_SCALE_MULT = 1.1f;  // 一体目は少し大きく
@@ -47,11 +47,15 @@ void HoldNote::Init(int lane, int endLane, int face, float initZ, float endZ, fl
 	// 始点〜終点を拍数ベースで分割して子ノート数を決定（Z座標ベースだと同期ズレの誤差影響を受けるため）
 	float diffBeat = endBeat - beat;
 	float stepVal = diffBeat / HOLD_BEAT_INTERVAL;
-	int totalSteps = (stepVal > 0.0f) ? (int)ceilf(stepVal) + 1 : 2;
+	int totalSteps = (stepVal > 0.0f) ? (int)roundf(stepVal) + 1 : 2;
 	if (totalSteps < 2) totalSteps = 2;
 
 	for (int i = 0; i < totalSteps; i++)
 	{
+		float childBeat = beat + (float)i * HOLD_BEAT_INTERVAL;
+		// 譜面の endBeat を超えた場合はそれ以降の生成を打ち切る
+		if (childBeat > endBeat + 0.001f) break;
+
 		// t: 0.0（始点gameLane）〜 1.0（終点gameEndLane）の進捗
 		float t = (float)i / (float)(totalSteps - 1);
 
@@ -65,7 +69,7 @@ void HoldNote::Init(int lane, int endLane, int face, float initZ, float endZ, fl
 		EnemyNote* child = new EnemyNote();
 		// 一体目も共通モデルを使用し、テクスチャのみを差し替える
 		child->Init(snapLane, face, childZ, speed, nullptr);
-		child->SetBeat(beat + (float)i * HOLD_BEAT_INTERVAL);
+		child->SetBeat(childBeat);
 		if (i == 0)
 		{
 			child->SetCustomTexture("asset/texture/Gargoyle_red.png");
