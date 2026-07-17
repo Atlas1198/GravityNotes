@@ -261,9 +261,30 @@ void NoteManager::Update(int playerLane, int playerFace, bool isGravityMoving)
 			}
 			else
 			{
-				// 毎フレームXAudio2の実際の再生位置で同期することで、
-				// Releaseビルド高FPS時のdt積算誤差によるタイミングずれを防ぐ。
-				m_ElapsedTime = (float)GetPlaybackPositionSec(m_pBgmData);
+				// 実際のBGMの再生位置を取得
+				float audioTime = (float)GetPlaybackPositionSec(m_pBgmData);
+				// 前回のElapsedTimeから順当に進んだ場合の想定時間
+				float expectedTime = m_ElapsedTime + dt;
+
+				// もし実際のBGM再生位置が想定時間よりも著しく進んでいる場合（＝処理落ちが発生した）
+				if (audioTime - expectedTime > 0.15f)
+				{
+					// フェードアウト中であればそのボリューム減衰率を維持
+					float volumeScale = 1.0f;
+					if (m_IsFadingOut && m_FadeOutDuration > 0.0f)
+					{
+						volumeScale = 1.0f - (m_FadeOutTimer / m_FadeOutDuration);
+						if (volumeScale < 0.0f) volumeScale = 0.0f;
+					}
+					// BGMをゲームの論理時間に同期（シーク）させる
+					PlaySound(m_pBgmData, false, volumeScale, expectedTime);
+					m_ElapsedTime = expectedTime;
+				}
+				else
+				{
+					// 通常時はXAudio2の再生位置に同期
+					m_ElapsedTime = audioTime;
+				}
 			}
 		}
 		else
