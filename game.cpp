@@ -38,6 +38,8 @@ enum class GameState {
 static GameState      g_GameState = GameState::PLAYING;
 static float          g_FinishTimer = 0.0f;
 static float          g_FinishWaitDuration = 3.0f;
+static float          g_EscapeHoldTimer = 0.0f;
+static bool           g_IsStageSelectRequested = false;
 
 bool IsGamePlaying(void)
 {
@@ -93,6 +95,8 @@ void Game_Initialize(void)
 	// 各状態の初期化
 	g_GameState = GameState::PLAYING;
 	g_FinishTimer = 0.0f;
+	g_EscapeHoldTimer = 0.0f;
+	g_IsStageSelectRequested = false;
 
 	//各種初期化
 	GameCamera::Init();
@@ -120,6 +124,29 @@ void Game_Initialize(void)
 
 void Game_Update(void)
 {
+	// ESCキーを3秒間押し続けるとステージ選択へ戻る。
+	if (!g_IsStageSelectRequested)
+	{
+		if (Keyboard_IsKeyDown(KK_ESCAPE))
+		{
+			g_EscapeHoldTimer += dt;
+			if (g_EscapeHoldTimer >= 3.0f)
+			{
+				g_IsStageSelectRequested = true;
+				SetSceneFade(SCENE_STAGESELECT);
+			}
+		}
+		else
+		{
+			g_EscapeHoldTimer = 0.0f;
+		}
+	}
+
+	if (g_IsStageSelectRequested)
+	{
+		return;
+	}
+
 	if (g_GameState == GameState::FINISHED_WAIT)
 	{
 		// 終了演出待機中：余韻を持たせる（黒フェードが徐々に表示される）
