@@ -819,7 +819,7 @@ FT_BEGIN_HEADER
    * sophisticated kerning variants.  Use a higher-level library like
    * HarfBuzz instead for that.
    */
-/* #define TT_CONFIG_OPTION_GPOS_KERNING */
+#define TT_CONFIG_OPTION_GPOS_KERNING
 
 
   /*************************************************************************/

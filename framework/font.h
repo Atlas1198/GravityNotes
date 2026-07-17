@@ -22,8 +22,8 @@ using namespace DirectX;
 // テキストアライメント
 enum TextAlignment {
 	TA_START,
-    TA_MIDDLE,
-    TA_END
+	TA_MIDDLE,
+	TA_END
 };
 
 // フォント設定定数
@@ -36,9 +36,11 @@ enum TextAlignment {
 
 // フォント文字情報
 struct CharInfo {
-    float x0, y0, x1, y1;  // アトラス上のテクスチャ座標
-    float xadvance;         // 文字の進む量
-    int glyphIndex;         // グリフインデックス
+	float x0, y0, x1, y1;  // アトラス上のテクスチャ座標
+	float xadvance;         // 文字の進む量（ピクセル）
+	float bitmapLeft;       // ペン位置からの水平オフセット（ピクセル）
+	float bitmapTop;        // ベースラインからの上方向オフセット（ピクセル）
+	int glyphIndex;         // グリフインデックス
 };
 
 // グローバルフォントデータ管理
@@ -80,21 +82,21 @@ private:
 	std::string m_Text;
 	float m_FontSize;                         // フォントサイズ（ピクセル）
 	TextAlignment m_Alignment;                // アライメント
-	
+
 	UINT m_VertexCount;
 	std::map<int, CharInfo> m_CharCache;      // グリフIDからCharInfo への マッピング
 	std::deque<int> m_CacheLRU;               // LRU キャッシュ用キュー
-	
+
 	unsigned char* m_pAtlasData;              // アトラスバッファ
 	int m_AtlasWidth;
 	int m_AtlasHeight;
 	int m_AtlasNextX;                         // 次のグリフを配置するX位置
 	int m_AtlasNextY;                         // 次のグリフを配置するY位置
 	int m_AtlasRowHeight;                     // 現在の行の高さ
-	
-	// フォントメトリクス
-	int m_FontAscender;                        // アセンダー（フォント単位）
-	int m_FontDescender;                       // ディセンダー（フォント単位）
+
+	// フォントメトリクス（フォント単位）
+	int m_FontAscender;
+	int m_FontDescender;
 
 	// ヘルパー関数
 	bool CreateShaders();
@@ -104,9 +106,11 @@ private:
 	void EvictLRUGlyph();
 	int UTF8ToCodePoint(const std::string& text, size_t& index);
 	void UpdateAtlasTexture();
+	bool EnsurePixelSize();
+	float GetKerningPx(int prevGlyph, int glyphIndex) const;
+	float GetGlyphAdvancePx(int glyphIndex);
 
-	// stbtt 関連
-	struct stbtt_fontinfo* m_pFontInfo;
+	bool m_Ready;                             // FreeType Face 利用可能か
 };
 
 #endif // FONT_H
