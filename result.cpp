@@ -238,8 +238,8 @@ void Result_Initialize(void)
 	// [0]: 曲名, [1]: 作曲者, [2]: 譜面制作者, [3]: 難易度
 	float initialPos[4][2] = {
 		{ 300.0f, 152.0f },
-		{ 550.0f, 220.0f },
-		{ 550.0f, 250.0f },
+		{ 400.0f, 210.0f },
+		{ 400.0f, 240.0f },
 		{ 138.0f, 613.0f }
 	};
 
@@ -272,7 +272,7 @@ void Result_Initialize(void)
 
 	// 作曲者、譜面制作者
 	g_pAuthorFont = new MultiLineFontRenderer(
-		{ 300.0f, 220.0f },
+		{ 300.0f, 210.0f },
 		18.0f,
 		0.0f,
 		{ 1.0f, 1.0f, 1.0f, 1.0f },
