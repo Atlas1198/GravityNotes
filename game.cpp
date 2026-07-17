@@ -39,6 +39,11 @@ static GameState      g_GameState = GameState::PLAYING;
 static float          g_FinishTimer = 0.0f;
 static float          g_FinishWaitDuration = 3.0f;
 
+bool IsGamePlaying(void)
+{
+	return g_GameState == GameState::PLAYING;
+}
+
 // ①インスタンス、ポインタ用意
 static Sprite2D* g_pGameSprite = nullptr;
 static ClickFont* g_pChangeSceneText = nullptr;

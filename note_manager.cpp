@@ -1,4 +1,4 @@
-﻿#include "define.h"
+#include "define.h"
 #include "debug_ostream.h"
 #include "game.h"
 #include "note_manager.h"
@@ -21,7 +21,8 @@ static SoundData* s_pRainbowSe = nullptr;
 
 static const float HIT_ZONE_Z     = 3.0f;
 static const float PASSIVE_ZONE_Z = 0.5f; // Orb・Barrier の自動判定Z
-static const float HIT_WINDOW     = 2.5f;
+static const float HIT_WINDOW     = 1.3f;
+static const float HOLD_JUDGE_WINDOW = 1.0f;
 static const float ROPE_ACTIVATE_WINDOW = 0.5f; // レインボーはプレイヤーの足元でのみ活性化（PASSIVE_ZONE_Z基準）
 
 // startFace→endFaceの経由面リストを構築する。
@@ -78,10 +79,10 @@ int NoteManager::WallToFace(ScoreWall wall) const
 	}
 }
 
-JUDGE NoteManager::JudgeByDistance(NoteBase* note, float targetZ)
+JUDGE NoteManager::JudgeByDistance(NoteBase* note, float targetZ, float window)
 {
 	float dist = fabsf(note->GetPosZ() - targetZ);
-	if (dist >= HIT_WINDOW) return JUDGE_NONE;
+	if (dist >= window) return JUDGE_NONE;
 
 	// エネミーが消える前の座標を使って撃破パーティクルを生成する。
 	if (m_pEnemyDefeatEffect && note->GetType() == NoteType::Enemy)
@@ -99,7 +100,7 @@ void NoteManager::Init(const std::string& scoreFilePath)
 	if (!m_pOrbCollectEffect)
 		m_pOrbCollectEffect = new OrbCollectEffect();
 
-	m_NoteSpeed      = 10.0f;
+	m_NoteSpeed      = D_PARAMS.noteSpeed;
 	m_SpawnZ         = 80.0f;
 	m_BgmStarted     = false;
 	m_BgmStartTime   = 0.0f;
@@ -294,12 +295,15 @@ void NoteManager::Update(int playerLane, int playerFace, bool isGravityMoving)
 	}
 
 	// スポーン処理：時刻が来たイベントを順番に生成
-	while (m_NextEventIndex < (int)m_ScoreData.events.size())
+	if (IsGamePlaying())
 	{
-		const ScoreEvent& ev = m_ScoreData.events[m_NextEventIndex];
-		if (m_ElapsedTime < BeatToSpawnTime(ev.beat)) break;
+		while (m_NextEventIndex < (int)m_ScoreData.events.size())
+		{
+			const ScoreEvent& ev = m_ScoreData.events[m_NextEventIndex];
+			if (m_ElapsedTime < BeatToSpawnTime(ev.beat)) break;
 
-		int face = WallToFace(ev.wall);
+			int face = WallToFace(ev.wall);
+
 
 		// 現時刻でノーツが居るべきZ座標を計算（遅延スポーン時は手前に補正）
 		float hitTime = BeatToAudioTime(ev.beat);
@@ -365,6 +369,7 @@ void NoteManager::Update(int playerLane, int playerFace, bool isGravityMoving)
 		}
 		m_NextEventIndex++;
 	}
+}
 
 	// 更新・自動判定・削除
 	for (int i = (int)m_Notes.size() - 1; i >= 0; i--)
@@ -379,7 +384,10 @@ void NoteManager::Update(int playerLane, int playerFace, bool isGravityMoving)
 			while (hold->HasPendingMissJudge())
 			{
 				bool isDamage = hold->PopMissJudge();
-				m_PendingJudges.push(isDamage ? JUDGE_HOLD_MISS : JUDGE_PASS_MISS);
+				if (IsGamePlaying())
+				{
+					m_PendingJudges.push(isDamage ? JUDGE_HOLD_MISS : JUDGE_PASS_MISS);
+				}
 			}
 		}
 
@@ -402,16 +410,22 @@ void NoteManager::Update(int playerLane, int playerFace, bool isGravityMoving)
 						if (m_pOrbCollectEffect)
 							m_pOrbCollectEffect->Spawn(orb->GetEffectPosition(), orb->GetFace());
 						orb->OnHit();
-						m_PendingOrbEvents.push(ORB_EVENT_HIT);
-						if (m_pOrbGetsSe != nullptr)
+						if (IsGamePlaying())
 						{
-							PlaySound(m_pOrbGetsSe, false);
+							m_PendingOrbEvents.push(ORB_EVENT_HIT);
+							if (m_pOrbGetsSe != nullptr)
+							{
+								PlaySound(m_pOrbGetsSe, false);
+							}
 						}
 					}
 					else if (z < HIT_ZONE_Z - HIT_WINDOW)
 					{
 						orb->OnMiss();
-						m_PendingOrbEvents.push(ORB_EVENT_MISS);
+						if (IsGamePlaying())
+						{
+							m_PendingOrbEvents.push(ORB_EVENT_MISS);
+						}
 					}
 				}
 			}
@@ -429,7 +443,7 @@ void NoteManager::Update(int playerLane, int playerFace, bool isGravityMoving)
 						{
 							// 重力移動中はバリアに被弾しない（安全に回避中）
 							barrier->OnHit();
-							if (m_ProcessedBarrierBeats.find(beat) == m_ProcessedBarrierBeats.end())
+							if (IsGamePlaying() && m_ProcessedBarrierBeats.find(beat) == m_ProcessedBarrierBeats.end())
 							{
 								m_PendingJudges.push(JUDGE_SILENT_COMBO);
 								m_ProcessedBarrierBeats.insert(beat);
@@ -438,7 +452,10 @@ void NoteManager::Update(int playerLane, int playerFace, bool isGravityMoving)
 						else
 						{
 							barrier->OnMiss();
-							m_PendingJudges.push(JUDGE_MISS);
+							if (IsGamePlaying())
+							{
+								m_PendingJudges.push(JUDGE_MISS);
+							}
 							m_ProcessedBarrierBeats.insert(beat);
 						}
 					}
@@ -446,7 +463,7 @@ void NoteManager::Update(int playerLane, int playerFace, bool isGravityMoving)
 					{
 						// 操作をしなかった（元から安全な場所にいた）場合は、音や判定を出さずに自然消滅
 						barrier->OnHit();
-						if (m_ProcessedBarrierBeats.find(beat) == m_ProcessedBarrierBeats.end())
+						if (IsGamePlaying() && m_ProcessedBarrierBeats.find(beat) == m_ProcessedBarrierBeats.end())
 						{
 							m_PendingJudges.push(JUDGE_SILENT_COMBO);
 							m_ProcessedBarrierBeats.insert(beat);
@@ -461,15 +478,18 @@ void NoteManager::Update(int playerLane, int playerFace, bool isGravityMoving)
 			         z < HIT_ZONE_Z - HIT_WINDOW)
 			{
 				m_Notes[i]->OnMiss();
-				// プレイヤーと同じlane/faceにいた場合のみダメージあり、それ以外はコンボリセットのみ
-				if (m_Notes[i]->GetLaneIndex() == playerLane &&
-					m_Notes[i]->GetFace()      == playerFace)
+				if (IsGamePlaying())
 				{
-					m_PendingJudges.push(JUDGE_MISS); // StatusManager に伝える
-				}
-				else
-				{
-					m_PendingJudges.push(JUDGE_PASS_MISS);
+					// プレイヤーと同じlane/faceにいた場合のみダメージあり、それ以外はコンボリセットのみ
+					if (m_Notes[i]->GetLaneIndex() == playerLane &&
+						m_Notes[i]->GetFace()      == playerFace)
+					{
+						m_PendingJudges.push(JUDGE_MISS); // StatusManager に伝える
+					}
+					else
+					{
+						m_PendingJudges.push(JUDGE_PASS_MISS);
+					}
 				}
 			}
 		}
@@ -481,10 +501,18 @@ void NoteManager::Update(int playerLane, int playerFace, bool isGravityMoving)
 			{
 				RopeHoldNote* rope = static_cast<RopeHoldNote*>(m_Notes[i]);
 				if (rope->GetState() == RopeHoldNote::State::COMPLETE)
-					m_PendingJudges.push(JUDGE_HIT);
+				{
+					if (IsGamePlaying())
+					{
+						m_PendingJudges.push(JUDGE_HIT);
+					}
+				}
 				else if (rope->GetState() == RopeHoldNote::State::FAILED_START)
 				{
-					m_PendingJudges.push(JUDGE_PASS_MISS); // 始点で触れられなかった場合。Enemyの押し逃しと同様、コンボリセットのみでHPは減らさない
+					if (IsGamePlaying())
+					{
+						m_PendingJudges.push(JUDGE_PASS_MISS); // 始点で触れられなかった場合。Enemyの押し逃しと同様、コンボリセットのみでHPは減らさない
+					}
 					hal::dout << "[MISS] Type: RopeHold (Failed Start), Beat: " << rope->GetBeat()
 					          << ", Lane: " << rope->GetLaneIndex()
 					          << ", Face: " << rope->GetFace() << std::endl;
@@ -732,7 +760,7 @@ JUDGE NoteManager::Judge(int lane, int face)
 
 	if (bestNote)
 	{
-		return JudgeByDistance(bestNote, HIT_ZONE_Z);
+		return JudgeByDistance(bestNote, HIT_ZONE_Z, HIT_WINDOW);
 	}
 
 	// HoldNote（連撃）の最初の一撃はKeyTriggerで取る
@@ -744,7 +772,7 @@ JUDGE NoteManager::Judge(int lane, int face)
 		EnemyNote* child = hold->GetNearestActiveChild(lane, face);
 		if (!child) continue;
 
-		JUDGE j = JudgeByDistance(child, HIT_ZONE_Z);
+		JUDGE j = JudgeByDistance(child, HIT_ZONE_Z, HIT_WINDOW);
 		if (j != JUDGE_NONE) return j;
 	}
 
@@ -792,7 +820,7 @@ JUDGE NoteManager::JudgeHold(int lane, int face, bool isTrigger)
 		EnemyNote* child = hold->GetNearestActiveChild(lane, face);
 		if (!child) continue;
 
-		JUDGE j = JudgeByDistance(child, HIT_ZONE_Z);
+		JUDGE j = JudgeByDistance(child, HIT_ZONE_Z, HOLD_JUDGE_WINDOW);
 		if (j != JUDGE_NONE) return j;
 	}
 	return JUDGE_NONE; // HoldNote が存在しない／範囲外のときは何もしない

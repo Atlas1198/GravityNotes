@@ -10,7 +10,9 @@
 #include "renderer.h"
 #include "define.h"
 
-
+// スクリーンショットの解像度設定
+#define SCREENSHOT_WIDTH  (1920)
+#define SCREENSHOT_HEIGHT (1080)
 
 //*********************************************************
 // 構造体
@@ -962,11 +964,11 @@ void TakeScreenshot(void)
 		tm_local.tm_year + 1900, tm_local.tm_mon + 1, tm_local.tm_mday,
 		tm_local.tm_hour, tm_local.tm_min, tm_local.tm_sec);
 
-	// 1920x1080 のテクスチャ（レンダーターゲット用）を作成
+	// SCREENSHOT_WIDTH x SCREENSHOT_HEIGHT のテクスチャ（レンダーターゲット用）を作成
 	D3D11_TEXTURE2D_DESC td;
 	ZeroMemory(&td, sizeof(td));
-	td.Width = 1920;
-	td.Height = 1080;
+	td.Width = SCREENSHOT_WIDTH;
+	td.Height = SCREENSHOT_HEIGHT;
 	td.MipLevels = 1;
 	td.ArraySize = 1;
 	td.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -989,11 +991,11 @@ void TakeScreenshot(void)
 		return;
 	}
 
-	// 1920x1080 の深度ステンシルバッファを作成
+	// SCREENSHOT_WIDTH x SCREENSHOT_HEIGHT の深度ステンシルバッファを作成
 	D3D11_TEXTURE2D_DESC depthDesc;
 	ZeroMemory(&depthDesc, sizeof(depthDesc));
-	depthDesc.Width = 1920;
-	depthDesc.Height = 1080;
+	depthDesc.Width = SCREENSHOT_WIDTH;
+	depthDesc.Height = SCREENSHOT_HEIGHT;
 	depthDesc.MipLevels = 1;
 	depthDesc.ArraySize = 1;
 	depthDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
@@ -1036,11 +1038,11 @@ void TakeScreenshot(void)
 	float prevClientHeight = g_ClientHeight;
 	D3D11_TEXTURE2D_DESC prevBackBufferDesc = g_BackBufferDesc;
 
-	// 1920x1080 に解像度を変更し、バックバッファ記述も書き換える
-	g_ClientWidth = 1920.0f;
-	g_ClientHeight = 1080.0f;
-	g_BackBufferDesc.Width = 1920;
-	g_BackBufferDesc.Height = 1080;
+	// SCREENSHOT_WIDTH x SCREENSHOT_HEIGHT に解像度を変更し、バックバッファ記述も書き換える
+	g_ClientWidth = static_cast<float>(SCREENSHOT_WIDTH);
+	g_ClientHeight = static_cast<float>(SCREENSHOT_HEIGHT);
+	g_BackBufferDesc.Width = SCREENSHOT_WIDTH;
+	g_BackBufferDesc.Height = SCREENSHOT_HEIGHT;
 
 	// スクリーンショット撮影中フラグとターゲットの設定
 	g_IsTakingScreenshot = true;
@@ -1052,8 +1054,8 @@ void TakeScreenshot(void)
 	D3D11_VIEWPORT vp;
 	vp.TopLeftX = 0.0f;
 	vp.TopLeftY = 0.0f;
-	vp.Width = 1920.0f;
-	vp.Height = 1080.0f;
+	vp.Width = static_cast<float>(SCREENSHOT_WIDTH);
+	vp.Height = static_cast<float>(SCREENSHOT_HEIGHT);
 	vp.MinDepth = 0.0f;
 	vp.MaxDepth = 1.0f;
 	g_ImmediateContext->RSSetViewports(1, &vp);

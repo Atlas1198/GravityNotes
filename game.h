@@ -19,3 +19,6 @@ void Game_Finalize(void);
 void Game_Update(void);
 void Game_Draw(void);
 void Game_DebugUIDraw(void);
+
+// ゲーム中（PLAYING状態）であるかを取得する関数
+bool IsGamePlaying(void);

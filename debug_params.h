@@ -21,7 +21,7 @@ struct CameraFaceOffset {
 // =========================================================================
 namespace ReleaseConfig
 {
-    constexpr float noteSpeed = 15.0f;
+    constexpr float noteSpeed = 10.0f;
     constexpr float hitDistance = 2.0f;
     constexpr float laneWidth = 2.0f;
     constexpr float gravityTransTime = 0.3f;
@@ -46,7 +46,7 @@ namespace ReleaseConfig
 struct DebugParams
 {
     // ノーツ
-    float noteSpeed         = 15.0f;  // ノーツのZ軸移動速度 (units/sec)
+    float noteSpeed         = 10.0f;  // ノーツのZ軸移動速度 (units/sec)
     float hitDistance       = 2.0f;   // 判定が発生するZ距離 (units)
 
     // プレイヤー
