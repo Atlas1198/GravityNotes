@@ -1,4 +1,4 @@
-#include "define.h"
+﻿#include "define.h"
 #include "debug_ostream.h"
 #include "game.h"
 #include "note_manager.h"

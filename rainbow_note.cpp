@@ -269,7 +269,7 @@ void RopeHoldNote::Update()
 	XMFLOAT3 bbPos = {
 		startXY.x + normal.x * inset,
 		startXY.y + normal.y * inset,
-		m_Position.z
+		m_Position.z - 1.5f
 	};
 	m_StartBillboard.SetPos(bbPos);
 	m_StartBillboard.Update();
