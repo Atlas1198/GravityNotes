@@ -186,9 +186,17 @@ inline ScoreData LoadScore(const std::string& filePath)
 				{
 					float diffBeat = ev.endBeat - ev.beat;
 					float stepVal = diffBeat / 0.25f; // HOLD_BEAT_INTERVAL = 0.25f
-					int totalSteps = (stepVal > 0.0f) ? (int)ceilf(stepVal) + 1 : 2;
+					int totalSteps = (stepVal > 0.0f) ? (int)roundf(stepVal) + 1 : 2;
 					if (totalSteps < 2) totalSteps = 2;
-					fullCombo += totalSteps;
+
+					int actualSteps = 0;
+					for (int i = 0; i < totalSteps; i++)
+					{
+						float childBeat = ev.beat + (float)i * 0.25f;
+						if (childBeat > ev.endBeat + 0.001f) break;
+						actualSteps++;
+					}
+					fullCombo += actualSteps;
 				}
 				break;
 			case ScoreType::RopeHold:
