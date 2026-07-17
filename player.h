@@ -41,6 +41,7 @@ private:
 	XMFLOAT3 m_GravityStartPos;
 	XMFLOAT3 m_GravityStartRot;
 	bool m_WasHoldingRope; // 前フレームでレインボーを保持していたか
+	bool m_IsPostRopeSnapping; // ロープ終端→面正規位置への補正中か（入力はブロックしない）
 
 	NoteManager*   m_pNoteManager;
 	StatusManager* m_pStatusManager;
