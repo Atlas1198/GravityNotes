@@ -708,6 +708,6 @@
       <VersionFilePath>$(ProjectDir).github\version.txt</VersionFilePath>
       <HeaderFilePath>$(ProjectDir)version.h</HeaderFilePath>
     </PropertyGroup>
-    <Exec Command="powershell -ExecutionPolicy Bypass -Command &quot;if (Test-Path '$(VersionFilePath)') { $v = (Get-Content '$(VersionFilePath)' -Raw).Trim() } else { $v = 'unknown' }; $content = '#pragma once' + [Environment]::NewLine + '#define VERSION_STR L\&quot;v' + $v + '\&quot;' + [Environment]::NewLine; [System.IO.File]::WriteAllText('$(HeaderFilePath)', $content, (New-Object System.Text.UTF8Encoding($true)))&quot;" />
+    <Exec Command="powershell -ExecutionPolicy Bypass -Command &quot;if (Test-Path '$(VersionFilePath)') { $v = (Get-Content '$(VersionFilePath)' -Raw).Trim() } else { $v = 'unknown' }; $content = '#pragma once' + [Environment]::NewLine + '#define VERSION_STR L\&quot;v' + $v + '\&quot;' + [Environment]::NewLine; $current = if (Test-Path '$(HeaderFilePath)') { [System.IO.File]::ReadAllText('$(HeaderFilePath)') } else { '' }; if ($current -ne $content) { [System.IO.File]::WriteAllText('$(HeaderFilePath)', $content, (New-Object System.Text.UTF8Encoding($true))) }&quot;" />
   </Target>
 </Project>
