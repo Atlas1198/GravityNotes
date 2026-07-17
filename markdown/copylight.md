@@ -5,6 +5,8 @@
 
 4th smile / 作曲：LeaF
 
+命日 / 作曲：LeaF
+
 GAIA / 作曲：森田交一（魔王魂）/ 作詞：火ノ岡レイ / 歌：KEI
 
 ## SE
