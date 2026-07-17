@@ -42,4 +42,6 @@ public:
 	void SetPlayerPosition(int lane, int face) { m_PlayerLane = lane; m_PlayerFace = face; }
 	bool HasPendingMissJudge() const { return !m_PendingMissJudges.empty(); }
 	bool PopMissJudge() { bool v = m_PendingMissJudges.front(); m_PendingMissJudges.pop(); return v; }
+	bool IsStarted() const { if (m_ChildNotes.empty()) return false; return m_ChildNotes[0]->IsHit(); }
 };
+

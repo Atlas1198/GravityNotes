@@ -48,9 +48,11 @@ private:
 	SplitBilBoard* m_pEffectSlash;
 	bool           m_IsEffectSlashActive;
 	bool           m_IsOverridePlaying;
+	bool           m_IsHoldingHoldNote; // HoldNote長押し攻撃中フラグ
 	float          m_DamageFlashRemaining;
 	float          m_DamageFlashElapsed;
 	ThreePointLight m_ThreePointLight;   // キャラクター用3点照明
+
 
 	SoundData*     m_pSwordSe = nullptr;
 	SoundData*     m_pEnemyHitSe = nullptr;

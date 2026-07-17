@@ -49,6 +49,7 @@ void Player::Init(NoteManager* nm, StatusManager* sm)
 
 	m_IsEffectSlashActive = false;
 	m_IsOverridePlaying = false;
+	m_IsHoldingHoldNote = false;
 	m_DamageFlashRemaining = 0.0f;
 	m_DamageFlashElapsed = 0.0f;
 	m_pEffectSlash = new SplitBilBoard(
@@ -105,6 +106,7 @@ void Player::Reset()
 
 	m_IsEffectSlashActive = false;
 	m_IsOverridePlaying = false;
+	m_IsHoldingHoldNote = false;
 	m_DamageFlashRemaining = 0.0f;
 	m_DamageFlashElapsed = 0.0f;
 	if (m_pEffectSlash)
@@ -301,7 +303,84 @@ void Player::Update()
 		bool isPressed  = Input_IsActionTrigger(INPUT_ACTION_ATTACK);
 		bool isHolding  = Input_IsActionDown(INPUT_ACTION_ATTACK);
 
-		if (isPressed)
+		int judgeFace = m_IsGravityMoving ? m_TargetFace : m_GravityFace;
+		bool isHoldingHoldNote = isHolding && m_pNoteManager->IsHoldingActiveHoldNote(m_LaneIndex, judgeFace);
+
+		if (isHoldingHoldNote)
+		{
+			if (!m_IsHoldingHoldNote)
+			{
+				m_IsHoldingHoldNote = true;
+
+				// 剣振りモーションをループ再生
+				std::vector<std::string> overrideBones = { "BJnt_R_shoulder", "BJnt_sword" };
+				PlayOverrideAnimation("attack", overrideBones, true); // loop = true
+				SetOverridePlaySpeed(2.0);
+				m_IsOverridePlaying = true;
+
+				// エフェクトをループ再生
+				if (m_pEffectSlash)
+				{
+					m_pEffectSlash->SetLoop(true);
+					m_pEffectSlash->SetFPS(60.0f); // 2倍のペース (30fps -> 60fps)
+					m_pEffectSlash->SetTextureIndex(0);
+					m_pEffectSlash->SetAnimationEnabled(true);
+					m_IsEffectSlashActive = true;
+				}
+			}
+
+			// エフェクトの位置・回転を毎フレーム更新（移動中などのため）
+			if (m_pEffectSlash && m_IsEffectSlashActive)
+			{
+				float upX = 0.0f;
+				float upY = 0.0f;
+				switch (judgeFace)
+				{
+				case FACE_FLOOR:      upX =  0.0f; upY =  1.0f; break; // 床では上方向
+				case FACE_CEILING:    upX =  0.0f; upY = -1.0f; break; // 天井では下方向
+				case FACE_LEFT_WALL:  upX =  1.0f; upY =  0.0f; break; // 左壁では右方向(内側)
+				case FACE_RIGHT_WALL: upX = -1.0f; upY =  0.0f; break; // 右壁では左方向(内側)
+				}
+				m_pEffectSlash->SetPos({ m_Position.x + 1.0f * upX, m_Position.y + 1.0f * upY, m_Position.z });
+
+				XMFLOAT3 rot = { 90.0f, 180.0f, 0.0f };
+				switch (judgeFace)
+				{
+				case FACE_FLOOR:
+					rot = { 90.0f, 180.0f, 0.0f };
+					break;
+				case FACE_CEILING:
+					rot = { -90.0f, 180.0f, 180.0f };
+					break;
+				case FACE_LEFT_WALL:
+					rot = { 0.0f, 270.0f, 90.0f }; // 左壁に沿わせるためのオイラー角
+					break;
+				case FACE_RIGHT_WALL:
+					rot = { 0.0f, 90.0f, -90.0f }; // 右壁に沿わせるためのオイラー角
+					break;
+				}
+				m_pEffectSlash->SetRotation(rot);
+			}
+		}
+		else
+		{
+			if (m_IsHoldingHoldNote)
+			{
+				m_IsHoldingHoldNote = false;
+
+				if (m_pEffectSlash)
+				{
+					m_pEffectSlash->SetLoop(false);
+					m_pEffectSlash->SetFPS(30.0f); // 等倍に戻す
+				}
+
+				StopOverrideAnimation();
+				SetOverridePlaySpeed(1.0);
+				m_IsOverridePlaying = false;
+			}
+		}
+
+		if (isPressed && !isHoldingHoldNote)
 		{
 			bool isJumping = (m_AnimState.currentAnimName.find("jump_left") != std::string::npos ||
 							  m_AnimState.currentAnimName.find("jump_right") != std::string::npos);
@@ -313,8 +392,6 @@ void Player::Update()
 			std::vector<std::string> overrideBones = { "BJnt_R_shoulder", "BJnt_sword" };
 			PlayOverrideAnimation("attack", overrideBones, false);
 			m_IsOverridePlaying = true;
-
-			int judgeFace = m_IsGravityMoving ? m_TargetFace : m_GravityFace;
 
 			if (m_pEffectSlash)
 			{
@@ -391,6 +468,7 @@ void Player::Update()
 			JUDGE result = m_pNoteManager->OnButtonRelease(m_LaneIndex, judgeFace);
 			processJudge(result, false);
 		}
+
 
 		// RopeHoldNote 完了など、非同期で積まれた判定を処理
 		while (m_pNoteManager->HasPendingJudge())

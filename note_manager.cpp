@@ -993,3 +993,25 @@ void NoteManager::ResetPlayPosition()
 		m_NextEventIndex++;
 	}
 }
+
+bool NoteManager::IsHoldingActiveHoldNote(int lane, int face) const
+{
+	for (NoteBase* note : m_Notes)
+	{
+		if (note->GetType() != NoteType::Hold || !note->IsActive()) continue;
+		const HoldNote* hold = static_cast<const HoldNote*>(note);
+
+		EnemyNote* child = hold->GetNearestActiveChild(lane, face);
+		if (!child) continue;
+
+		// 既に叩き始めている（最初のノーツがヒット済み）、
+		// または最初の子ノーツが判定窓（HIT_ZONE_Z + HOLD_JUDGE_WINDOW）に近づいていたら叩き中とする。
+		if (hold->IsStarted() || child->GetPosZ() < HIT_ZONE_Z + HOLD_JUDGE_WINDOW)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+

@@ -64,6 +64,7 @@ struct OverrideAnimationState {
 	double time = 0.0;                 // 現在の再生位置（単位: ティック）
 	bool play = false;                 // 再生中フラグ
 	bool loop = true;                  // ループフラグ
+	double speed = 1.0;                // 再生速度倍率
 	std::string currentAnimName = "";  // 現在再生中の部分アニメーション名
 	std::vector<std::string> startBoneNames; // オーバーライドを開始する親ボーン名のリスト
 	std::unordered_map<std::string, int> nodeToAnimIndex; // アニメーションチャンネルインデックス
@@ -220,6 +221,7 @@ public:
 	void StopOverrideAnimation();
 	bool IsOverrideAnimationActive() const { return m_OverrideAnimState.isActive && m_OverrideAnimState.play; }
 	const char* GetOverrideAnimationName() const { return m_OverrideAnimState.currentAnimName.c_str(); }
+	void SetOverridePlaySpeed(double speed) { m_OverrideAnimState.speed = speed; }
 
 private:
 	// 内部用：FBX内のアニメーションから AnimationClip を作成・設定

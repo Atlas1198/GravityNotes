@@ -413,7 +413,7 @@ void AnimSprite3D::UpdateAnimation(float dt)
 			overrideTicksPerSecond = 24.0;
 		}
 
-		m_OverrideAnimState.time += dt * overrideTicksPerSecond;
+		m_OverrideAnimState.time += dt * overrideTicksPerSecond * m_OverrideAnimState.speed;
 
 		if (m_OverrideAnimState.time >= m_OverrideAnimState.clip->duration)
 		{
@@ -890,6 +890,7 @@ bool AnimSprite3D::PlayOverrideAnimation(const char* animName, const std::vector
 		m_OverrideAnimState.time = 0.0;
 		m_OverrideAnimState.play = true;
 		m_OverrideAnimState.loop = loop;
+		m_OverrideAnimState.speed = 1.0;
 		m_OverrideAnimState.currentAnimName = animName;
 		m_OverrideAnimState.startBoneNames = startBoneNames;
 		m_OverrideAnimState.isActive = true;

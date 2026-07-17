@@ -103,4 +103,6 @@ public:
 	bool  CheckAndHitBarrier(int fromLane, int fromFace, int toLane, int toFace);
 	bool  IsFinished() const;
 	void  StartBgmFadeOut(float durationSec);
+	bool  IsHoldingActiveHoldNote(int lane, int face) const;
 };
+
